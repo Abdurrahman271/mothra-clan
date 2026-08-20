@@ -5,29 +5,39 @@
 
 'use strict';
 
-// 1. AUTHENTICATION CREDENTIALS
-const AUTH_EMAIL = 'abdurrrahman09@gmail.com';
-const AUTH_PASS  = 'Senayan@18';
+// ============================================================
+// 1. AUTHENTICATION
+// ============================================================
 const AUTH_SESSION_KEY = 'mothra_admin_auth_active';
 
-let db = getMothraData();
+const VALID_EMAILS = [
+  'abdurrrahman09@gmail.com',
+  'abdurrahman09@gmail.com',
+  'abdurrahman271@gmail.com',
+  'admin'
+];
+const VALID_PASSWORDS = ['Senayan@18', 'senayan@18', 'Senayan18'];
 
-// DOM Elements
-const loginScreen   = document.getElementById('loginScreen');
-const loginForm     = document.getElementById('loginForm');
-const loginEmail    = document.getElementById('loginEmail');
-const loginPassword = document.getElementById('loginPassword');
-const loginAlert    = document.getElementById('loginAlert');
-const dashboardWrap = document.getElementById('dashboardWrap');
-const logoutBtn     = document.getElementById('logoutBtn');
-const toastMsg      = document.getElementById('toastMsg');
+let db = null;
 
-// Check Session on Load
+function showToast(msg) {
+  const t = document.getElementById('toastMsg');
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add('visible');
+  setTimeout(() => t.classList.remove('visible'), 4000);
+}
+
 function checkAuth() {
+  const loginScreen   = document.getElementById('loginScreen');
+  const dashboardWrap = document.getElementById('dashboardWrap');
+  if (!loginScreen || !dashboardWrap) return;
+
   const isAuth = sessionStorage.getItem(AUTH_SESSION_KEY) === 'true';
   if (isAuth) {
     loginScreen.classList.add('hidden');
     dashboardWrap.classList.remove('hidden');
+    if (!db) db = getMothraData();
     initDashboard();
   } else {
     loginScreen.classList.remove('hidden');
@@ -35,53 +45,56 @@ function checkAuth() {
   }
 }
 
-loginForm.addEventListener('submit', (e) => {
-  e.preventDefault();
-  const u = (loginEmail.value || '').trim().toLowerCase();
-  const p = (loginPassword.value || '').trim();
+// Bind login form after DOM is ready
+document.addEventListener('DOMContentLoaded', function () {
+  // Login form submit
+  const loginForm     = document.getElementById('loginForm');
+  const loginEmail    = document.getElementById('loginEmail');
+  const loginPassword = document.getElementById('loginPassword');
+  const loginAlert    = document.getElementById('loginAlert');
+  const logoutBtn     = document.getElementById('logoutBtn');
 
-  // Validasi email dan password
-  const validEmails = [
-    'abdurrrahman09@gmail.com',
-    'abdurrahman09@gmail.com',
-    'abdurrahman271@gmail.com',
-    'admin'
-  ];
-  const validPasswords = ['Senayan@18', 'senayan@18', 'Senayan18'];
+  if (loginForm) {
+    loginForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const u = ((loginEmail && loginEmail.value) || '').trim().toLowerCase();
+      const p = ((loginPassword && loginPassword.value) || '').trim();
 
-  const emailOk = validEmails.includes(u);
-  const passOk  = validPasswords.includes(p);
+      const emailOk = VALID_EMAILS.includes(u);
+      const passOk  = VALID_PASSWORDS.includes(p);
 
-  if (emailOk && passOk) {
-    sessionStorage.setItem(AUTH_SESSION_KEY, 'true');
-    loginAlert.classList.remove('visible');
-    loginScreen.classList.add('hidden');
-    dashboardWrap.classList.remove('hidden');
-    initDashboard();
-    showToast('Login berhasil! Selamat datang Admin MOTHRA.');
-  } else {
-    loginAlert.textContent = 'Username atau Password salah! Pastikan email dan password benar.';
-    loginAlert.classList.add('visible');
-    loginPassword.value = '';
-    loginPassword.focus();
+      if (emailOk && passOk) {
+        sessionStorage.setItem(AUTH_SESSION_KEY, 'true');
+        if (loginAlert) loginAlert.classList.remove('visible');
+        checkAuth();
+        showToast('Login berhasil! Selamat datang Admin MOTHRA.');
+      } else {
+        if (loginAlert) {
+          loginAlert.textContent = 'Email atau Password salah. Coba lagi.';
+          loginAlert.classList.add('visible');
+        }
+        if (loginPassword) { loginPassword.value = ''; loginPassword.focus(); }
+      }
+    });
   }
-});
 
-logoutBtn.addEventListener('click', () => {
-  sessionStorage.removeItem(AUTH_SESSION_KEY);
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', function () {
+      sessionStorage.removeItem(AUTH_SESSION_KEY);
+      checkAuth();
+      showToast('Berhasil keluar dari panel admin.');
+    });
+  }
+
+  // Run auth check
   checkAuth();
-  showToast('Berhasil keluar dari panel admin.');
 });
 
-function showToast(msg) {
-  toastMsg.textContent = msg;
-  toastMsg.classList.add('visible');
-  setTimeout(() => toastMsg.classList.remove('visible'), 4000);
-}
-
+// ============================================================
 // 2. DASHBOARD NAVIGATION TABS
+// ============================================================
 function initDashboard() {
-  db = getMothraData();
+  if (!db) db = getMothraData();
   renderOverviewStats();
   renderDossierForm();
   renderCategoriesTable();
@@ -95,18 +108,18 @@ function initDashboard() {
 }
 
 const navItems = document.querySelectorAll('.nav-item');
-const panels = document.querySelectorAll('.admin-panel');
+const panels   = document.querySelectorAll('.admin-panel');
 
 navItems.forEach((btn) => {
   btn.addEventListener('click', () => {
     navItems.forEach((b) => b.classList.remove('active'));
-    panels.forEach((p) => p.classList.remove('active'));
-
+    panels.forEach((p)   => p.classList.remove('active'));
     btn.classList.add('active');
     const target = document.getElementById(btn.dataset.panel);
     if (target) target.classList.add('active');
   });
 });
+
 
 /* ============================================================
    HELPER: LOCAL PC IMAGE FILE UPLOAD WITH CANVAS COMPRESSION
@@ -1480,7 +1493,3 @@ document.querySelectorAll('.btn-cancel').forEach((btn) => {
     document.querySelectorAll('.crud-modal').forEach((m) => m.classList.remove('open'));
   });
 });
-
-// Run auth check on initialization
-checkAuth();
-

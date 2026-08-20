@@ -575,24 +575,6 @@ function saveMothraData(data) {
   }
 }
 
-      // 2. Simpan ke Server lokal disk via server.js jika sedang dijalankan
-      try {
-        fetch('/api/data', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
-        }).then((res) => {
-          if (res.ok) console.log('Successfully synced data to disk via server.js');
-        }).catch(() => {});
-      } catch (err) {}
-    }
-    return true;
-  } catch (e) {
-    console.error('Failed to save data', e);
-    return false;
-  }
-}
-
 // Global Exports & Window Binding
 if (typeof window !== 'undefined') {
   window.getMothraData = getMothraData;
