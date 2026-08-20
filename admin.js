@@ -5,33 +5,22 @@
 
 'use strict';
 
-// 1. AUTHENTICATION CREDENTIALS (Mendukung variasi penulisan email & password)
-const AUTH_USERS = [
-  'abdurrrahman09@gmail.com',
-  'abdurrahman09@gmail.com',
-  'abdurrahman271@gmail.com',
-  'admin@mothra.com',
-  'admin'
-];
-const AUTH_PASSWORDS = [
-  'Senayan@18',
-  'senayan@18',
-  'Senayan18',
-  'admin123'
-];
+// 1. AUTHENTICATION CREDENTIALS
+const AUTH_EMAIL = 'abdurrrahman09@gmail.com';
+const AUTH_PASS  = 'Senayan@18';
 const AUTH_SESSION_KEY = 'mothra_admin_auth_active';
 
 let db = getMothraData();
 
 // DOM Elements
-const loginScreen = document.getElementById('loginScreen');
-const loginForm = document.getElementById('loginForm');
-const loginEmail = document.getElementById('loginEmail');
+const loginScreen   = document.getElementById('loginScreen');
+const loginForm     = document.getElementById('loginForm');
+const loginEmail    = document.getElementById('loginEmail');
 const loginPassword = document.getElementById('loginPassword');
-const loginAlert = document.getElementById('loginAlert');
+const loginAlert    = document.getElementById('loginAlert');
 const dashboardWrap = document.getElementById('dashboardWrap');
-const logoutBtn = document.getElementById('logoutBtn');
-const toastMsg = document.getElementById('toastMsg');
+const logoutBtn     = document.getElementById('logoutBtn');
+const toastMsg      = document.getElementById('toastMsg');
 
 // Check Session on Load
 function checkAuth() {
@@ -48,13 +37,22 @@ function checkAuth() {
 
 loginForm.addEventListener('submit', (e) => {
   e.preventDefault();
-  const u = loginEmail.value.trim().toLowerCase();
-  const p = loginPassword.value.trim();
+  const u = (loginEmail.value || '').trim().toLowerCase();
+  const p = (loginPassword.value || '').trim();
 
-  const isValidUser = AUTH_USERS.some((user) => user.toLowerCase() === u);
-  const isValidPass = AUTH_PASSWORDS.includes(p);
+  // Validasi email dan password
+  const validEmails = [
+    'abdurrrahman09@gmail.com',
+    'abdurrahman09@gmail.com',
+    'abdurrahman271@gmail.com',
+    'admin'
+  ];
+  const validPasswords = ['Senayan@18', 'senayan@18', 'Senayan18'];
 
-  if (isValidUser && isValidPass) {
+  const emailOk = validEmails.includes(u);
+  const passOk  = validPasswords.includes(p);
+
+  if (emailOk && passOk) {
     sessionStorage.setItem(AUTH_SESSION_KEY, 'true');
     loginAlert.classList.remove('visible');
     loginScreen.classList.add('hidden');
@@ -62,8 +60,10 @@ loginForm.addEventListener('submit', (e) => {
     initDashboard();
     showToast('Login berhasil! Selamat datang Admin MOTHRA.');
   } else {
-    loginAlert.textContent = 'Username atau Password salah! Harap periksa kembali.';
+    loginAlert.textContent = 'Username atau Password salah! Pastikan email dan password benar.';
     loginAlert.classList.add('visible');
+    loginPassword.value = '';
+    loginPassword.focus();
   }
 });
 
