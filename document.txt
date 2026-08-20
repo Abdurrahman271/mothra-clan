@@ -1,0 +1,237 @@
+================================================================================
+  PANDUAN LENGKAP MENGKONEKSIKAN WEBSITE CLAN MOTHRA DENGAN SUPABASE (ONLINE & REALTIME)
+================================================================================
+Dokumentasi ini menjelaskan langkah demi langkah cara meng-onlinekan seluruh
+data konfigurasi website Clan MOTHRA Point Blank menggunakan Supabase (PostgreSQL
+Database + Realtime WebSockets) sehingga dapat diakses dan disinkronkan secara
+otomatis di GitHub Pages, Netlify, Vercel, HP, dan semua browser pengunjung.
+
+================================================================================
+DAFTAR ISI
+================================================================================
+1. Ringkasan & Keunggulan Sistem Supabase Realtime
+2. TAHAP 1: Membuat Akun & Project Baru di Supabase
+3. TAHAP 2: Menjalankan Script SQL Schema (supabase_schema.sql) di Supabase
+4. TAHAP 3: Mengambil Kredensial API (Project URL & Anon Key)
+5. TAHAP 4: Menghubungkan Database ke Website Clan MOTHRA (2 Cara Mudah)
+6. TAHAP 5: Menguji Sinkronisasi Database Realtime Lintas Browser & HP
+7. TAHAP 6: Cara Replace & Deploy ke GitHub Pages (Otomatis Online)
+8. Struktur Tabel Database PostgreSQL Supabase
+9. Tips Keamanan (RLS), Troubleshooting & Solusi Kendala
+
+================================================================================
+1. RINGKASAN & KEUNGGULAN SISTEM SUPABASE REALTIME
+================================================================================
+Sebelumnya, perubahan data di panel admin hanya tersimpan di LocalStorage browser
+lokal. Dengan integrasi Supabase:
+- Database berada di Cloud PostgreSQL Supabase (Online 24/7 Gratis).
+- Mendukung Realtime WebSockets (postgres_changes). Begitu Admin mengubah data
+  pemain, jadwal, foto galeri, atau dossier di admin.html, seluruh pengunjung
+  yang sedang membuka website (termasuk di GitHub Pages) akan melihat perubahan
+  secara LANGSUNG tanpa perlu refresh/reload halaman.
+- Kompatibel 100% dengan GitHub Pages (Statis) melalui Supabase JS SDK CDN.
+- Memiliki sistem Hybrid Fallback Cache: Halaman web terbuka secepat kilat (0 ms)
+  menggunakan cache lokal, lalu secara otomatis mengupdate data dengan database
+  online Supabase terbaru.
+
+================================================================================
+2. TAHAP 1: MEMBUAT AKUN & PROJECT BARU DI SUPABASE
+================================================================================
+1. Buka browser dan kunjungi: https://supabase.com
+2. Klik tombol "Start your project" atau "Sign In".
+3. Anda bisa login gratis menggunakan akun GitHub, Google, atau Email Anda.
+4. Di halaman dashboard Supabase (https://supabase.com/dashboard/projects),
+   klik tombol "New Project" (Proyek Baru).
+5. Isi form pembuatan project:
+   - Organization : Pilih organisasi default Anda.
+   - Name         : mothra-clan (atau nama bebas sesuai keinginan Anda).
+   - Database Password : Buat password database yang kuat (Simpan password ini).
+   - Region       : Pilih "Singapore (ap-southeast-1)" agar koneksi tercepat dari Indonesia.
+   - Pricing Plan : Pilih "Free" (0 USD / Gratis Selamanya).
+6. Klik tombol "Create new project".
+7. Tunggu sekitar 1 - 2 menit hingga status project berubah menjadi "Active".
+
+================================================================================
+3. TAHAP 2: MENJALANKAN SCRIPT SQL SCHEMA DI SUPABASE SQL EDITOR
+================================================================================
+Di dalam folder project website Anda, sudah disediakan file:
+"supabase_schema.sql"
+
+File ini berisi seluruh struktur tabel, Row Level Security (RLS) policies,
+publikasi Realtime, serta seluruh data awal roster pemain, jadwal, aliansi,
+prestasi, dan foto dari data.js.
+
+Langkah menjalankan SQL di Supabase:
+1. Di Dashboard Supabase project Anda, lihat menu di bilah sebelah kiri.
+2. Klik ikon "SQL Editor" (ikon terminal/database).
+3. Klik tombol "+ New query" (Query Baru).
+4. Buka file "supabase_schema.sql" di komputer Anda menggunakan Notepad / VS Code,
+   lalu COPY (Salin) SELURUH isinya (Ctrl+A lalu Ctrl+C).
+   (Alternatif: Di Panel Admin MOTHRA, ada tombol "COPY SCRIPT SQL KE CLIPBOARD").
+5. PASTE (Tempel) seluruh kode SQL tersebut ke dalam kotak SQL Editor di Supabase.
+6. Klik tombol "RUN" (atau tekan Ctrl + Enter) di pojok kanan bawah.
+7. Tunggu beberapa detik hingga muncul pesan hijau:
+   "Success. No rows returned" atau "Success".
+8. Sekarang seluruh tabel (mothra_cms, mothra_lineup, mothra_categories,
+   mothra_schedule_matches, dll) beserta data awal dan Realtime sudah aktif!
+
+================================================================================
+4. TAHAP 3: MENGAMBIL KREDENSIAL API (PROJECT URL & ANON KEY)
+================================================================================
+1. Di Dashboard Supabase project Anda, klik menu "Project Settings" (ikon gerigi
+   di bilah kiri bawah).
+2. Pilih submenu "API" (di bawah bagian Configuration).
+3. Pada halaman API Settings, Anda akan melihat 2 informasi penting:
+   a. Project URL:
+      Contoh: https://abcdefghijklm.supabase.co
+   b. Project API Keys -> "anon" "public":
+      Contoh: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS...
+4. Copy (Salin) kedua nilai tersebut ke Notepad sementara.
+
+================================================================================
+5. TAHAP 4: MENGHUBUNGKAN DATABASE KE WEBSITE CLAN MOTHRA
+================================================================================
+Anda dapat memilih salah satu dari 2 cara mudah di bawah ini:
+
+--------------------------------------------------------------------------------
+CARA A: MENGISI LEWAT PANEL ADMIN (PALING MUDAH TANPA SENTUH KODE)
+--------------------------------------------------------------------------------
+1. Buka halaman admin website Anda:
+   - Lokal: http://localhost:3000/admin (atau buka file admin.html)
+   - Live: https://domain-kamu.com/admin.html
+2. Login dengan akun Operator:
+   - Email    : abdurrrahman09@gmail.com
+   - Password : Senayan@18
+3. Klik menu navigasi di bilah samping: "☁️ Database Online (Supabase)".
+4. Pada form "PENGATURAN KREDENSIAL SUPABASE":
+   - Masukkan SUPABASE PROJECT URL yang Anda dapat dari Tahap 3.
+   - Masukkan SUPABASE ANON / PUBLIC API KEY yang Anda dapat dari Tahap 3.
+5. Klik tombol "🔌 TES KONEKSI & SIMPAN CONFIG".
+6. Status di bagian atas akan langsung berubah menjadi:
+   🟢 "ONLINE & REALTIME TERHUBUNG (POSTGRESQL)"
+7. Klik tombol "☁️ UPLOAD / SINKRONKAN SEMUA DATA KE SUPABASE" untuk memastikan
+   seluruh data lokal saat ini tersimpan sempurna di database Supabase Anda.
+
+--------------------------------------------------------------------------------
+CARA B: MENGISI LANGSUNG DI FILE data.js (PERMANEN UNTUK SEMUA ORANG)
+--------------------------------------------------------------------------------
+1. Buka file "data.js" di folder project Anda menggunakan Text Editor (Notepad / VS Code).
+2. Bagian konfigurasi sudah terisi otomatis dengan URL project Anda:
+   const SUPABASE_CONFIG = {
+     url: 'https://idkeanqnglmomwkxkbqs.supabase.co',
+     anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+     tableName: 'mothra_cms',
+     docId: 'main'
+   };
+3. Semua pengaturan sudah siap pakai secara permanen!
+
+================================================================================
+6. TAHAP 5: MENGUJI SINKRONISASI DATABASE REALTIME
+================================================================================
+Untuk membuktikan bahwa sistem database online dan realtime sudah bekerja:
+1. Buka halaman website utama (index.html) di Browser 1 (misalnya Google Chrome).
+2. Buka halaman panel admin (admin.html) di Browser 2 (misalnya Microsoft Edge atau HP Anda).
+3. Di Panel Admin (Browser 2):
+   - Masuk ke menu "The Lineup" atau "Match Schedule".
+   - Edit nama salah satu pemain atau tambah jadwal turnamen baru.
+   - Klik Simpan.
+4. Lihat di Browser 1 (Google Chrome):
+   - Tanpa perlu menekan tombol refresh (F5), data pemain / jadwal akan LANGSUNG
+     berubah secara otomatis di depan mata Anda dalam waktu kurang dari 1 detik!
+5. Buka Console Browser (Tekan F12 -> Console):
+   - Anda akan melihat log:
+     "⚡ [MOTHRA REALTIME] Update database online diterima"
+     "☁️ [SUPABASE SAVED] Perubahan berhasil disimpan ke database online Supabase!"
+
+================================================================================
+7. TAHAP 6: CARA REPLACE & DEPLOY KE GITHUB PAGES
+================================================================================
+Agar website Clan MOTHRA online di GitHub Pages dan langsung terhubung dengan
+database Supabase:
+
+1. Buka repository GitHub Anda di https://github.com/username/mothra-clan
+2. Pastikan file-file berikut di folder project Anda sudah yang terbaru:
+   - index.html        (Sudah include Supabase SDK & CSP)
+   - admin.html        (Sudah include Supabase Panel & SDK)
+   - data.js           (Sudah include Supabase Client & Realtime)
+   - admin.js          (Sudah include Supabase Controller)
+   - main.js           (Sudah include Realtime Listener)
+   - supabase_schema.sql (Script Database)
+   - style.css & admin.css
+   - folder assets/
+3. Upload / Replace (Timpa) file-file tersebut ke repository GitHub:
+   - Lewat Git Terminal:
+     git add .
+     git commit -m "Upgrade to Supabase Online Realtime Database"
+     git push origin main
+   - Atau lewat web GitHub: Klik "Add file" -> "Upload files" -> Tarik seluruh file project -> Klik "Commit changes".
+4. Aktifkan GitHub Pages (jika belum):
+   - Buka menu "Settings" di repository GitHub Anda.
+   - Klik menu "Pages" di bilah kiri.
+   - Pada "Build and deployment" -> "Branch", pilih "main" / "master" dan folder "/ (root)".
+   - Klik "Save".
+5. Tunggu 1 menit, website Anda akan live di:
+   https://username.github.io/mothra-clan/
+6. Halaman admin online di:
+   https://username.github.io/mothra-clan/admin.html
+7. Sekarang, kapanpun Anda mengubah data di admin.html, database Supabase akan
+   menyimpan perubahannya, dan semua orang di seluruh dunia yang membuka GitHub
+   Pages Anda akan melihat data realtime terbaru!
+
+================================================================================
+8. STRUKTUR TABEL DATABASE POSTGRESQL SUPABASE
+================================================================================
+Database Supabase Clan MOTHRA terdiri dari tabel-tabel berikut:
+
+1. public.mothra_cms (Tabel Utama State Realtime):
+   - id           : TEXT (Primary Key, default 'main')
+   - data         : JSONB (Seluruh state dokumen CMS: dossier, lineup, schedule, dll)
+   - data_version : BIGINT (Timestamp versi data untuk pencegahan konflik)
+   - updated_at   : TIMESTAMPTZ (Waktu pembaruan terakhir)
+
+2. public.mothra_lineup (Roster Pemain & BA):
+   - id, name, realname, role, category, num, img, weapon, kd, hs, winrate, exp, bio, stats
+
+3. public.mothra_schedule_matches (Jadwal Pertandingan):
+   - id, stage, status, opponent, opponent_short, opponent_color, tournament, map, time, stream_url
+
+4. public.mothra_categories (Kategori Turnamen):
+   - id, label, badge, full_name
+
+5. public.mothra_partnerships (Aliansi, Sponsor & Scrim):
+   - id, type, type_label, name, contact, contact_type, status, date, logo, notes
+
+6. public.mothra_records (Prestasi & Juara):
+   - id, year, title, subtitle
+
+7. public.mothra_gallery (Galeri Dokumentasi Field Notes):
+   - id, title, img, large
+
+================================================================================
+9. TIPS KEAMANAN (RLS), TROUBLESHOOTING & FAQ
+================================================================================
+
+Q1: Apakah aman meletakkan Anon Key Supabase di frontend GitHub Pages?
+A1: SANGAT AMAN. Supabase memang mendesain "anon key" sebagai kunci publik untuk
+    klien frontend. Keamanan database dilindungi oleh Row Level Security (RLS)
+    di PostgreSQL. Jangan pernah membagikan "service_role key" rahasia Anda.
+
+Q2: Mengapa status di Admin Panel masih kuning / "STANDBY"?
+A2: Pastikan:
+    1. Project URL diawali dengan "https://" dan berakhiran ".supabase.co".
+    2. Anon Key disalin lengkap tanpa spasi tambahan di awal/akhir.
+    3. Script "supabase_schema.sql" sudah dijalankan di SQL Editor Supabase.
+
+Q3: Apa yang terjadi jika koneksi internet pengunjung sedang lambat atau terputus?
+A3: Website MOTHRA dilengkapi sistem Hybrid Cache. Website tetap dapat terbuka
+    seketika menggunakan data cache di browser. Begitu koneksi internet kembali,
+    data akan otomatis disinkronkan dengan database Supabase secara halus.
+
+Q4: Bagaimana cara membackup database?
+A4: Di Panel Admin -> menu "Backup & Restore", Anda dapat mendownload file backup
+    JSON kapan saja, atau mendownload file data.js terbaru. Di Supabase Dashboard,
+    PostgreSQL juga menyediakan fitur backup otomatis harian.
+
+================================================================================
+© 2024 CLAN MOTHRA POINT BLANK INDONESIA — NO FEAR. NO EXCUSES.
+================================================================================

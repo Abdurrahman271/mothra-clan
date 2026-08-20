@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  
+  <!-- SEO & Social Meta -->
+  <title>MOTHRA — Clan Point Blank Indonesia</title>
+  <meta name="description" content="Clan Point Blank Indonesia sejak 2020. Disiplin, Loyalitas, Insting. Official MOTHRA Esports HQ." />
+  <meta name="keywords" content="MOTHRA, Clan Point Blank, PB Indonesia, Esports Indonesia, Scrim PB, PBNC" />
+  <meta name="author" content="MOTHRA Clan" />
+  <meta name="robots" content="index, follow" />
+  
+  <!-- Open Graph -->
+  <meta property="og:title" content="MOTHRA — Clan Point Blank Indonesia" />
+  <meta property="og:description" content="Official Clan Point Blank Indonesia. No Fear. No Excuses." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="assets/mothra-logo.png" />
+  <link rel="icon" type="image/png" href="assets/mothra-logo.png" />
+
+  <!-- Security Meta Tags & CDN Connectivity -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https: wss: data: blob:; img-src 'self' https: data: blob:; font-src 'self' https://fonts.gstatic.com; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; script-src 'self' https: 'unsafe-inline' 'unsafe-eval';" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,300;0,400;0,600;0,700;0,800;0,900;1,700&family=Barlow:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- CUSTOM CURSOR -->
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-follower" id="cursorFollower"></div>
+
+  <!-- LOADER -->
+  <div class="loader" id="loader">
+    <div class="loader-inner">
+      <div class="loader-logo-wrap">
+        <img src="assets/mothra-logo.png" alt="MOTHRA Logo" class="loader-logo-img" width="70" height="75" />
+        <div class="loader-logo">MOTHRA</div>
+      </div>
+      <div class="loader-bar"><div class="loader-fill" id="loaderFill"></div></div>
+      <div class="loader-text" id="loaderText">ESTABLISHING TACTICAL UPLINK...</div>
+    </div>
+  </div>
+
+  <!-- NAVIGATION -->
+  <nav class="nav" id="nav">
+    <div class="nav-container">
+      <a href="#hero" class="nav-logo" aria-label="MOTHRA Clan Home">
+        <img src="assets/mothra-logo.png" alt="MOTHRA Clan Logo" class="nav-logo-img" width="42" height="46" />
+        <span class="logo-text">MOTHRA</span>
+      </a>
+      
+      <ul class="nav-links" id="navLinks" role="menubar">
+        <li role="none"><a href="#about" role="menuitem" class="nav-link">The Dossier</a></li>
+        <li role="none"><a href="#lineup" role="menuitem" class="nav-link">The Lineup</a></li>
+        <li role="none"><a href="#schedule" role="menuitem" class="nav-link">Schedule</a></li>
+        <li role="none"><a href="#partnership" role="menuitem" class="nav-link">Partnership</a></li>
+        <li role="none"><a href="#record" role="menuitem" class="nav-link">The Record</a></li>
+        <li role="none"><a href="#gallery" role="menuitem" class="nav-link">Field Notes</a></li>
+        <li role="none"><a href="#join" role="menuitem" class="nav-link nav-cta">Join Us</a></li>
+      </ul>
+
+      <button class="hamburger" id="navHamburger" aria-label="Buka menu navigasi" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- MOBILE MENU WITH BACK / CLOSE BUTTON -->
+  <div class="mobile-menu" id="mobileMenu" role="dialog" aria-label="Mobile navigation">
+    <div class="mobile-menu-inner">
+      <div class="mobile-menu-header">
+        <div class="mobile-header-brand">
+          <img src="assets/mothra-logo.png" alt="MOTHRA" width="32" height="35" />
+          <span>MOTHRA</span>
+        </div>
+        <button class="mobile-close-btn" id="mobileMenuClose" aria-label="Tutup menu navigasi">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          <span>TUTUP / KEMBALI</span>
+        </button>
+      </div>
+
+      <a href="#about" class="mobile-link">01 / THE DOSSIER</a>
+      <a href="#lineup" class="mobile-link">02 / THE LINEUP</a>
+      <a href="#schedule" class="mobile-link">03 / MATCH SCHEDULE</a>
+      <a href="#partnership" class="mobile-link">04 / PARTNERSHIP &amp; SCRIM</a>
+      <a href="#record" class="mobile-link">05 / THE RECORD</a>
+      <a href="#gallery" class="mobile-link">06 / FIELD NOTES</a>
+      <a href="#join" class="mobile-link mobile-link--cta">07 / JOIN THE HUNT</a>
+      
+      <div class="mobile-socials">
+        <a href="https://www.instagram.com/mothra.officiall" target="_blank" rel="noopener" class="mobile-social-link">Instagram</a>
+        <a href="https://discord.gg/fxfMBWSzW" target="_blank" rel="noopener" class="mobile-social-link">Discord</a>
+        <a href="mailto:abdurrrahman09@gmail.com" class="mobile-social-link">Email HQ</a>
+      </div>
+    </div>
+  </div>
+
+  <main>
+    <!-- ===================== HERO SECTION ===================== -->
+    <section class="hero" id="hero" aria-label="Hero Section">
+      <div class="hero-bg">
+        <div class="hero-bg-img" id="heroBgImg"></div>
+        <div class="hero-bg-overlay"></div>
+        <div class="hero-grid-lines"></div>
+        <canvas class="hero-particles" id="heroCanvas"></canvas>
+      </div>
+
+      <div class="hero-content">
+        <div class="hero-badge">
+          <span class="badge-dot"></span>
+          <span>POINT BLANK INDONESIA • OFFICIAL SQUAD</span>
+        </div>
+        <h1 class="hero-title">
+          <span class="hero-title-line">THE</span>
+          <span class="hero-title-line hero-title-line--gold">HUNT</span>
+          <span class="hero-title-line">NEVER STOPS.</span>
+        </h1>
+        <p class="hero-subtitle">Jakarta, Indonesia &mdash; Est. 2020 &mdash; Unit MTH-08</p>
+        
+        <div class="hero-actions">
+          <a href="#join" class="btn btn--primary" id="heroJoinBtn">
+            <span>MULAI PERJALANAN</span>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+          <a href="#about" class="btn btn--ghost">KENALI KAMI</a>
+        </div>
+      </div>
+
+      <!-- Hero bottom bar -->
+      <div class="hero-bottom-bar">
+        <div class="hero-brand">
+          <img src="assets/mothra-logo.png" alt="MOTHRA Logo" class="hero-brand-logo" width="52" height="56" />
+          <div>
+            <span class="hero-brand-text">MOTHRA</span>
+            <span class="hero-brand-sub">NO FEAR. NO EXCUSES.</span>
+          </div>
+        </div>
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <div><span class="hero-stat-num" data-count="84">0</span><span class="hero-stat-unit">%</span></div>
+            <span class="hero-stat-label">Win Rate</span>
+          </div>
+          <div class="hero-stat-divider"></div>
+          <div class="hero-stat">
+            <div><span class="hero-stat-num" data-count="7">0</span><span class="hero-stat-unit">+</span></div>
+            <span class="hero-stat-label">Roster &amp; BA</span>
+          </div>
+          <div class="hero-stat-divider"></div>
+          <div class="hero-stat">
+            <div><span class="hero-stat-num" data-count="3">0</span><span class="hero-stat-unit">&#215;</span></div>
+            <span class="hero-stat-label">Juara Turnamen</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-scroll-indicator">
+        <div class="scroll-line"></div>
+        <span>SCROLL</span>
+      </div>
+    </section>
+
+    <!-- ===================== 01 / THE DOSSIER ===================== -->
+    <section class="section about" id="about" aria-labelledby="aboutHeading">
+      <div class="section-container">
+        <div class="section-tag reveal-fade">01 / THE DOSSIER</div>
+        <div class="about-grid">
+          <div class="about-left reveal-left">
+            <h2 id="aboutHeading" class="section-heading">
+              DISIPLIN.<br/>
+              <span class="text-gold">LOYALITAS.</span><br/>
+              INSTING.
+            </h2>
+            <p class="about-desc">
+              MOTHRA lahir dari satu keyakinan: tim yang hebat dibangun dari pejuang yang mau tumbuh bersama. Sejak 2020, kami menjadikan setiap match sebagai ruang belajar dan setiap panggung turnamen sebagai arena pembuktian mental juara.
+            </p>
+            <a href="#lineup" class="text-link">LIHAT PROFIL PEMAIN <span aria-hidden="true">&#8250;</span></a>
+          </div>
+
+          <div class="about-center reveal-fade">
+            <div class="about-origin-card">
+              <span class="origin-label">TACTICAL DIVISION</span>
+              <div class="origin-city">JAKARTA<br/>INDONESIA</div>
+              <div class="origin-meta">
+                <span>UNIT / MTH-08</span>
+                <span>STATUS / <span class="status-active">ACTIVE ROSTER</span></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="about-right reveal-right">
+            <div class="about-values">
+              <div class="value-item">
+                <div class="value-icon">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <circle cx="12" cy="12" r="9" stroke="#D4AF37" stroke-width="2"/>
+                    <path d="M12 6v6l4 2" stroke="#D4AF37" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                </div>
+                <div>
+                  <div class="value-title">PLAY SMART</div>
+                  <div class="value-desc">Eksekusi strategi sebelum ego pribadi.</div>
+                </div>
+              </div>
+              <div class="value-item">
+                <div class="value-icon">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="#D4AF37" stroke-width="2" stroke-linecap="round"/>
+                    <circle cx="9" cy="7" r="4" stroke="#D4AF37" stroke-width="2"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="#D4AF37" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                </div>
+                <div>
+                  <div class="value-title">PLAY AS ONE</div>
+                  <div class="value-desc">Kekuatan kami adalah kesatuan dan komunikasi.</div>
+                </div>
+              </div>
+              <div class="value-item">
+                <div class="value-icon">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26 12,2" stroke="#D4AF37" stroke-width="2" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+                <div>
+                  <div class="value-title">STAY SHARP</div>
+                  <div class="value-desc">Refleks tajam, mental tenang dalam clutch moment.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== 02 / THE LINEUP (EXTENDED ROSTER) ===================== -->
+    <section class="section lineup" id="lineup" aria-labelledby="lineupHeading">
+      <div class="section-container">
+        <div class="section-tag reveal-fade">02 / THE LINEUP</div>
+        <div class="lineup-header">
+          <div>
+            <h2 id="lineupHeading" class="section-heading reveal-left">
+              MEET THE <span class="text-gold">UNIT.</span>
+            </h2>
+            <span class="lineup-hint">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+              Klik kartu pemain untuk membuka tactical dossier lengkap &amp; statistik
+            </span>
+          </div>
+          <p class="lineup-sub reveal-right">Roster kompetitif Point Blank, Sixth Man, dan Brand Ambassador resmi Clan MOTHRA.</p>
+        </div>
+
+        <!-- Roster Filter Tabs -->
+        <div class="roster-filters reveal-fade">
+          <button class="filter-btn active" data-filter="all">SEMUA ROSTER (7)</button>
+          <button class="filter-btn" data-filter="main">MAIN SQUAD PBNC</button>
+          <button class="filter-btn" data-filter="sub">SUB / ACADEMY</button>
+          <button class="filter-btn" data-filter="ba">BRAND AMBASSADOR</button>
+        </div>
+
+        <div class="players-grid">
+          <!-- 1. Captain (Featured) -->
+          <div class="player-card player-card--featured reveal-fade"
+               data-category="main"
+               data-delay="0"
+               data-player="raven"
+               data-name="MOTHRA•RAVEN"
+               data-realname="Raka Pratama"
+               data-role="IGL / CAPTAIN"
+               data-num="01"
+               data-img="assets/player-captain.jpg"
+               data-weapon="AUG A3 Silence &amp; Kriss S.V"
+               data-kd="2.45"
+               data-hs="68%"
+               data-experience="5+ Tahun"
+               data-bio="Master strategist dan in-game leader MOTHRA sejak 2020. Dikenal dengan rotasi call yang presisi dan pembacaan formasi lawan dalam turnamen nasional."
+               tabindex="0"
+               role="button"
+               aria-label="Lihat profil MOTHRA RAVEN">
+            <div class="player-img-wrap">
+              <img src="assets/player-captain.jpg" alt="MOTHRA RAVEN - IGL Captain" loading="lazy" width="400" height="533" />
+              <div class="player-num">01</div>
+              <div class="player-status"><span class="dot dot--green"></span> ACTIVE ROSTER</div>
+              <div class="player-hover-action">
+                <span>VIEW DOSSIER <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17l9.2-9.2M17 17V8H8"/></svg></span>
+              </div>
+            </div>
+            <div class="player-info">
+              <span class="player-role">IGL / CAPTAIN</span>
+              <div class="player-name">MOTHRA&#8226;RAVEN</div>
+              <div class="player-realname">Raka Pratama</div>
+            </div>
+          </div>
+
+          <!-- Squad Side Cards -->
+          <div class="players-grid-side">
+            <!-- 2. Rusher -->
+            <div class="player-card reveal-fade"
+                 data-category="main"
+                 data-delay="100"
+                 data-player="vex"
+                 data-name="MOTHRA•VEX"
+                 data-realname="Vex Ardi"
+                 data-role="RUSHER"
+                 data-num="07"
+                 data-img="assets/player2.jpg"
+                 data-weapon="Kriss S.V Batik &amp; OA-93"
+                 data-kd="2.30"
+                 data-hs="62%"
+                 data-experience="4 Tahun"
+                 data-bio="Rusher agresif dengan refleks kilat. Selalu membuka jalan bagi rekan setim dan ahli menembus pertahanan bombsite A/B lawan."
+                 tabindex="0"
+                 role="button"
+                 aria-label="Lihat profil MOTHRA VEX">
+              <div class="player-img-wrap">
+                <img src="assets/player2.jpg" alt="MOTHRA VEX - Rusher" loading="lazy" width="300" height="400" />
+                <div class="player-num">07</div>
+                <div class="player-status"><span class="dot dot--green"></span> ACTIVE ROSTER</div>
+                <div class="player-hover-action">
+                  <span>VIEW DOSSIER <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17l9.2-9.2M17 17V8H8"/></svg></span>
+                </div>
+              </div>
+              <div class="player-info">
+                <span class="player-role">RUSHER</span>
+                <div class="player-name">MOTHRA&#8226;VEX</div>
+                <div class="player-realname">Vex Ardi</div>
+              </div>
+            </div>
+
+            <!-- 3. Sniper -->
+            <div class="player-card reveal-fade"
+                 data-category="main"
+                 data-delay="200"
+                 data-player="nova"
+                 data-name="MOTHRA•NOVA"
+                 data-realname="Dimas Kurnia"
+                 data-role="SNIPER"
+                 data-num="11"
+                 data-img="assets/player3.jpg"
+                 data-weapon="CheyTac M200 &amp; Tactilite T2"
+                 data-kd="2.80"
+                 data-hs="82%"
+                 data-experience="5 Tahun"
+                 data-bio="Sharpshooter andalan MOTHRA dengan akurasi quickscope mematikan. Mengontrol garis pandang jarak jauh dan mengamankan first-pick di tiap round."
+                 tabindex="0"
+                 role="button"
+                 aria-label="Lihat profil MOTHRA NOVA">
+              <div class="player-img-wrap">
+                <img src="assets/player3.jpg" alt="MOTHRA NOVA - Sniper" loading="lazy" width="300" height="400" />
+                <div class="player-num">11</div>
+                <div class="player-status"><span class="dot dot--green"></span> ACTIVE ROSTER</div>
+                <div class="player-hover-action">
+                  <span>VIEW DOSSIER <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17l9.2-9.2M17 17V8H8"/></svg></span>
+                </div>
+              </div>
+              <div class="player-info">
+                <span class="player-role">SNIPER</span>
+                <div class="player-name">MOTHRA&#8226;NOVA</div>
+                <div class="player-realname">Dimas Kurnia</div>
+              </div>
+            </div>
+
+            <!-- 4. Support -->
+            <div class="player-card reveal-fade"
+                 data-category="main"
+                 data-delay="300"
+                 data-player="echo"
+                 data-name="MOTHRA•ECHO"
+                 data-realname="Fajar Malik"
+                 data-role="SUPPORT"
+                 data-num="23"
+                 data-img="assets/player4.jpg"
+                 data-weapon="SC-2010 &amp; P90 Ext."
+                 data-kd="2.10"
+                 data-hs="59%"
+                 data-experience="4 Tahun"
+                 data-bio="Ahli utilitas dan smoke lineup. Menjamin cover fire bagi tim serta memegang peranan penting saat skenario retake bombsite."
+                 tabindex="0"
+                 role="button"
+                 aria-label="Lihat profil MOTHRA ECHO">
+              <div class="player-img-wrap">
+                <img src="assets/player4.jpg" alt="MOTHRA ECHO - Support" loading="lazy" width="300" height="400" />
+                <div class="player-num">23</div>
+                <div class="player-status"><span class="dot dot--green"></span> ACTIVE ROSTER</div>
+                <div class="player-hover-action">
+                  <span>VIEW DOSSIER <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17l9.2-9.2M17 17V8H8"/></svg></span>
+                </div>
+              </div>
+              <div class="player-info">
+                <span class="player-role">SUPPORT</span>
+                <div class="player-name">MOTHRA&#8226;ECHO</div>
+                <div class="player-realname">Fajar Malik</div>
+              </div>
+            </div>
+
+            <!-- 5. Entry Frag -->
+            <div class="player-card reveal-fade"
+                 data-category="main"
+                 data-delay="400"
+                 data-player="kai"
+                 data-name="MOTHRA•KAI"
+                 data-realname="Kaisar Rizky"
+                 data-role="ENTRY FRAG"
+                 data-num="88"
+                 data-img="assets/squad-focus.jpg"
+                 data-weapon="AUG A3 &amp; APC-9"
+                 data-kd="2.38"
+                 data-hs="65%"
+                 data-experience="3.5 Tahun"
+                 data-bio="First-contact specialist berani mati yang membuka ruang tembak untuk rusher dan IGL. Dikenal clutch saat situasi 1v2 dan 1v3."
+                 tabindex="0"
+                 role="button"
+                 aria-label="Lihat profil MOTHRA KAI">
+              <div class="player-img-wrap">
+                <img src="assets/squad-focus.jpg" alt="MOTHRA KAI - Entry Frag" loading="lazy" width="300" height="400" />
+                <div class="player-num">88</div>
+                <div class="player-status"><span class="dot dot--green"></span> ACTIVE ROSTER</div>
+                <div class="player-hover-action">
+                  <span>VIEW DOSSIER <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17l9.2-9.2M17 17V8H8"/></svg></span>
+                </div>
+              </div>
+              <div class="player-info">
+                <span class="player-role">ENTRY FRAG</span>
+                <div class="player-name">MOTHRA&#8226;KAI</div>
+                <div class="player-realname">Kaisar Rizky</div>
+              </div>
+            </div>
+
+            <!-- 6. Brand Ambassador & Streamer (NEW) -->
+            <div class="player-card reveal-fade"
+                 data-category="ba"
+                 data-delay="200"
+                 data-player="clara"
+                 data-name="MOTHRA•CLARA"
+                 data-realname="Clara Valen"
+                 data-role="BRAND AMBASSADOR"
+                 data-num="00"
+                 data-img="assets/player-ba.jpg"
+                 data-weapon="AUG A3 &amp; Kriss S.V Gold"
+                 data-kd="1.95"
+                 data-hs="54%"
+                 data-experience="Content Creator &amp; BA"
+                 data-bio="Brand Ambassador dan content creator resmi Clan MOTHRA. Aktif live streaming turnamen PB, interview roster, serta menjalin kolaborasi sponsor."
+                 tabindex="0"
+                 role="button"
+                 aria-label="Lihat profil MOTHRA CLARA">
+              <div class="player-img-wrap">
+                <img src="assets/player-ba.jpg" alt="MOTHRA CLARA - Brand Ambassador" loading="lazy" width="300" height="400" />
+                <div class="player-num">00</div>
+                <div class="player-status"><span class="dot dot--gold"></span> OFFICIAL BA</div>
+                <div class="player-hover-action">
+                  <span>VIEW DOSSIER <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17l9.2-9.2M17 17V8H8"/></svg></span>
+                </div>
+              </div>
+              <div class="player-info">
+                <span class="player-role text-gold">BRAND AMBASSADOR</span>
+                <div class="player-name">MOTHRA&#8226;CLARA</div>
+                <div class="player-realname">Clara Valen</div>
+              </div>
+            </div>
+
+            <!-- 7. Substitute / Sixth Man (NEW) -->
+            <div class="player-card reveal-fade"
+                 data-category="sub"
+                 data-delay="300"
+                 data-player="shadow"
+                 data-name="MOTHRA•SHADOW"
+                 data-realname="Reza Pahlevi"
+                 data-role="SIXTH MAN / FLEX"
+                 data-num="99"
+                 data-img="assets/player2.jpg"
+                 data-weapon="P90 Ext. &amp; L115A1"
+                 data-kd="2.15"
+                 data-hs="61%"
+                 data-experience="3 Tahun"
+                 data-bio="Pemain serba bisa (flex) yang siap mengisi posisi sniper maupun assault saat rotasi roster pertandingan turnamen."
+                 tabindex="0"
+                 role="button"
+                 aria-label="Lihat profil MOTHRA SHADOW">
+              <div class="player-img-wrap">
+                <img src="assets/player2.jpg" alt="MOTHRA SHADOW - Sixth Man" loading="lazy" width="300" height="400" />
+                <div class="player-num">99</div>
+                <div class="player-status"><span class="dot dot--green"></span> SUB ROSTER</div>
+                <div class="player-hover-action">
+                  <span>VIEW DOSSIER <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17l9.2-9.2M17 17V8H8"/></svg></span>
+                </div>
+              </div>
+              <div class="player-info">
+                <span class="player-role">SIXTH MAN / FLEX</span>
+                <div class="player-name">MOTHRA&#8226;SHADOW</div>
+                <div class="player-realname">Reza Pahlevi</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="lineup-footer-action reveal-fade">
+          <a href="#gallery" class="btn btn--ghost">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            <span>LIHAT LEBIH BANYAK FOTO &amp; HIGHLIGHT SQUAD</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== 03 / THE SCHEDULE (MATCH JADWAL) ===================== -->
+    <section class="section schedule" id="schedule" aria-labelledby="scheduleHeading">
+      <div class="section-container">
+        <div class="section-tag reveal-fade">03 / THE OPERATIONS</div>
+        <div class="schedule-header">
+          <div>
+            <h2 id="scheduleHeading" class="section-heading reveal-left">
+              MATCH <span class="text-gold">SCHEDULE.</span>
+            </h2>
+            <p class="schedule-sub reveal-right">Jadwal resmi pertandingan turnamen &amp; clan war MOTHRA musim 2024.</p>
+          </div>
+        </div>
+
+        <!-- Official Tournament Schedule Poster Banner -->
+        <div class="schedule-banner-wrap reveal-fade" id="scheduleBannerWrap" title="Klik untuk memperbesar jadwal">
+          <img src="assets/match-schedule.jpg" alt="Official Match Schedule Poster Clan MOTHRA PBNC 2024" class="schedule-banner-img" loading="lazy" />
+          <div class="schedule-banner-badge">OFFICIAL FIXTURES POSTER • PBNC 2024</div>
+          <div class="schedule-banner-zoom-hint">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+            <span>KLIK UNTUK PERBESAR POSTER</span>
+          </div>
+        </div>
+
+        <!-- Match Cards Grid -->
+        <div class="matches-grid">
+          <!-- Match 1 -->
+          <div class="match-card reveal-fade" data-delay="0">
+            <div class="match-meta">
+              <span>MATCH 01 &bull; GROUP STAGE</span>
+              <span class="match-status status-upcoming">UPCOMING</span>
+            </div>
+            <div class="match-teams">
+              <div class="team-item">
+                <div class="team-logo-placeholder">MTH</div>
+                <span class="team-name text-gold">MOTHRA</span>
+              </div>
+              <div class="match-vs">VS</div>
+              <div class="team-item">
+                <div class="team-logo-placeholder" style="color:#EF4444;">RRQ</div>
+                <span class="team-name">RRQ PB</span>
+              </div>
+            </div>
+            <div class="match-details">
+              <div class="match-detail-row"><span>Tournament:</span><span class="match-detail-val">PBNC 2024 Stage</span></div>
+              <div class="match-detail-row"><span>Map Pick:</span><span class="match-detail-val text-gold">Luxville (Bomb Mission)</span></div>
+              <div class="match-detail-row"><span>Waktu:</span><span class="match-detail-val">Sabtu, 20:00 WIB</span></div>
+            </div>
+            <a href="https://discord.gg/fxfMBWSzW" target="_blank" rel="noopener" class="btn btn--ghost btn--sm btn--full">WATCHPARTY ON DISCORD</a>
+          </div>
+
+          <!-- Match 2 -->
+          <div class="match-card reveal-fade" data-delay="150">
+            <div class="match-meta">
+              <span>MATCH 02 &bull; GROUP STAGE</span>
+              <span class="match-status status-upcoming">SCHEDULED</span>
+            </div>
+            <div class="match-teams">
+              <div class="team-item">
+                <div class="team-logo-placeholder">MTH</div>
+                <span class="team-name text-gold">MOTHRA</span>
+              </div>
+              <div class="match-vs">VS</div>
+              <div class="team-item">
+                <div class="team-logo-placeholder" style="color:#3B82F6;">EVOS</div>
+                <span class="team-name">EVOS ECLIPSE</span>
+              </div>
+            </div>
+            <div class="match-details">
+              <div class="match-detail-row"><span>Tournament:</span><span class="match-detail-val">PBNC 2024 Stage</span></div>
+              <div class="match-detail-row"><span>Map Pick:</span><span class="match-detail-val text-gold">Downtown (Bomb Mission)</span></div>
+              <div class="match-detail-row"><span>Waktu:</span><span class="match-detail-val">Selasa, 20:00 WIB</span></div>
+            </div>
+            <a href="https://discord.gg/fxfMBWSzW" target="_blank" rel="noopener" class="btn btn--ghost btn--sm btn--full">WATCHPARTY ON DISCORD</a>
+          </div>
+
+          <!-- Match 3 -->
+          <div class="match-card reveal-fade" data-delay="300">
+            <div class="match-meta">
+              <span>MATCH 03 &bull; PLAYOFFS</span>
+              <span class="match-status status-upcoming">ROUND 1</span>
+            </div>
+            <div class="match-teams">
+              <div class="team-item">
+                <div class="team-logo-placeholder">MTH</div>
+                <span class="team-name text-gold">MOTHRA</span>
+              </div>
+              <div class="match-vs">VS</div>
+              <div class="team-item">
+                <div class="team-logo-placeholder" style="color:#F59E0B;">ONIC</div>
+                <span class="team-name">ONIC G</span>
+              </div>
+            </div>
+            <div class="match-details">
+              <div class="match-detail-row"><span>Tournament:</span><span class="match-detail-val">Playoffs Stage</span></div>
+              <div class="match-detail-row"><span>Map Pick:</span><span class="match-detail-val text-gold">Blowcity (Bomb Mission)</span></div>
+              <div class="match-detail-row"><span>Waktu:</span><span class="match-detail-val">Jumat, 20:00 WIB</span></div>
+            </div>
+            <a href="https://discord.gg/fxfMBWSzW" target="_blank" rel="noopener" class="btn btn--ghost btn--sm btn--full">WATCHPARTY ON DISCORD</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== 04 / THE ALLIANCE (PARTNERSHIP) ===================== -->
+    <section class="section partnership" id="partnership" aria-labelledby="partnerHeading">
+      <div class="section-container">
+        <div class="section-tag reveal-fade">04 / THE ALLIANCE</div>
+        <div class="schedule-header">
+          <div>
+            <h2 id="partnerHeading" class="section-heading reveal-left">
+              PARTNERSHIP &amp; <span class="text-gold">COLLABORATION.</span>
+            </h2>
+            <p class="schedule-sub reveal-right">Buka peluang kolaborasi strategis, sparring clan, creative design, dan sponsorship.</p>
+          </div>
+        </div>
+
+        <div class="partnership-grid">
+          <!-- 1. Friendly Match / Scrim -->
+          <div class="partner-card reveal-fade" data-delay="0">
+            <div>
+              <div class="partner-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 17.5L3 6V3h3l11.5 11.5"/><path d="M13 19l6-6"/><path d="M16 16l4 4"/><path d="M19 21l2-2"/></svg>
+              </div>
+              <h3 class="partner-title">FRIENDLY MATCH / SCRIM</h3>
+              <p class="partner-desc">Tantang skuad MOTHRA dalam 5v5 Bomb Mission Scrim (Rule PBNC / Clan War). Jadwal malam fleksibel.</p>
+            </div>
+            <button type="button" class="partner-action open-collab-btn" data-type="Friendly Match / Scrim Request">AJUKAN SPARRING &rarr;</button>
+          </div>
+
+          <!-- 2. Sponsorship -->
+          <div class="partner-card reveal-fade" data-delay="100">
+            <div>
+              <div class="partner-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+              </div>
+              <h3 class="partner-title">SPONSORSHIP &amp; BRAND</h3>
+              <p class="partner-desc">Integrasi brand Anda di jersey resmi, banner turnamen, live stream overlay, dan media sosial Clan MOTHRA.</p>
+            </div>
+            <button type="button" class="partner-action open-collab-btn" data-type="Sponsorship & Brand Inquiry">AJUKAN PROPOSAL &rarr;</button>
+          </div>
+
+          <!-- 3. Design Partner -->
+          <div class="partner-card reveal-fade" data-delay="200">
+            <div>
+              <div class="partner-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+              </div>
+              <h3 class="partner-title">DESIGN PARTNER</h3>
+              <p class="partner-desc">Kolaborasi tim kreatif: Jersey design, Point Blank 3D animation, poster pertandingan, VFX/GFX &amp; video motion.</p>
+            </div>
+            <button type="button" class="partner-action open-collab-btn" data-type="Design & Creative Partnership">GABUNG CREATIVE &rarr;</button>
+          </div>
+
+          <!-- 4. Brand Ambassador -->
+          <div class="partner-card reveal-fade" data-delay="300">
+            <div>
+              <div class="partner-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+              </div>
+              <h3 class="partner-title">BRAND AMBASSADOR</h3>
+              <p class="partner-desc">Bagi streamer dan gaming influencer yang ingin menjadi Brand Ambassador / Talent resmi Clan MOTHRA.</p>
+            </div>
+            <button type="button" class="partner-action open-collab-btn" data-type="Brand Ambassador & Talent">DAFTAR TALENT / BA &rarr;</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== 05 / THE RECORD ===================== -->
+    <section class="section record" id="record" aria-labelledby="recordHeading">
+      <div class="section-container">
+        <div class="section-tag reveal-fade">05 / THE RECORD</div>
+        <div class="record-header">
+          <h2 id="recordHeading" class="section-heading reveal-left">
+            PROVEN <span class="text-gold">UNDER FIRE.</span>
+          </h2>
+          <div class="record-winrate reveal-right">
+            <div><span class="winrate-num" data-count="84">0</span><span class="winrate-pct">%</span></div>
+            <div class="winrate-label">WIN RATE<br/>SEASON 08</div>
+          </div>
+        </div>
+
+        <div class="record-divider reveal-fade"></div>
+
+        <div class="achievements-list">
+          <div class="achievement-item reveal-fade" data-delay="0">
+            <div class="achievement-year">2024</div>
+            <div class="achievement-info">
+              <div class="achievement-title">JUARA 1 &mdash; PBNC REGIONAL JAWA BARAT</div>
+              <div class="achievement-sub">Grand Final 2&mdash;0 Clean Sweep vs. VORTEX</div>
+            </div>
+            <div class="achievement-trophy" aria-hidden="true">
+              <svg width="32" height="32" viewBox="0 0 28 28" fill="none">
+                <path d="M9 3h10v8a5 5 0 0 1-10 0V3z" stroke="#D4AF37" stroke-width="2"/>
+                <path d="M9 7H5a3 3 0 0 0 3 3M19 7h4a3 3 0 0 1-3 3M14 16v4M10 24h8M11 20h6" stroke="#D4AF37" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
+          </div>
+
+          <div class="achievement-item reveal-fade" data-delay="100">
+            <div class="achievement-year">2023</div>
+            <div class="achievement-info">
+              <div class="achievement-title">TOP 4 &mdash; POINT BLANK NATIONAL CUP</div>
+              <div class="achievement-sub">Jakarta Convention Hall &bull; Main Stage</div>
+            </div>
+            <div class="achievement-trophy" aria-hidden="true">
+              <svg width="32" height="32" viewBox="0 0 28 28" fill="none">
+                <path d="M9 3h10v8a5 5 0 0 1-10 0V3z" stroke="#D4AF37" stroke-width="2"/>
+                <path d="M9 7H5a3 3 0 0 0 3 3M19 7h4a3 3 0 0 1-3 3M14 16v4M10 24h8M11 20h6" stroke="#D4AF37" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
+          </div>
+
+          <div class="achievement-item reveal-fade" data-delay="200">
+            <div class="achievement-year">2022</div>
+            <div class="achievement-info">
+              <div class="achievement-title">JUARA 1 &mdash; MOTHRA OPEN INVITATIONAL</div>
+              <div class="achievement-sub">16 Tim Kompetitif / Bracket Tournament</div>
+            </div>
+            <div class="achievement-trophy" aria-hidden="true">
+              <svg width="32" height="32" viewBox="0 0 28 28" fill="none">
+                <path d="M9 3h10v8a5 5 0 0 1-10 0V3z" stroke="#D4AF37" stroke-width="2"/>
+                <path d="M9 7H5a3 3 0 0 0 3 3M19 7h4a3 3 0 0 1-3 3M14 16v4M10 24h8M11 20h6" stroke="#D4AF37" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
+          </div>
+
+          <div class="achievement-item reveal-fade" data-delay="300">
+            <div class="achievement-year">2021</div>
+            <div class="achievement-info">
+              <div class="achievement-title">TOP 8 &mdash; PBNC REGIONAL QUALIFIER</div>
+              <div class="achievement-sub">Debut Season Resmi MOTHRA Point Blank</div>
+            </div>
+            <div class="achievement-trophy" aria-hidden="true">
+              <svg width="32" height="32" viewBox="0 0 28 28" fill="none">
+                <path d="M9 3h10v8a5 5 0 0 1-10 0V3z" stroke="#D4AF37" stroke-width="2"/>
+                <path d="M9 7H5a3 3 0 0 0 3 3M19 7h4a3 3 0 0 1-3 3M14 16v4M10 24h8M11 20h6" stroke="#D4AF37" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== 06 / FIELD NOTES ===================== -->
+    <section class="section gallery" id="gallery" aria-labelledby="galleryHeading">
+      <div class="section-container">
+        <div class="section-tag reveal-fade">06 / FIELD NOTES</div>
+        <div class="gallery-header">
+          <h2 id="galleryHeading" class="section-heading reveal-left">
+            INSIDE THE <span class="text-gold">NEST.</span>
+          </h2>
+          <p class="gallery-sub reveal-right">Dokumentasi operasional dari markas dan medan pertempuran PB.</p>
+        </div>
+
+        <div class="gallery-grid reveal-fade">
+          <div class="gallery-item gallery-item--large">
+            <img src="assets/pb-bg-squad.jpg" alt="MOTHRA Tactical Squad Point Blank" loading="lazy" width="600" height="450" />
+            <div class="gallery-label">TACTICAL FORCE / 01</div>
+            <div class="gallery-overlay"><span>LIHAT GAMBAR</span></div>
+          </div>
+          <div class="gallery-side">
+            <div class="gallery-item">
+              <img src="assets/pb-bg-duo.jpg" alt="Special Operations Unit" loading="lazy" width="300" height="200" />
+              <div class="gallery-label">SPEC-OPS / 02</div>
+              <div class="gallery-overlay"><span>LIHAT GAMBAR</span></div>
+            </div>
+            <div class="gallery-item">
+              <img src="assets/player-ba.jpg" alt="Brand Ambassador Session" loading="lazy" width="300" height="200" />
+              <div class="gallery-label">AMBASSADOR / 03</div>
+              <div class="gallery-overlay"><span>LIHAT GAMBAR</span></div>
+            </div>
+            <div class="gallery-item">
+              <img src="assets/bootcamp.jpg" alt="HQ Bootcamp Session" loading="lazy" width="300" height="200" />
+              <div class="gallery-label">BOOTCAMP / 04</div>
+              <div class="gallery-overlay"><span>LIHAT GAMBAR</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== 07 / JOIN / RECRUITMENT ===================== -->
+    <section class="section join" id="join" aria-labelledby="joinHeading">
+      <div class="join-bg">
+        <div class="join-bg-img"></div>
+        <div class="join-overlay"></div>
+      </div>
+      <div class="section-container">
+        <div class="section-tag reveal-fade">07 / OPEN RECRUITMENT</div>
+        <div class="join-content">
+          <div class="join-left reveal-left">
+            <h2 id="joinHeading" class="section-heading join-heading">
+              READY TO<br/>
+              <span class="text-gold">JOIN THE HUNT?</span>
+            </h2>
+            <p class="join-desc">
+              Slot roster terbuka bagi pemain berkomitmen tinggi. Isi form pendaftaran di samping dan persiapkan diri untuk seleksi scrim match.
+            </p>
+            <div class="join-reqs">
+              <div class="req-item"><span class="req-dot"></span><span>Aktif bermain Point Blank minimum 3 bulan</span></div>
+              <div class="req-item"><span class="req-dot"></span><span>Rank Diamond / Major ke atas (K/D &gt; 55%)</span></div>
+              <div class="req-item"><span class="req-dot"></span><span>Bersedia latihan rutin (jadwal scrim malam)</span></div>
+              <div class="req-item"><span class="req-dot"></span><span>Attitude positif, no cheat, siap turnamen</span></div>
+            </div>
+
+            <!-- Direct Channel Connect Buttons -->
+            <div class="join-direct-channels">
+              <span class="direct-label">ATAU HUBUNGI KAMI LANGSUNG:</span>
+              <div class="direct-buttons">
+                <a href="https://discord.gg/fxfMBWSzW" target="_blank" rel="noopener" class="direct-btn direct-btn--discord">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.033.055a19.745 19.745 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+                  <span>JOIN DISCORD CLAN MOTHRA</span>
+                </a>
+                <a href="https://www.instagram.com/mothra.officiall" target="_blank" rel="noopener" class="direct-btn direct-btn--ig">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>
+                  <span>DM INSTAGRAM @MOTHRA.OFFICIALL</span>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div class="join-right reveal-right">
+            <form class="join-form" id="joinForm" novalidate aria-label="Form Pendaftaran Clan MOTHRA">
+              <div class="honeypot-wrap" style="display:none!important;visibility:hidden!important;">
+                <label for="honeypotField">Leave blank</label>
+                <input type="text" id="honeypotField" name="_clan_hp_verify" tabindex="-1" autocomplete="off" />
+              </div>
+
+              <div class="form-badge">
+                <span class="badge-dot"></span>
+                <span>OFFICIAL RECRUITMENT PORTAL</span>
+              </div>
+
+              <div class="form-group">
+                <label for="playerName" class="form-label">NAMA PANGGILAN <span class="req-star">*</span></label>
+                <input type="text" id="playerName" name="playerName" class="form-input" placeholder="e.g. Raka" required autocomplete="nickname" maxlength="50" />
+              </div>
+              <div class="form-group">
+                <label for="gameId" class="form-label">IN-GAME NICKNAME &amp; RANK <span class="req-star">*</span></label>
+                <input type="text" id="gameId" name="gameId" class="form-input" placeholder="e.g. MOTHRA•KAI (Diamond 2)" required autocomplete="off" maxlength="60" />
+              </div>
+              <div class="form-group">
+                <label for="role" class="form-label">ROLE UTAMA <span class="req-star">*</span></label>
+                <select id="role" name="role" class="form-input form-select" required>
+                  <option value="" disabled selected>Pilih Role Utama</option>
+                  <option value="IGL / Tactical Leader">IGL / Tactical Leader</option>
+                  <option value="Rusher">Rusher (Point / Sub-Machine)</option>
+                  <option value="Sniper">Sniper (Sharpshooter)</option>
+                  <option value="Support">Support / Utility Specialist</option>
+                  <option value="Entry Frag">Entry Frag (First Contact)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="contact" class="form-label">KONTAK (DISCORD / INSTAGRAM / WA) <span class="req-star">*</span></label>
+                <input type="text" id="contact" name="contact" class="form-input" placeholder="e.g. Discord: raka#1234 atau IG: @raka" required autocomplete="off" maxlength="80" />
+              </div>
+              <div class="form-group">
+                <label for="message" class="form-label">MOTIVASI &amp; PENGALAMAN TOURNAMENT</label>
+                <textarea id="message" name="message" class="form-input form-textarea" placeholder="Ceritakan pengalaman bermain, riwayat turnamen, jam online harian..." rows="4" maxlength="500"></textarea>
+              </div>
+
+              <div class="form-warning" id="formWarning" role="alert"></div>
+
+              <button type="submit" class="btn btn--primary btn--full" id="submitBtn">
+                <span>KIRIM LAMARAN RESMI</span>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+
+              <div class="form-success" id="formSuccess" role="alert" aria-live="polite">
+                <div class="success-icon-wrap">
+                  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10" stroke="#22C55E" stroke-width="2"/>
+                    <path d="M8 12l3 3 5-5" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+                <div class="success-body">
+                  <h4 class="success-title">LAMARAN BERHASIL DIKIRIM!</h4>
+                  <p class="success-text">Data pendaftaran telah terkirim ke manajemen Clan MOTHRA (abdurrrahman09@gmail.com). Silakan langsung join Discord dan DM Instagram kami untuk verifikasi cepat:</p>
+                  <div class="success-actions">
+                    <a href="https://discord.gg/fxfMBWSzW" target="_blank" rel="noopener" class="btn btn--primary btn--sm">Masuk Discord Server</a>
+                    <a href="https://www.instagram.com/mothra.officiall" target="_blank" rel="noopener" class="btn btn--ghost btn--sm">DM Instagram @mothra.officiall</a>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===================== COLLABORATION / PARTNERSHIP MODAL ===================== -->
+  <div class="collab-modal" id="collabModal" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Form Partnership & Scrim">
+    <div class="collab-modal-backdrop" id="collabModalBackdrop"></div>
+    <div class="collab-modal-container">
+      <button class="collab-modal-close" id="collabModalClose" aria-label="Tutup form">&times;</button>
+      
+      <div class="form-badge" style="margin-bottom:1rem;">
+        <span class="badge-dot"></span>
+        <span id="collabCategoryBadge">ALLIANCE PROPOSAL</span>
+      </div>
+
+      <h3 style="font-family:var(--font-display);font-size:2rem;font-weight:900;color:var(--white);margin-bottom:0.5rem;" id="collabModalTitle">
+        AJUKAN PROPOSAL / SPARRING
+      </h3>
+      <p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:1.5rem;">
+        Kirimkan rincian ajakan Friendly Match, kerjasama sponsorship, desain jersey, atau talent BA ke manajemen MOTHRA.
+      </p>
+
+      <form id="collabForm" novalidate>
+        <input type="hidden" id="collabType" name="collabType" value="General Inquiry" />
+        
+        <div class="form-group" style="margin-bottom:1rem;">
+          <label for="collabOrg" class="form-label">NAMA CLAN / BRAND / INSTANSI <span class="req-star">*</span></label>
+          <input type="text" id="collabOrg" class="form-input" placeholder="e.g. Clan RRQ / Brand Logitech / Media Esports" required />
+        </div>
+
+        <div class="form-group" style="margin-bottom:1rem;">
+          <label for="collabPic" class="form-label">NAMA PIC / CONTACT PERSON <span class="req-star">*</span></label>
+          <input type="text" id="collabPic" class="form-input" placeholder="e.g. Leader Andi / Manager Budi" required />
+        </div>
+
+        <div class="form-group" style="margin-bottom:1rem;">
+          <label for="collabContact" class="form-label">KONTAK AKTIF (DISCORD / WA / EMAIL) <span class="req-star">*</span></label>
+          <input type="text" id="collabContact" class="form-input" placeholder="e.g. WhatsApp: 0812xxxx / Discord: andi#1234" required />
+        </div>
+
+        <div class="form-group" style="margin-bottom:1.5rem;">
+          <label for="collabNotes" class="form-label">RINCIAN KERJASAMA / TANGGAL MATCH <span class="req-star">*</span></label>
+          <textarea id="collabNotes" class="form-input form-textarea" placeholder="Tuliskan jadwal sparring yang diinginkan, penawaran sponsorship, portfolio design, atau proposal BA..." rows="4" required></textarea>
+        </div>
+
+        <div class="form-warning" id="collabWarning" style="margin-bottom:1rem;"></div>
+
+        <button type="submit" class="btn btn--primary btn--full" id="collabSubmitBtn">
+          <span>KIRIM PROPOSAL KE MOTHRA HQ</span>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+
+        <div class="form-success" id="collabSuccess">
+          <div class="success-icon-wrap">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#22C55E" stroke-width="2"/><path d="M8 12l3 3 5-5" stroke="#22C55E" stroke-width="2"/></svg>
+          </div>
+          <div class="success-body">
+            <h4 class="success-title">PROPOSAL BERHASIL DIKIRIM!</h4>
+            <p class="success-text">Pesan Anda telah diteruskan ke email manajemen MOTHRA (abdurrrahman09@gmail.com). Kami akan merespons melalui kontak yang Anda cantumkan.</p>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================== PLAYER PROFILE MODAL ===================== -->
+  <div class="player-modal" id="playerModal" role="dialog" aria-modal="true" aria-hidden="true" aria-label="Profil Pemain">
+    <div class="player-modal-backdrop" id="playerModalBackdrop"></div>
+    <div class="player-modal-container">
+      <button class="player-modal-close" id="playerModalClose" aria-label="Tutup profil">&#10005;</button>
+      
+      <div class="player-modal-grid">
+        <div class="player-modal-media">
+          <img id="modalPlayerImg" src="assets/player-captain.jpg" alt="Player Profile" class="player-modal-img" />
+          <div class="player-modal-num-overlay" id="modalPlayerNum">01</div>
+          <div class="player-modal-badge" id="modalPlayerBadge">
+            <span class="dot dot--green"></span> ACTIVE ROSTER
+          </div>
+        </div>
+
+        <div class="player-modal-content">
+          <div class="player-modal-tag" id="modalPlayerRole">IGL / CAPTAIN</div>
+          <h3 class="player-modal-name" id="modalPlayerName">MOTHRA•RAVEN</h3>
+          <div class="player-modal-realname" id="modalPlayerRealname">Raka Pratama</div>
+
+          <div class="player-modal-stats-grid">
+            <div class="pstat-item">
+              <span class="pstat-label">FAVORITE WEAPON</span>
+              <span class="pstat-val" id="modalPlayerWeapon">AUG A3 &amp; Kriss S.V</span>
+            </div>
+            <div class="pstat-item">
+              <span class="pstat-label">K/D RATIO</span>
+              <span class="pstat-val text-gold" id="modalPlayerKD">2.45</span>
+            </div>
+            <div class="pstat-item">
+              <span class="pstat-label">HEADSHOT %</span>
+              <span class="pstat-val text-gold" id="modalPlayerHS">68%</span>
+            </div>
+            <div class="pstat-item">
+              <span class="pstat-label">COMPETITIVE EXP</span>
+              <span class="pstat-val" id="modalPlayerExp">5+ Tahun</span>
+            </div>
+          </div>
+
+          <div class="player-modal-bio-wrap">
+            <span class="pstat-label">TACTICAL BIO</span>
+            <p class="player-modal-bio" id="modalPlayerBio">Bio pemain...</p>
+          </div>
+
+          <div class="player-modal-actions">
+            <a href="#join" class="btn btn--primary btn--sm" id="modalJoinBtn">
+              <span>GABUNG DENGAN SQUAD</span>
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </a>
+            <button type="button" class="btn btn--ghost btn--sm" id="modalCloseBtn">TUTUP</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer class="footer" id="footer" role="contentinfo">
+    <div class="footer-container">
+      <div class="footer-brand">
+        <div class="footer-logo-row">
+          <img src="assets/mothra-logo.png" alt="MOTHRA Logo" class="footer-logo-img" width="42" height="46" />
+          <div class="footer-logo">MOTHRA</div>
+        </div>
+        <div class="footer-tagline">THE HUNT NEVER STOPS.</div>
+        <p class="footer-desc">Clan Point Blank Indonesia berbasis Jakarta.<br/>Est. 2020 &mdash; Unit MTH-08 &bull; Official Esports Division</p>
+      </div>
+      
+      <div class="footer-nav">
+        <div class="footer-nav-col">
+          <div class="footer-nav-title">NAVIGATE</div>
+          <a href="#about" class="footer-link">The Dossier</a>
+          <a href="#lineup" class="footer-link">The Lineup</a>
+          <a href="#schedule" class="footer-link">Match Schedule</a>
+          <a href="#partnership" class="footer-link">Partnership &amp; Scrim</a>
+          <a href="#record" class="footer-link">The Record</a>
+          <a href="#gallery" class="footer-link">Field Notes</a>
+          <a href="#join" class="footer-link">Join Recruitment</a>
+        </div>
+        
+        <div class="footer-nav-col">
+          <div class="footer-nav-title">CONNECT</div>
+          <a href="https://www.instagram.com/mothra.officiall" target="_blank" rel="noopener" class="footer-link footer-social-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>
+            @mothra.officiall
+          </a>
+          <a href="https://discord.gg/fxfMBWSzW" target="_blank" rel="noopener" class="footer-link footer-social-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.033.055a19.745 19.745 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+            Discord: MOTHRA HQ
+          </a>
+          <a href="mailto:abdurrrahman09@gmail.com" class="footer-link footer-social-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg>
+            abdurrrahman09@gmail.com
+          </a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="footer-bottom">
+      <span>&copy; 2024 MOTHRA COMPANY &bull; ALL RIGHTS RESERVED &bull; <a href="admin.html" style="color:var(--gold);text-decoration:underline;">ADMIN HQ LOGIN</a></span>
+      <span>NO FEAR. NO EXCUSES.</span>
+    </div>
+  </footer>
+
+  <button class="scroll-top" id="scrollTop" aria-label="Scroll ke atas">
+    <svg width="22" height="22" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path d="M10 15V5M5 10l5-5 5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Image viewer">
+    <button class="lightbox-close" id="lightboxClose" aria-label="Tutup lightbox">&#10005;</button>
+    <img class="lightbox-img" id="lightboxImg" src="" alt="" />
+  </div>
+
+  <!-- Supabase Cloud Database & Realtime SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="data.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
+

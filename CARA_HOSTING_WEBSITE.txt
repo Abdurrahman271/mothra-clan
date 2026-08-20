@@ -1,0 +1,84 @@
+================================================================================
+          PANDUAN LENGKAP CARA MENG-ONLINEKAN & PANEL ADMIN CLAN MOTHRA
+================================================================================
+
+Website Clan MOTHRA ini dibuat dengan teknologi HTML, CSS, & Vanilla JavaScript modern.
+Website ini 100% STATIS dan AMAN, sehingga BISA DI-HOSTING DI MANA SAJA SECARA GRATIS!
+
+--------------------------------------------------------------------------------
+🔐 INFORMASI LOGIN ADMIN PANEL (/admin)
+--------------------------------------------------------------------------------
+Akses Panel Admin:
+- Di browser lokal: http://localhost:3000/admin (atau buka admin.html)
+- Di live hosting: https://domain-kamu.com/admin
+
+Akun Login Resmi:
+- Username (Email): abdurrrahman09@gmail.com
+- Password         : Senayan@18
+
+Fitur Admin Panel:
+1. The Dossier : Ubah slogan, deskripsi, kota markas, winrate %, dan statistik clan.
+2. The Lineup  : CRUD (Tambah/Edit/Hapus) pemain, role, senjata, K/D, Headshot %, dan foto.
+3. Schedule    : CRUD jadwal pertandingan turnamen PBNC & update poster jadwal.
+4. Partnership : Pantau alur sparring, sponsor brand, design partner & talent BA.
+5. The Record  : CRUD riwayat piala dan juara turnamen.
+6. Field Notes : CRUD galeri foto dokumentasi.
+7. Backup JSON : Export & Import seluruh data konfigurasi website.
+
+
+--------------------------------------------------------------------------------
+🔥 METODE 1: NETLIFY DROP (PALING MUDAH & CEPAT — HANYA 10 DETIK / GRATIS)
+--------------------------------------------------------------------------------
+1. Buka browser dan kunjungi: https://app.netlify.com/drop
+2. Jika diminta login, login gratis menggunakan akun Google / GitHub / Email.
+3. Buka File Explorer di komputer kamu, lalu TARIK (DRAG & DROP) seluruh folder
+   "WebsiteMothra" ke dalam kotak di halaman Netlify Drop tersebut.
+4. Tunggu upload selesai (kurang dari 10 detik).
+5. Selesai! Netlify akan langsung memberikan URL Online resmi, contohnya:
+   https://clan-mothra-official.netlify.app
+6. Halaman admin langsung aktif di: https://clan-mothra-official.netlify.app/admin
+
+
+--------------------------------------------------------------------------------
+⚡ METODE 2: VERCEL (SANGAT CEPAT & POPULER / GRATIS)
+--------------------------------------------------------------------------------
+1. Buka https://vercel.com/signup dan login dengan akun Google / GitHub.
+2. Klik tombol "Add New..." -> "Project".
+3. Upload / import folder WebsiteMothra.
+4. Klik "Deploy".
+5. Website kamu langsung aktif online dengan domain:
+   https://website-mothra.vercel.app
+
+
+--------------------------------------------------------------------------------
+🌐 METODE 3: GITHUB PAGES (GRATIS SELAMANYA)
+--------------------------------------------------------------------------------
+1. Buka https://github.com dan buat repository baru bernama: "mothra-clan"
+2. Upload semua file dari folder WebsiteMothra ke repository tersebut.
+3. Buka menu "Settings" -> "Pages".
+4. Pada bagian "Branch", pilih "main" atau "master" lalu klik "Save".
+5. Website akan online di: https://username-kamu.github.io/mothra-clan/
+
+
+--------------------------------------------------------------------------------
+🖥️ METODE 4: HOSTING BERBAYAR / CPANEL (Niagahoster, DomaiNesia, Hostinger, dll)
+--------------------------------------------------------------------------------
+1. Login ke cPanel hosting kamu.
+2. Buka "File Manager" -> folder "public_html".
+3. Upload seluruh isi folder WebsiteMothra ke dalam folder public_html.
+4. Pastikan file "index.html" dan "admin.html" berada langsung di dalam public_html.
+5. Website kamu langsung online di domain utama kamu!
+
+
+--------------------------------------------------------------------------------
+💻 CARA BUKA DI KOMPUTER SENDIRI (TANPA KELIHATAN ALAMAT FOLDER)
+--------------------------------------------------------------------------------
+Cukup klik 2x file:
+start-server.bat
+
+Website akan otomatis jalan di: http://localhost:3000
+Admin Panel di: http://localhost:3000/admin
+
+================================================================================
+© 2024 CLAN MOTHRA POINT BLANK INDONESIA — NO FEAR. NO EXCUSES.
+================================================================================

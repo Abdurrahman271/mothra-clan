@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MOTHRA HQ — Admin Panel &amp; CMS</title>
+  <link rel="icon" type="image/png" href="assets/mothra-logo.png" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,800;0,900;1,700&family=Barlow:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+
+  <!-- ===================== LOGIN SCREEN ===================== -->
+  <div class="login-screen" id="loginScreen">
+    <div class="login-card">
+      <div class="login-header">
+        <img src="assets/mothra-logo.png" alt="MOTHRA Logo" class="login-logo" />
+        <h1 class="login-title">MOTHRA HQ</h1>
+        <p class="login-sub">ADMINISTRATIVE ACCESS GATEWAY</p>
+      </div>
+
+      <div class="login-alert" id="loginAlert"></div>
+
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="loginEmail" class="form-label">EMAIL OPERATOR</label>
+          <input type="email" id="loginEmail" class="form-input" placeholder="abdurrrahman09@gmail.com" required autocomplete="username" value="abdurrrahman09@gmail.com" />
+        </div>
+
+        <div class="form-group">
+          <label for="loginPassword" class="form-label">TACTICAL ACCESS KEY (PASSWORD)</label>
+          <input type="password" id="loginPassword" class="form-input" placeholder="Masukkan password" required autocomplete="current-password" />
+        </div>
+
+        <button type="submit" class="btn-primary" style="margin-top:1rem;">MASUK KE ADMIN PANEL &rarr;</button>
+      </form>
+
+      <div style="margin-top:1.5rem;text-align:center;">
+        <a href="index.html" style="font-family:var(--font-mono);font-size:0.75rem;color:var(--gray-light);text-decoration:none;">&larr; Kembali ke Website Utama</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== ADMIN DASHBOARD ===================== -->
+  <div class="dashboard-wrap hidden" id="dashboardWrap">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+      <div class="sidebar-header">
+        <img src="assets/mothra-logo.png" alt="MOTHRA" class="sidebar-logo" />
+        <div>
+          <div class="sidebar-brand-text">MOTHRA</div>
+          <span class="sidebar-brand-sub">TACTICAL CMS v2.5</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-panel="panelOverview">📊 Overview</button>
+        <button class="nav-item" data-panel="panelDossier">📜 The Dossier</button>
+        <button class="nav-item" data-panel="panelCategories">🏆 Kategori Turnamen</button>
+        <button class="nav-item" data-panel="panelLineup">🎮 The Lineup (Roster)</button>
+        <button class="nav-item" data-panel="panelSchedule">📅 Match Schedule</button>
+        <button class="nav-item" data-panel="panelPartnership">🤝 The Alliance (Partnership)</button>
+        <button class="nav-item" data-panel="panelRecord">🏅 The Record (Prestasi)</button>
+        <button class="nav-item" data-panel="panelGallery">📸 Field Notes (Galeri)</button>
+        <button class="nav-item" data-panel="panelDatabase">☁️ Database Online (Supabase)</button>
+        <button class="nav-item" data-panel="panelBackup">💾 Backup &amp; Restore</button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <a href="index.html" target="_blank" class="btn-view-site">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          Lihat Live Website
+        </a>
+        <button class="btn-logout" id="logoutBtn">LOGOUT / KELUAR</button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+      <div class="top-bar">
+        <div>
+          <h2 class="top-title">COMMAND CENTER</h2>
+          <span class="top-sub">PANEL KONTROL KONTEN WEBSITE CLAN MOTHRA POINT BLANK</span>
+        </div>
+        <div style="font-family:var(--font-mono);font-size:0.8rem;color:var(--gold);background:var(--dark-2);padding:0.5rem 1rem;border:1px solid var(--border);border-radius:var(--radius);">
+          OPERATOR: abdurrrahman09@gmail.com
+        </div>
+      </div>
+
+      <!-- 1. OVERVIEW PANEL -->
+      <section class="admin-panel active" id="panelOverview">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:1.25rem;margin-bottom:2.5rem;">
+          <div class="card-box" style="margin-bottom:0;text-align:center;">
+            <span style="font-family:var(--font-mono);font-size:0.75rem;color:var(--gray-light);">KATEGORI TURNAMEN</span>
+            <div style="font-family:var(--font-display);font-size:3rem;font-weight:900;color:#60A5FA;" id="statCategoryCount">0</div>
+          </div>
+          <div class="card-box" style="margin-bottom:0;text-align:center;">
+            <span style="font-family:var(--font-mono);font-size:0.75rem;color:var(--gray-light);">TOTAL ROSTER &amp; BA</span>
+            <div style="font-family:var(--font-display);font-size:3rem;font-weight:900;color:var(--gold);" id="statRosterCount">0</div>
+          </div>
+          <div class="card-box" style="margin-bottom:0;text-align:center;">
+            <span style="font-family:var(--font-mono);font-size:0.75rem;color:var(--gray-light);">MATCH JADWAL</span>
+            <div style="font-family:var(--font-display);font-size:3rem;font-weight:900;color:var(--red-bright);" id="statMatchCount">0</div>
+          </div>
+          <div class="card-box" style="margin-bottom:0;text-align:center;">
+            <span style="font-family:var(--font-mono);font-size:0.75rem;color:var(--gray-light);">KERJASAMA &amp; ALIANSI</span>
+            <div style="font-family:var(--font-display);font-size:3rem;font-weight:900;color:#86EFAC;" id="statOverviewPartnerCount">0</div>
+          </div>
+          <div class="card-box" style="margin-bottom:0;text-align:center;">
+            <span style="font-family:var(--font-mono);font-size:0.75rem;color:var(--gray-light);">PRESTASI TURNAMEN</span>
+            <div style="font-family:var(--font-display);font-size:3rem;font-weight:900;color:var(--white);" id="statRecordCount">0</div>
+          </div>
+          <div class="card-box" style="margin-bottom:0;text-align:center;">
+            <span style="font-family:var(--font-mono);font-size:0.75rem;color:var(--gray-light);">FOTO DOKUMENTASI</span>
+            <div style="font-family:var(--font-display);font-size:3rem;font-weight:900;color:var(--gold-bright);" id="statGalleryCount">0</div>
+          </div>
+        </div>
+
+        <div class="card-box">
+          <h3 class="card-box-title">PANDUAN PENGELOLAAN CMS REALTIME</h3>
+          <p style="color:var(--text-muted);font-size:0.95rem;line-height:1.7;margin-top:0.5rem;">
+            Selamat datang di Command Center Clan MOTHRA. Seluruh foto yang di-upload dari PC lokal dan perubahan data di panel ini <strong style="color:var(--gold);">langsung otomatis terupdate secara realtime di website utama</strong>:
+          </p>
+          <ul style="color:var(--text-muted);font-size:0.9rem;margin:1rem 0 0 1.5rem;line-height:1.8;">
+            <li><strong>Kategori Turnamen</strong>: Tambah / Edit / Hapus Kategori Turnamen (PBNC, PBSC, PBIC, PBLC Ladies, dll) yang langsung tersinkronisasi di filter website dan form Lineup.</li>
+            <li><strong>The Lineup</strong>: Kelola pemain berdasarkan Kategori Turnamen dan upload foto pemain langsung dari PC lokal.</li>
+            <li><strong>The Dossier</strong>: Mengubah slogan, visi misi, kota markas, dan statistik winrate clan.</li>
+            <li><strong>Match Schedule</strong>: Upload poster jadwal turnamen dari PC lokal dan kelola jadwal match.</li>
+            <li><strong>The Alliance</strong>: Manajemen data sparring, sponsorship brand, design partner, dan Brand Ambassador lengkap dengan foto/logo.</li>
+            <li><strong>The Record</strong>: Tambah atau perbarui riwayat juara turnamen Point Blank.</li>
+            <li><strong>Field Notes</strong>: Update galeri foto dokumentasi arena pertandingan dan bootcamp langsung dari PC lokal.</li>
+            <li><strong>Backup</strong>: Download file cadangan JSON untuk disimpan atau dipindahkan ke perangkat lain.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- 2. THE DOSSIER PANEL -->
+      <section class="admin-panel" id="panelDossier">
+        <div class="card-box">
+          <h3 class="card-box-title">EDIT THE DOSSIER (ABOUT &amp; STATS)</h3>
+          <form id="dossierForm" style="margin-top:1.5rem;">
+            <div class="form-group">
+              <label class="form-label">TAGLINE / SLOGAN UTAMA</label>
+              <input type="text" id="dosTagline" class="form-input" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">DESKRIPSI &amp; FILOSOFI CLAN</label>
+              <textarea id="dosDesc" class="form-input" rows="4" required></textarea>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;">
+              <div class="form-group">
+                <label class="form-label">KOTA ASAL</label>
+                <input type="text" id="dosCity" class="form-input" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label">KODE UNIT TACTICAL</label>
+                <input type="text" id="dosUnit" class="form-input" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label">STATUS ROSTER</label>
+                <input type="text" id="dosStatus" class="form-input" required />
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-top:0.5rem;">
+              <div class="form-group">
+                <label class="form-label">WIN RATE (%)</label>
+                <input type="number" id="dosWinrate" class="form-input" min="1" max="100" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label">MEMBER AKTIF</label>
+                <input type="number" id="dosMembers" class="form-input" min="1" max="50" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label">JUARA TURNAMEN (KALI)</label>
+                <input type="number" id="dosTournaments" class="form-input" min="0" max="50" required />
+              </div>
+            </div>
+            <button type="submit" class="btn-add" style="margin-top:1.5rem;font-size:1.05rem;padding:0.75rem 2rem;">SIMPAN PERUBAHAN DOSSIER &rarr;</button>
+          </form>
+        </div>
+      </section>
+
+      <!-- 3. KATEGORI TURNAMEN PANEL (CRUD TURNAMEN) -->
+      <section class="admin-panel" id="panelCategories">
+        <div class="card-box">
+          <div class="card-header-flex">
+            <div>
+              <h3 class="card-box-title">🏆 MANAJEMEN KATEGORI TURNAMEN (PBNC, PBSC, PBIC, DLL)</h3>
+              <p style="color:var(--text-muted);font-size:0.85rem;margin-top:0.25rem;">
+                Kelola kategori turnamen resmi (PBNC, PBSC, PBIC, PBLC Ladies, dll). Kategori ini otomatis terintegrasi ke form Lineup dan tombol filter website!
+              </p>
+            </div>
+            <button class="btn-add" onclick="openAddCategoryModal()">+ TAMBAH KATEGORI TURNAMEN</button>
+          </div>
+          <div class="table-responsive">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>KODE (ID)</th>
+                  <th>NAMA TURNAMEN</th>
+                  <th>NAMA LENGKAP TURNAMEN</th>
+                  <th>BADGE TEKS KARTU</th>
+                  <th>JUMLAH ROSTER</th>
+                  <th>AKSI</th>
+                </tr>
+              </thead>
+              <tbody id="categoriesTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. THE LINEUP PANEL -->
+      <section class="admin-panel" id="panelLineup">
+        <div class="card-box">
+          <div class="card-header-flex">
+            <div>
+              <h3 class="card-box-title">MANAJEMEN LINEUP &amp; ROSTER CLAN</h3>
+              <p style="color:var(--text-muted);font-size:0.85rem;margin-top:0.25rem;">
+                Kelola roster berdasarkan Kategori Turnamen (PBNC, PBSC, PBIC, dll). Mendukung upload foto langsung dari PC lokal.
+              </p>
+            </div>
+            <div style="display:flex;gap:0.75rem;">
+              <button class="btn-action-edit" onclick="document.querySelector('[data-panel=panelCategories]').click()">🏆 KELOLA KATEGORI TURNAMEN</button>
+              <button class="btn-add" onclick="openAddPlayerModal()">+ TAMBAH PEMAIN / BA</button>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>FOTO</th>
+                  <th>NICKNAME &amp; NAMA ASLI</th>
+                  <th>KATEGORI TURNAMEN</th>
+                  <th>ROLE</th>
+                  <th>FAVORITE WEAPON</th>
+                  <th>K/D</th>
+                  <th>HS %</th>
+                  <th>AKSI</th>
+                </tr>
+              </thead>
+              <tbody id="lineupTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. MATCH SCHEDULE PANEL -->
+      <section class="admin-panel" id="panelSchedule">
+        <div class="card-box">
+          <h3 class="card-box-title">BANNER POSTER JADWAL TURNAMEN</h3>
+          <p style="color:var(--text-muted);font-size:0.85rem;margin-top:0.25rem;">Upload poster jadwal turnamen dari komputer Anda (otomatis terupdate di website).</p>
+          <form id="bannerForm" style="margin-top:1.25rem;">
+            <div style="display:grid;grid-template-columns:1fr auto;gap:1.5rem;align-items:center;">
+              <div>
+                <div class="form-group">
+                  <label class="form-label">📁 UPLOAD POSTER DARI KOMPUTER (LOCAL PC)</label>
+                  <input type="file" id="bannerImgFile" accept="image/*" class="file-upload-input" />
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label">ATAU URL / PATH GAMBAR</label>
+                  <input type="text" id="bannerImgUrl" class="form-input" required />
+                </div>
+              </div>
+              <div class="upload-preview-box" id="bannerPreviewBox" style="width:200px;height:110px;">
+                <img id="bannerPreviewImg" src="assets/match-schedule.jpg" alt="Poster Preview" style="width:100%;height:100%;object-fit:cover;border-radius:4px;" />
+              </div>
+            </div>
+            <button type="submit" class="btn-add" style="margin-top:1rem;padding:0.65rem 1.5rem;">UPDATE BANNER POSTER</button>
+          </form>
+        </div>
+
+        <div class="card-box">
+          <div class="card-header-flex">
+            <h3 class="card-box-title">DAFTAR MATCH PERTANDINGAN</h3>
+            <button class="btn-add" onclick="openAddMatchModal()">+ TAMBAH JADWAL MATCH</button>
+          </div>
+          <div class="table-responsive">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>STAGE / MATCH</th>
+                  <th>LAWAN</th>
+                  <th>TURNAMEN</th>
+                  <th>MAP PICK</th>
+                  <th>WAKTU</th>
+                  <th>STATUS</th>
+                  <th>AKSI</th>
+                </tr>
+              </thead>
+              <tbody id="scheduleTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. THE ALLIANCE (PARTNERSHIP) PANEL -->
+      <section class="admin-panel" id="panelPartnership">
+        <!-- Stat Cards -->
+        <div class="pa-stats-grid">
+          <div class="pa-stat-card pa-stat-scrim">
+            <div class="pa-stat-icon">⚔️</div>
+            <div class="pa-stat-num" id="statScrimCount">0</div>
+            <div class="pa-stat-label">FRIENDLY MATCH / SCRIM</div>
+          </div>
+          <div class="pa-stat-card pa-stat-sponsor">
+            <div class="pa-stat-icon">🤝</div>
+            <div class="pa-stat-num" id="statSponsorCount">0</div>
+            <div class="pa-stat-label">SPONSORSHIP &amp; BRAND</div>
+          </div>
+          <div class="pa-stat-card pa-stat-design">
+            <div class="pa-stat-icon">🎨</div>
+            <div class="pa-stat-num" id="statDesignCount">0</div>
+            <div class="pa-stat-label">DESIGN PARTNER</div>
+          </div>
+          <div class="pa-stat-card pa-stat-ba">
+            <div class="pa-stat-icon">👑</div>
+            <div class="pa-stat-num" id="statBaCount">0</div>
+            <div class="pa-stat-label">BRAND AMBASSADOR</div>
+          </div>
+          <div class="pa-stat-card pa-stat-total">
+            <div class="pa-stat-icon">📋</div>
+            <div class="pa-stat-num" id="statPartnerTotal">0</div>
+            <div class="pa-stat-label">TOTAL KERJASAMA</div>
+          </div>
+        </div>
+
+        <!-- Partnership Table Box -->
+        <div class="card-box">
+          <div class="card-header-flex">
+            <div>
+              <h3 class="card-box-title">MANAJEMEN KERJASAMA &amp; ALIANSI</h3>
+              <p style="color:var(--text-muted);font-size:0.85rem;margin-top:0.25rem;">
+                Kelola daftar sparring scrim, sponsor brand, partner kreatif, dan Brand Ambassador (Dukung upload logo/foto dari PC).
+              </p>
+            </div>
+            <button class="btn-add" onclick="openAddPartnershipModal()">+ TAMBAH KERJASAMA</button>
+          </div>
+
+          <!-- Filter Tabs -->
+          <div class="pa-filter-tabs">
+            <button class="pa-tab active" data-type="all">Semua Kerjasama</button>
+            <button class="pa-tab" data-type="scrim">⚔️ Friendly Match (Scrim)</button>
+            <button class="pa-tab" data-type="sponsor">🤝 Sponsorship &amp; Brand</button>
+            <button class="pa-tab" data-type="design">🎨 Design Partner</button>
+            <button class="pa-tab" data-type="ba">👑 Brand Ambassador</button>
+          </div>
+
+          <div class="table-responsive">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>LOGO / FOTO</th>
+                  <th>TIPE KERJASAMA</th>
+                  <th>NAMA MITRA / CLAN / BRAND</th>
+                  <th>KONTAK &amp; PLATFORM</th>
+                  <th>STATUS</th>
+                  <th>TGL MULAI</th>
+                  <th>CATATAN KESEPAKATAN</th>
+                  <th>AKSI</th>
+                </tr>
+              </thead>
+              <tbody id="partnershipTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Info Card -->
+        <div class="card-box" style="border-color:rgba(212,175,55,0.4);background:rgba(212,175,55,0.04);">
+          <div style="display:flex;align-items:flex-start;gap:1rem;">
+            <span style="font-size:1.6rem;flex-shrink:0;">📨</span>
+            <div>
+              <strong style="color:var(--gold);font-family:var(--font-display);font-size:1.1rem;letter-spacing:0.05em;">ALUR PROPOSAL MASUK DARI WEBSITE PUBLIK</strong>
+              <p style="color:var(--text-muted);font-size:0.9rem;line-height:1.6;margin-top:0.35rem;">
+                Seluruh pengajuan dari formulir publik (Scrim, Sponsor, Design, Brand Ambassador) terkirim otomatis ke email: 
+                <strong style="color:var(--white);">abdurrrahman09@gmail.com</strong>.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 7. THE RECORD PANEL -->
+      <section class="admin-panel" id="panelRecord">
+        <div class="card-box">
+          <div class="card-header-flex">
+            <h3 class="card-box-title">DAFTAR PRESTASI TURNAMEN</h3>
+            <button class="btn-add" onclick="openAddRecordModal()">+ TAMBAH PRESTASI</button>
+          </div>
+          <div class="table-responsive">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>TAHUN</th>
+                  <th>NAMA JUARA / PRESTASI</th>
+                  <th>SUBTITLE / ARENA</th>
+                  <th>AKSI</th>
+                </tr>
+              </thead>
+              <tbody id="recordsTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 8. FIELD NOTES PANEL -->
+      <section class="admin-panel" id="panelGallery">
+        <div class="card-box">
+          <div class="card-header-flex">
+            <div>
+              <h3 class="card-box-title">GALERI FOTO &amp; DOKUMENTASI (FIELD NOTES)</h3>
+              <p style="color:var(--text-muted);font-size:0.85rem;margin-top:0.25rem;">Dokumentasi arena turnamen dan bootcamp (Dukung upload foto dari PC).</p>
+            </div>
+            <button class="btn-add" onclick="openAddGalleryModal()">+ TAMBAH FOTO</button>
+          </div>
+          <div class="table-responsive">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>THUMBNAIL</th>
+                  <th>JUDUL / LABEL</th>
+                  <th>FILE PATH / DATA</th>
+                  <th>AKSI</th>
+                </tr>
+              </thead>
+              <tbody id="galleryTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 9. BACKUP & RESTORE PANEL -->
+      <section class="admin-panel" id="panelBackup">
+        <div class="card-box">
+          <h3 class="card-box-title">🌐 SINKRONISASI LINTAS BROWSER &amp; HOSTING (GITHUB PAGES)</h3>
+          <p style="color:var(--text-muted);font-size:0.95rem;line-height:1.7;margin:0.75rem 0 1.25rem;">
+            Saat Anda mengubah data / mengunggah foto melalui server lokal (<code style="color:var(--gold)">http://localhost:3000</code>), sistem otomatis menyimpan perubahan ke file <code style="color:var(--gold)">data.js</code> di komputer Anda.
+            Agar perubahan foto &amp; data juga muncul di <strong>Google Chrome, Edge, HP / Pengunjung Website GitHub Pages</strong>:
+          </p>
+          
+          <div style="background:rgba(212,175,55,0.06);border:1px solid rgba(212,175,55,0.3);border-radius:6px;padding:1rem;margin-bottom:1.5rem;">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
+              <div>
+                <strong style="color:var(--gold);font-family:var(--font-display);font-size:1.1rem;">DOWNLOAD / EXPORT data.js TERBARU</strong>
+                <p style="color:var(--gray-light);font-size:0.85rem;margin-top:0.25rem;">Klik tombol ini untuk mengunduh file <code>data.js</code> yang sudah berisi foto baru Anda, lalu timpa file <code>data.js</code> dan lakukan <code>git push</code>.</p>
+              </div>
+              <button class="btn-add" onclick="exportDataJsFile()" style="font-size:1rem;padding:0.75rem 1.5rem;background:#10B981;border-color:#10B981;">💾 DOWNLOAD data.js TERBARU</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-box">
+          <h3 class="card-box-title">CADANGAN &amp; PEMULIHAN JSON</h3>
+          <p style="color:var(--text-muted);font-size:0.95rem;line-height:1.7;margin:0.75rem 0 1.25rem;">
+            Anda dapat mendownload file cadangan JSON atau memulihkannya kapan saja di browser manapun.
+          </p>
+
+          <div style="display:flex;gap:1.5rem;flex-wrap:wrap;align-items:center;">
+            <button class="btn-add" onclick="exportBackupJson()">📥 DOWNLOAD BACKUP JSON</button>
+            
+            <div style="display:flex;align-items:center;gap:0.75rem;">
+              <input type="file" id="importFile" accept=".json" style="font-family:var(--font-mono);font-size:0.8rem;" />
+              <button class="btn-action-edit" onclick="importBackupJson()" style="padding:0.6rem 1.2rem;font-weight:bold;">📤 RESTORE DATA</button>
+            </div>
+
+            <button class="btn-action-del" onclick="resetToDefault()" style="padding:0.6rem 1.2rem;font-weight:bold;margin-left:auto;">⚠️ RESET KE PABRIK (DEFAULT)</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 10. SUPABASE CLOUD DATABASE & REALTIME PANEL -->
+      <section class="admin-panel" id="panelDatabase">
+        <!-- Live Status Card -->
+        <div class="card-box" style="border-left:4px solid var(--gold);">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1rem;">
+            <div>
+              <h3 class="card-box-title" style="margin-bottom:0.25rem;">🌐 STATUS DATABASE ONLINE (SUPABASE POSTGRESQL)</h3>
+              <p style="color:var(--text-muted);font-size:0.88rem;">Sistem database cloud realtime untuk Clan MOTHRA — Aktif di GitHub Pages, Netlify &amp; Lokal</p>
+            </div>
+            <div id="supabaseStatusBadge" style="display:inline-flex;align-items:center;gap:0.5rem;padding:0.5rem 1rem;background:rgba(212,175,55,0.1);border:1px solid var(--gold);border-radius:20px;font-family:var(--font-mono);font-size:0.8rem;color:var(--gold);">
+              <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--gold);" id="supabaseStatusDot"></span>
+              <span id="supabaseStatusText">MEMERIKSA KONEKSI...</span>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:1rem;margin-top:1.25rem;background:var(--dark-1);padding:1rem;border-radius:var(--radius);border:1px solid var(--border-dim);">
+            <div>
+              <span style="font-family:var(--font-mono);font-size:0.75rem;color:var(--gray-light);">TARGET TABEL</span>
+              <div style="font-family:var(--font-mono);font-size:0.95rem;color:var(--white);font-weight:bold;margin-top:0.25rem;">public.mothra_cms</div>
+            </div>
+            <div>
+              <span style="font-family:var(--font-mono);font-size:0.75rem;color:var(--gray-light);">REALTIME WEBSOCKET</span>
+              <div style="font-family:var(--font-mono);font-size:0.95rem;color:#10B981;font-weight:bold;margin-top:0.25rem;" id="sbRealtimeState">postgres_changes (ON)</div>
+            </div>
+            <div>
+              <span style="font-family:var(--font-mono);font-size:0.75rem;color:var(--gray-light);">VERSI DATA AKTIF</span>
+              <div style="font-family:var(--font-mono);font-size:0.95rem;color:var(--gold);font-weight:bold;margin-top:0.25rem;" id="sbDataVersion">-</div>
+            </div>
+            <div>
+              <span style="font-family:var(--font-mono);font-size:0.75rem;color:var(--gray-light);">TERAKHIR DISINKRONKAN</span>
+              <div style="font-family:var(--font-mono);font-size:0.85rem;color:var(--text);margin-top:0.25rem;" id="sbLastSynced">-</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Configuration Settings Card -->
+        <div class="card-box">
+          <h3 class="card-box-title">⚙️ PENGATURAN KREDENSIAL SUPABASE</h3>
+          <p style="color:var(--text-muted);font-size:0.9rem;margin:0.5rem 0 1.5rem;">
+            Dapatkan <strong>Project URL</strong> dan <strong>Anon Public Key</strong> gratis dari Dashboard Supabase Anda (<a href="https://supabase.com/dashboard" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:underline;">supabase.com/dashboard</a> &rarr; Project Settings &rarr; API).
+          </p>
+
+          <form id="supabaseConfigForm">
+            <div class="form-group">
+              <label class="form-label">SUPABASE PROJECT URL *</label>
+              <input type="url" id="sbInputUrl" class="form-input" placeholder="https://xyzcompany.supabase.co" required style="font-family:var(--font-mono);" />
+              <small style="color:var(--gray-light);font-size:0.75rem;margin-top:0.25rem;">Format: https://&lt;project-id&gt;.supabase.co</small>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">SUPABASE ANON / PUBLIC API KEY *</label>
+              <textarea id="sbInputKey" class="form-input" rows="3" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." required style="font-family:var(--font-mono);font-size:0.8rem;resize:vertical;"></textarea>
+              <small style="color:var(--gray-light);font-size:0.75rem;margin-top:0.25rem;">Kunci publik (anon key) aman digunakan di frontend GitHub Pages bersama Row Level Security (RLS).</small>
+            </div>
+
+            <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-top:1.5rem;">
+              <button type="submit" class="btn-add" id="btnSaveSupabaseConfig" style="padding:0.75rem 1.5rem;font-size:0.95rem;background:#10B981;border-color:#10B981;">
+                🔌 TES KONEKSI &amp; SIMPAN CONFIG
+              </button>
+              
+              <button type="button" class="btn-action-edit" id="btnPushToSupabase" style="padding:0.75rem 1.5rem;font-size:0.95rem;font-weight:bold;background:var(--gold-dark);border-color:var(--gold);color:var(--white);">
+                ☁️ UPLOAD / SINKRONKAN SEMUA DATA KE SUPABASE
+              </button>
+
+              <button type="button" class="btn-action-edit" id="btnPullFromSupabase" style="padding:0.75rem 1.25rem;font-size:0.95rem;font-weight:bold;">
+                📥 TARIK DATA DARI SUPABASE
+              </button>
+
+              <button type="button" class="btn-action-del" id="btnClearSupabaseConfig" style="padding:0.75rem 1rem;font-size:0.85rem;margin-left:auto;">
+                HAPUS CONFIG LOKAL
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Quick Setup & SQL Query Helper Card -->
+        <div class="card-box">
+          <h3 class="card-box-title">📋 LANGKAH CEPAT KONEKSI KE SUPABASE (1 MENIT)</h3>
+          <ol style="color:var(--text);font-size:0.9rem;line-height:1.8;padding-left:1.25rem;margin:1rem 0 1.5rem;">
+            <li>Buka <a href="https://supabase.com" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:underline;">supabase.com</a>, buat akun dan buat <strong>New Project</strong> baru.</li>
+            <li>Buka menu <strong>SQL Editor</strong> di dashboard Supabase, lalu klik <strong>New Query</strong>.</li>
+            <li>Copy seluruh isi file <code style="color:var(--gold);">supabase_schema.sql</code> (atau klik tombol copy di bawah) dan klik <strong>Run</strong>.</li>
+            <li>Buka menu <strong>Project Settings &rarr; API</strong>, copy <strong>Project URL</strong> dan <strong>anon public key</strong>, lalu paste ke form di atas dan klik <strong>Simpan Config</strong>!</li>
+          </ol>
+
+          <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:center;">
+            <button class="btn-add" id="btnCopySqlSchema" style="background:#3B82F6;border-color:#3B82F6;">
+              📋 COPY SCRIPT SQL KE CLIPBOARD
+            </button>
+            <a href="supabase_schema.sql" download="supabase_schema.sql" class="btn-action-edit" style="text-decoration:none;padding:0.6rem 1.2rem;display:inline-flex;align-items:center;gap:0.5rem;">
+              💾 DOWNLOAD FILE supabase_schema.sql
+            </a>
+            <a href="document.txt" target="_blank" class="btn-view-site" style="margin-left:auto;text-decoration:none;">
+              📖 Buka Panduan Lengkap document.txt
+            </a>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ===================== MODAL: KATEGORI TURNAMEN CRUD ===================== -->
+  <div class="crud-modal" id="categoryCrudModal">
+    <div class="crud-modal-box" style="max-width:550px;">
+      <h3 class="crud-modal-title" id="categoryModalTitle">TAMBAH KATEGORI TURNAMEN</h3>
+      <form id="categoryCrudForm">
+        <div class="form-group">
+          <label class="form-label">KODE TURNAMEN (ID, HURUF KECIL TANPA SPASI) *</label>
+          <input type="text" id="catId" class="form-input" placeholder="contoh: pbnc, pbsc, pbic, pblc" required />
+          <small style="color:var(--gray-light);font-size:0.75rem;">Digunakan sebagai identitas filter di website.</small>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">NAMA KATEGORI TURNAMEN (SINGKAT) *</label>
+          <input type="text" id="catLabel" class="form-input" placeholder="contoh: PBNC (NATIONAL), PBSC (STAR), PBIC" required />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">NAMA LENGKAP TURNAMEN</label>
+          <input type="text" id="catFullName" class="form-input" placeholder="contoh: Point Blank National Championship" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">BADGE TEKS PADA KARTU ROSTER *</label>
+          <input type="text" id="catBadge" class="form-input" placeholder="contoh: PBNC ROSTER, PBSC SQUAD, PBIC ROSTER" required />
+        </div>
+
+        <div class="crud-modal-footer">
+          <button type="button" class="btn-cancel">BATAL</button>
+          <button type="submit" class="btn-add">SIMPAN KATEGORI TURNAMEN</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL: PLAYER CRUD ===================== -->
+  <div class="crud-modal" id="playerCrudModal">
+    <div class="crud-modal-box">
+      <h3 class="crud-modal-title" id="playerModalTitle">TAMBAH ROSTER BARU</h3>
+      <form id="playerCrudForm">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+          <div class="form-group">
+            <label class="form-label">IN-GAME NICKNAME *</label>
+            <input type="text" id="pName" class="form-input" placeholder="MOTHRA•RAVEN" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">NAMA ASLI</label>
+            <input type="text" id="pRealname" class="form-input" placeholder="Raka Pratama" />
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;">
+          <div class="form-group">
+            <label class="form-label">ROLE *</label>
+            <input type="text" id="pRole" class="form-input" placeholder="IGL / RUSHER / SNIPER" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">KATEGORI TURNAMEN *</label>
+            <select id="pCategory" class="form-input" required></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">NOMOR PUNGGUNG</label>
+            <input type="text" id="pNum" class="form-input" placeholder="01" />
+          </div>
+        </div>
+
+        <!-- Image Upload from PC / URL -->
+        <div class="upload-section">
+          <div class="form-group">
+            <label class="form-label">📁 UPLOAD FOTO DARI KOMPUTER (LOCAL PC)</label>
+            <input type="file" id="pImgFile" accept="image/*" class="file-upload-input" />
+          </div>
+          <div style="display:flex;gap:1rem;align-items:center;">
+            <div class="form-group" style="flex:1;margin-bottom:0;">
+              <label class="form-label">ATAU URL / PATH FOTO *</label>
+              <input type="text" id="pImg" class="form-input" placeholder="assets/player-captain.jpg" required />
+            </div>
+            <div class="upload-preview-box" style="width:65px;height:70px;">
+              <img id="pImgPreviewTag" src="assets/player-captain.jpg" alt="Preview" style="width:100%;height:100%;object-fit:cover;border-radius:3px;" />
+            </div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-top:1rem;">
+          <div class="form-group">
+            <label class="form-label">FAVORITE WEAPON</label>
+            <input type="text" id="pWeapon" class="form-input" placeholder="AUG A3 &amp; Kriss S.V" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">K/D RATIO</label>
+            <input type="text" id="pKD" class="form-input" placeholder="2.45" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">HEADSHOT %</label>
+            <input type="text" id="pHS" class="form-input" placeholder="68%" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">COMPETITIVE EXPERIENCE</label>
+          <input type="text" id="pExp" class="form-input" placeholder="5+ Tahun" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">TACTICAL BIO</label>
+          <textarea id="pBio" class="form-input" rows="3" placeholder="Profil singkat taktis pemain..."></textarea>
+        </div>
+
+        <div class="crud-modal-footer">
+          <button type="button" class="btn-cancel">BATAL</button>
+          <button type="submit" class="btn-add">SIMPAN PEMAIN</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL: PARTNERSHIP CRUD ===================== -->
+  <div class="crud-modal" id="partnershipCrudModal">
+    <div class="crud-modal-box" style="max-width:620px;">
+      <h3 class="crud-modal-title" id="partnershipModalTitle">TAMBAH DATA KERJASAMA</h3>
+      <form id="partnershipCrudForm">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+          <div class="form-group">
+            <label class="form-label">TIPE KERJASAMA *</label>
+            <select id="paType" class="form-input" required>
+              <option value="scrim">⚔️ Friendly Match / Scrim</option>
+              <option value="sponsor">🤝 Sponsorship / Endorsement</option>
+              <option value="design">🎨 Design Partner</option>
+              <option value="ba">👑 Brand Ambassador</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">STATUS KERJASAMA *</label>
+            <select id="paStatus" class="form-input" required>
+              <option value="ACTIVE">✅ ACTIVE — Berjalan</option>
+              <option value="PENDING">⏳ PENDING — Dalam Proses</option>
+              <option value="NEGOTIATION">🔄 NEGOTIATION — Sedang Negosiasi</option>
+              <option value="CLOSED">❌ CLOSED — Berakhir</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">NAMA MITRA / CLAN / BRAND *</label>
+          <input type="text" id="paName" class="form-input" placeholder="Contoh: RRQ PB Academy / GadgetXtreme ID" required />
+        </div>
+
+        <!-- Logo / Photo Upload from PC -->
+        <div class="upload-section">
+          <div class="form-group">
+            <label class="form-label">📁 UPLOAD LOGO / FOTO MITRA DARI KOMPUTER</label>
+            <input type="file" id="paLogoFile" accept="image/*" class="file-upload-input" />
+          </div>
+          <div style="display:flex;gap:1rem;align-items:center;">
+            <div class="form-group" style="flex:1;margin-bottom:0;">
+              <label class="form-label">ATAU URL / PATH LOGO</label>
+              <input type="text" id="paLogo" class="form-input" placeholder="assets/mothra-logo.png" />
+            </div>
+            <div class="upload-preview-box" style="width:55px;height:55px;">
+              <img id="paLogoPreviewTag" src="assets/mothra-logo.png" alt="Preview" style="width:100%;height:100%;object-fit:contain;border-radius:3px;" />
+            </div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:1rem;margin-top:1rem;">
+          <div class="form-group">
+            <label class="form-label">KONTAK (USERNAME / EMAIL / NOMOR) *</label>
+            <input type="text" id="paContact" class="form-input" placeholder="@username atau email@domain.com" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">PLATFORM KONTAK</label>
+            <select id="paContactType" class="form-input">
+              <option value="Instagram">Instagram</option>
+              <option value="Discord">Discord</option>
+              <option value="WhatsApp">WhatsApp</option>
+              <option value="Email">Email</option>
+              <option value="Telegram">Telegram</option>
+              <option value="Lainnya">Lainnya</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">TANGGAL MULAI KERJASAMA</label>
+          <input type="date" id="paDate" class="form-input" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">CATATAN / DETAIL KESEPAKATAN</label>
+          <textarea id="paNotes" class="form-input" rows="3" placeholder="Contoh: Scrim rutin 5v5 setiap Sabtu 20:00 WIB. Format best of 3."></textarea>
+        </div>
+
+        <div class="crud-modal-footer">
+          <button type="button" class="btn-cancel">BATAL</button>
+          <button type="submit" class="btn-add">SIMPAN KERJASAMA</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL: SCHEDULE CRUD ===================== -->
+  <div class="crud-modal" id="scheduleCrudModal">
+    <div class="crud-modal-box">
+      <h3 class="crud-modal-title" id="scheduleModalTitle">TAMBAH JADWAL MATCH</h3>
+      <form id="scheduleCrudForm">
+        <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:1rem;">
+          <div class="form-group">
+            <label class="form-label">STAGE / MATCH TITLE *</label>
+            <input type="text" id="mStage" class="form-input" placeholder="MATCH 01 • GROUP STAGE" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">STATUS *</label>
+            <input type="text" id="mStatus" class="form-input" placeholder="UPCOMING / SCHEDULED / LIVE" required />
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:1rem;">
+          <div class="form-group">
+            <label class="form-label">NAMA CLAN LAWAN *</label>
+            <input type="text" id="mOpponent" class="form-input" placeholder="RRQ PB" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">SINGKATAN</label>
+            <input type="text" id="mOpponentShort" class="form-input" placeholder="RRQ" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">WARNA BADGE (#HEX)</label>
+            <input type="text" id="mOpponentColor" class="form-input" placeholder="#EF4444" />
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+          <div class="form-group">
+            <label class="form-label">NAMA TURNAMEN *</label>
+            <input type="text" id="mTournament" class="form-input" placeholder="PBNC 2024 Stage" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">MAP PICK *</label>
+            <input type="text" id="mMap" class="form-input" placeholder="Luxville (Bomb Mission)" required />
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+          <div class="form-group">
+            <label class="form-label">WAKTU PERTANDINGAN *</label>
+            <input type="text" id="mTime" class="form-input" placeholder="Sabtu, 20:00 WIB" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">LINK STREAM / DISCORD</label>
+            <input type="text" id="mStreamUrl" class="form-input" placeholder="https://discord.gg/fxfMBWSzW" />
+          </div>
+        </div>
+
+        <div class="crud-modal-footer">
+          <button type="button" class="btn-cancel">BATAL</button>
+          <button type="submit" class="btn-add">SIMPAN MATCH</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL: RECORD CRUD ===================== -->
+  <div class="crud-modal" id="recordCrudModal">
+    <div class="crud-modal-box">
+      <h3 class="crud-modal-title" id="recordModalTitle">TAMBAH PRESTASI TURNAMEN</h3>
+      <form id="recordCrudForm">
+        <div class="form-group">
+          <label class="form-label">TAHUN TURNAMEN *</label>
+          <input type="text" id="rYear" class="form-input" placeholder="2024" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">NAMA GELAR / JUARA *</label>
+          <input type="text" id="rTitle" class="form-input" placeholder="JUARA 1 — PBNC REGIONAL JAWA BARAT" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">DETAIL MATCH / ARENA *</label>
+          <input type="text" id="rSubtitle" class="form-input" placeholder="Grand Final 2—0 Clean Sweep vs. VORTEX" required />
+        </div>
+        <div class="crud-modal-footer">
+          <button type="button" class="btn-cancel">BATAL</button>
+          <button type="submit" class="btn-add">SIMPAN PRESTASI</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL: GALLERY CRUD ===================== -->
+  <div class="crud-modal" id="galleryCrudModal">
+    <div class="crud-modal-box">
+      <h3 class="crud-modal-title" id="galleryModalTitle">TAMBAH FOTO DOKUMENTASI</h3>
+      <form id="galleryCrudForm">
+        <div class="form-group">
+          <label class="form-label">LABEL / JUDUL FOTO *</label>
+          <input type="text" id="gTitle" class="form-input" placeholder="TACTICAL SQUAD / 05" required />
+        </div>
+
+        <!-- Image Upload from PC / URL -->
+        <div class="upload-section">
+          <div class="form-group">
+            <label class="form-label">📁 UPLOAD FOTO DARI KOMPUTER (LOCAL PC)</label>
+            <input type="file" id="gImgFile" accept="image/*" class="file-upload-input" />
+          </div>
+          <div style="display:flex;gap:1rem;align-items:center;">
+            <div class="form-group" style="flex:1;margin-bottom:0;">
+              <label class="form-label">ATAU URL / PATH GAMBAR *</label>
+              <input type="text" id="gImg" class="form-input" placeholder="assets/pb-bg-squad.jpg" required />
+            </div>
+            <div class="upload-preview-box" style="width:75px;height:50px;">
+              <img id="gImgPreviewTag" src="assets/pb-bg-squad.jpg" alt="Preview" style="width:100%;height:100%;object-fit:cover;border-radius:3px;" />
+            </div>
+          </div>
+        </div>
+
+        <div class="crud-modal-footer" style="margin-top:1.5rem;">
+          <button type="button" class="btn-cancel">BATAL</button>
+          <button type="submit" class="btn-add">SIMPAN FOTO</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast-msg" id="toastMsg"></div>
+
+  <!-- Supabase Cloud Database & Realtime SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="data.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>
