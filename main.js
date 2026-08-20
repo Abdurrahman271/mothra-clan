@@ -219,17 +219,16 @@ function syncCmsData() {
 
   // 5. Sync The Record (Prestasi)
   if (Array.isArray(db.records) && db.records.length > 0) {
-    const timelineList = document.querySelector('.timeline-list');
+    const timelineList = document.querySelector('.timeline-list, .achievements-list');
     if (timelineList) {
       let recordsHtml = '';
       db.records.forEach((r, idx) => {
         recordsHtml += `
-          <div class="timeline-item reveal-fade visible revealed" data-delay="${idx * 100}">
-            <div class="timeline-year">${r.year}</div>
-            <div class="timeline-dot"></div>
-            <div class="timeline-content">
-              <h3 class="timeline-title">${r.title}</h3>
-              <p class="timeline-desc">${r.subtitle}</p>
+          <div class="achievement-item reveal-fade visible revealed" data-delay="${idx * 100}">
+            <div class="achievement-year">${r.year}</div>
+            <div class="achievement-info">
+              <h3 class="achievement-title">${r.title}</h3>
+              <p class="achievement-desc">${r.subtitle}</p>
             </div>
           </div>
         `;
@@ -266,9 +265,22 @@ window.addEventListener('storage', (e) => {
 });
 window.addEventListener('mothra_data_updated', () => syncCmsData());
 window.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') syncCmsData();
+  if (document.visibilityState === 'visible') {
+    if (typeof fetchMothraDataOnline === 'function') fetchMothraDataOnline();
+    syncCmsData();
+  }
 });
-window.addEventListener('focus', () => syncCmsData());
+window.addEventListener('focus', () => {
+  if (typeof fetchMothraDataOnline === 'function') fetchMothraDataOnline();
+  syncCmsData();
+});
+
+// Periodic Auto-Sync Background Poll (Jaminan Realtime di HP / Mobile)
+setInterval(() => {
+  if (typeof fetchMothraDataOnline === 'function') {
+    fetchMothraDataOnline();
+  }
+}, 3000);
 
 // Initial run
 syncCmsData();

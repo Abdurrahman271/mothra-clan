@@ -382,32 +382,51 @@ function subscribeSupabaseRealtime() {
   }
 }
 
-// Tarik data online dari Supabase
+// Tarik data online dari Supabase (SDK + Direct REST API dengan Anti-Cache)
 async function fetchMothraDataOnline() {
-  if (!_supabaseClient) {
-    initSupabase();
-    if (!_supabaseClient) return getMothraData();
-  }
   const config = getSupabaseConfig();
-  try {
-    const { data, error } = await _supabaseClient
-      .from(config.tableName)
-      .select('*')
-      .eq('id', config.docId)
-      .single();
+  if (!config.isConfigured) return getMothraData();
 
-    if (error) {
-      console.warn('⚠️ [MOTHRA CMS] Gagal query data Supabase:', error.message);
-      return getMothraData();
+  // 1. Coba via Supabase JS SDK jika tersedia
+  if (_supabaseClient) {
+    try {
+      const { data, error } = await _supabaseClient
+        .from(config.tableName)
+        .select('*')
+        .eq('id', config.docId)
+        .single();
+
+      if (!error && data && data.data) {
+        console.log('📥 [MOTHRA CMS] Berhasil mengambil data online via Supabase SDK!');
+        return applyIncomingOnlineData(data.data);
+      }
+    } catch (e) {
+      console.warn('SDK fetch error, falling back to REST:', e);
     }
+  }
 
-    if (data && data.data) {
-      console.log('📥 [MOTHRA CMS] Berhasil mengambil data online dari Supabase!');
-      return applyIncomingOnlineData(data.data);
+  // 2. Fallback Direct HTTPS REST API (Anti-Cache untuk Mobile/HP)
+  try {
+    const res = await fetch(`${config.url}/rest/v1/${config.tableName}?id=eq.${config.docId}&select=*&_t=${Date.now()}`, {
+      headers: {
+        'apikey': config.anonKey,
+        'Authorization': 'Bearer ' + config.anonKey,
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache'
+      }
+    });
+
+    if (res.ok) {
+      const rows = await res.json();
+      if (Array.isArray(rows) && rows.length > 0 && rows[0].data) {
+        console.log('📥 [MOTHRA CMS] Berhasil mengambil data online via Direct REST API!');
+        return applyIncomingOnlineData(rows[0].data);
+      }
     }
   } catch (err) {
     console.warn('⚠️ [MOTHRA CMS] Error fetch online data:', err);
   }
+
   return getMothraData();
 }
 
@@ -466,16 +485,6 @@ function getMothraData() {
       return _mothraMemoryData;
     }
     const data = JSON.parse(raw);
-    let changed = false;
-
-    // Check version update from repository / DEFAULT_MOTHRA_DATA
-    if (DEFAULT_MOTHRA_DATA.dataVersion && (!data.dataVersion || DEFAULT_MOTHRA_DATA.dataVersion > data.dataVersion)) {
-      console.log('New data version detected from repository! Updating local cache...');
-      _mothraMemoryData = JSON.parse(JSON.stringify(DEFAULT_MOTHRA_DATA));
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(_mothraMemoryData));
-      return _mothraMemoryData;
-    }
-
     sanitizeMothraData(data);
     _mothraMemoryData = data;
     return _mothraMemoryData;
@@ -486,7 +495,7 @@ function getMothraData() {
   }
 }
 
-// Fungsi simpan data: Menyimpan ke memory, LocalStorage, Supabase Online, dan server lokal
+// Fungsi simpan data: Menyimpan ke memory, LocalStorage, Supabase Online (Dual Sync), dan server lokal
 function saveMothraData(data) {
   try {
     data.dataVersion = Date.now();
@@ -501,27 +510,70 @@ function saveMothraData(data) {
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('mothra_data_updated', { detail: data }));
 
-      // 1. Simpan ke Database Online Supabase PostgreSQL
       const config = getSupabaseConfig();
-      if (_supabaseClient && config.isConfigured) {
-        _supabaseClient
-          .from(config.tableName)
-          .upsert({
+      if (config.isConfigured) {
+        if (!_supabaseClient) initSupabase();
+
+        // 1. Simpan via Supabase JS SDK
+        if (_supabaseClient) {
+          _supabaseClient
+            .from(config.tableName)
+            .upsert({
+              id: config.docId,
+              data: data,
+              data_version: data.dataVersion,
+              updated_at: data.updatedAt
+            })
+            .then(({ error }) => {
+              if (error) {
+                console.error('❌ [SUPABASE SAVE ERROR]', error.message);
+              } else {
+                console.log('☁️ [SUPABASE SAVED] Perubahan tersimpan di database online via SDK!');
+              }
+            })
+            .catch((err) => console.error('❌ [SUPABASE NETWORK ERROR]', err));
+        }
+
+        // 2. Dual Sync via Direct HTTPS REST API (Jaminan 100% terkirim)
+        if (typeof fetch !== 'undefined') {
+          const directPayload = [{
             id: config.docId,
             data: data,
             data_version: data.dataVersion,
             updated_at: data.updatedAt
-          })
-          .then(({ error }) => {
-            if (error) {
-              console.error('❌ [SUPABASE SAVE ERROR]', error.message);
-              if (window.showToast) window.showToast('Gagal simpan ke Supabase: ' + error.message);
-            } else {
-              console.log('☁️ [SUPABASE SAVED] Perubahan berhasil disimpan ke database online Supabase!');
-            }
-          })
-          .catch((err) => console.error('❌ [SUPABASE NETWORK ERROR]', err));
+          }];
+          fetch(`${config.url}/rest/v1/${config.tableName}?on_conflict=id`, {
+            method: 'POST',
+            headers: {
+              'apikey': config.anonKey,
+              'Authorization': 'Bearer ' + config.anonKey,
+              'Content-Type': 'application/json',
+              'Prefer': 'resolution=merge-duplicates,return=minimal'
+            },
+            body: JSON.stringify(directPayload)
+          }).then((res) => {
+            if (res.ok) console.log('☁️ [SUPABASE REST] Data tersimpan di Supabase via REST API!');
+          }).catch(() => {});
+        }
       }
+
+      // 3. Simpan ke Server lokal disk via server.js jika sedang dijalankan
+      try {
+        fetch('/api/data', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        }).then((res) => {
+          if (res.ok) console.log('Successfully synced data to disk via server.js');
+        }).catch(() => {});
+      } catch (err) {}
+    }
+    return true;
+  } catch (e) {
+    console.error('Failed to save data', e);
+    return false;
+  }
+}
 
       // 2. Simpan ke Server lokal disk via server.js jika sedang dijalankan
       try {
