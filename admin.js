@@ -6,19 +6,24 @@
 'use strict';
 
 // ============================================================
-// 1. AUTHENTICATION
+// 1. AUTHENTICATION (Dynamic Users via Supabase / localStorage)
 // ============================================================
 const AUTH_SESSION_KEY = 'mothra_admin_auth_active';
+const AUTH_USER_KEY    = 'mothra_admin_current_user';
 
-const VALID_EMAILS = [
-  'abdurrrahman09@gmail.com',
-  'abdurrahman09@gmail.com',
-  'abdurrahman271@gmail.com',
-  'admin'
+// Fallback credentials (saat db belum siap)
+const FALLBACK_USERS = [
+  { id: 'u_1', email: 'abdurrrahman09@gmail.com', password: 'Senayan@18', role: 'SUPER ADMIN', name: 'Abdurrahman', status: 'ACTIVE' },
+  { id: 'u_1', email: 'abdurrahman09@gmail.com',  password: 'Senayan@18', role: 'SUPER ADMIN', name: 'Abdurrahman', status: 'ACTIVE' },
+  { id: 'u_1', email: 'abdurrahman271@gmail.com', password: 'Senayan@18', role: 'SUPER ADMIN', name: 'Abdurrahman', status: 'ACTIVE' },
+  { id: 'u_1', email: 'admin',                    password: 'Senayan@18', role: 'SUPER ADMIN', name: 'Abdurrahman', status: 'ACTIVE' }
 ];
-const VALID_PASSWORDS = ['Senayan@18', 'senayan@18', 'Senayan18'];
 
 let db = null;
+
+function getCurrentUser() {
+  try { return JSON.parse(sessionStorage.getItem(AUTH_USER_KEY) || 'null'); } catch { return null; }
+}
 
 function showToast(msg) {
   const t = document.getElementById('toastMsg');
@@ -26,6 +31,11 @@ function showToast(msg) {
   t.textContent = msg;
   t.classList.add('visible');
   setTimeout(() => t.classList.remove('visible'), 4000);
+}
+
+function updateOperatorBadge(user) {
+  const badge = document.querySelector('.top-bar [style*="OPERATOR"]');
+  if (badge && user) badge.textContent = `OPERATOR: ${user.email} [${user.role || 'ADMIN'}]`;
 }
 
 function checkAuth() {
@@ -38,6 +48,7 @@ function checkAuth() {
     loginScreen.classList.add('hidden');
     dashboardWrap.classList.remove('hidden');
     if (!db) db = getMothraData();
+    updateOperatorBadge(getCurrentUser());
     initDashboard();
   } else {
     loginScreen.classList.remove('hidden');
@@ -47,7 +58,6 @@ function checkAuth() {
 
 // Bind login form after DOM is ready
 document.addEventListener('DOMContentLoaded', function () {
-  // Login form submit
   const loginForm     = document.getElementById('loginForm');
   const loginEmail    = document.getElementById('loginEmail');
   const loginPassword = document.getElementById('loginPassword');
@@ -57,20 +67,33 @@ document.addEventListener('DOMContentLoaded', function () {
   if (loginForm) {
     loginForm.addEventListener('submit', function (e) {
       e.preventDefault();
-      const u = ((loginEmail && loginEmail.value) || '').trim().toLowerCase();
-      const p = ((loginPassword && loginPassword.value) || '').trim();
+      const inputEmail = ((loginEmail && loginEmail.value) || '').trim().toLowerCase();
+      const inputPwd   = ((loginPassword && loginPassword.value) || '').trim();
 
-      const emailOk = VALID_EMAILS.includes(u);
-      const passOk  = VALID_PASSWORDS.includes(p);
+      // Get users from db (Supabase-synced) or fallback
+      let users = FALLBACK_USERS;
+      try {
+        const loaded = getMothraData();
+        if (loaded && loaded.users && loaded.users.length > 0) {
+          users = [...loaded.users, ...FALLBACK_USERS]; // merge, db takes priority
+        }
+      } catch (e2) {}
 
-      if (emailOk && passOk) {
+      const matched = users.find(u =>
+        u.email.toLowerCase() === inputEmail &&
+        u.password === inputPwd &&
+        u.status !== 'INACTIVE'
+      );
+
+      if (matched) {
         sessionStorage.setItem(AUTH_SESSION_KEY, 'true');
+        sessionStorage.setItem(AUTH_USER_KEY, JSON.stringify(matched));
         if (loginAlert) loginAlert.classList.remove('visible');
         checkAuth();
-        showToast('Login berhasil! Selamat datang Admin MOTHRA.');
+        showToast(`🎖️ Selamat datang, ${matched.name || matched.email}! [${matched.role}]`);
       } else {
         if (loginAlert) {
-          loginAlert.textContent = 'Email atau Password salah. Coba lagi.';
+          loginAlert.textContent = 'Email atau Password salah, atau akun dinonaktifkan. Coba lagi.';
           loginAlert.classList.add('visible');
         }
         if (loginPassword) { loginPassword.value = ''; loginPassword.focus(); }
@@ -81,6 +104,7 @@ document.addEventListener('DOMContentLoaded', function () {
   if (logoutBtn) {
     logoutBtn.addEventListener('click', function () {
       sessionStorage.removeItem(AUTH_SESSION_KEY);
+      sessionStorage.removeItem(AUTH_USER_KEY);
       checkAuth();
       showToast('Berhasil keluar dari panel admin.');
     });
@@ -122,6 +146,7 @@ function renderAllPanels() {
   renderRecordsTable();
   renderGalleryTable();
   renderSupabasePanel();
+  renderUsersTable();
 }
 
 // Dengarkan event update data realtime dari Supabase
@@ -1581,3 +1606,238 @@ document.querySelectorAll('.btn-cancel').forEach((btn) => {
     document.querySelectorAll('.crud-modal').forEach((m) => m.classList.remove('open'));
   });
 });
+
+/* ============================================================
+   USER MANAGEMENT CRUD
+   ============================================================ */
+const ROLE_COLORS = {
+  'SUPER ADMIN': '#D4AF37',
+  'TACTICAL OPERATOR': '#60A5FA',
+  'CONTENT WRITER': '#10B981',
+  'VIEWER': '#94A3B8'
+};
+
+function generateUserId() {
+  return 'u_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+}
+
+function maskPassword(pwd) {
+  if (!pwd) return '—';
+  return pwd.slice(0, 2) + '•'.repeat(Math.max(4, pwd.length - 2));
+}
+
+function renderUsersTable() {
+  const tbody = document.getElementById('usersTableBody');
+  if (!tbody) return;
+
+  const users = (db && db.users) ? db.users : [];
+
+  // Update stats
+  const total = users.length;
+  const active = users.filter(u => u.status === 'ACTIVE').length;
+  const superAdmins = users.filter(u => u.role === 'SUPER ADMIN').length;
+  const inactive = users.filter(u => u.status !== 'ACTIVE').length;
+
+  const elTotal = document.getElementById('statUserTotal');
+  const elActive = document.getElementById('statUserActive');
+  const elSuper = document.getElementById('statUserSuperAdmin');
+  const elInactive = document.getElementById('statUserInactive');
+  if (elTotal) elTotal.textContent = total;
+  if (elActive) elActive.textContent = active;
+  if (elSuper) elSuper.textContent = superAdmins;
+  if (elInactive) elInactive.textContent = inactive;
+
+  if (users.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--gray-light);padding:2rem;">Belum ada data pengguna. Klik <strong>+ TAMBAH ADMIN BARU</strong> untuk memulai.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = users.map((u, i) => {
+    const roleColor = ROLE_COLORS[u.role] || '#94A3B8';
+    const statusColor = u.status === 'ACTIVE' ? '#10B981' : '#EF4444';
+    const statusBg = u.status === 'ACTIVE' ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)';
+    return `
+      <tr>
+        <td style="color:var(--gray-light);font-size:0.8rem;">${i + 1}</td>
+        <td>
+          <div style="display:flex;align-items:center;gap:0.6rem;">
+            <div style="width:32px;height:32px;border-radius:50%;background:rgba(212,175,55,0.15);border:1px solid var(--gold-dark);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:900;font-size:0.85rem;color:var(--gold);flex-shrink:0;">${(u.name || '?').charAt(0).toUpperCase()}</div>
+            <div>
+              <div style="font-weight:700;font-size:0.9rem;">${u.name || '—'}</div>
+              ${u.notes ? `<div style="font-size:0.72rem;color:var(--gray-light);">${u.notes}</div>` : ''}
+            </div>
+          </div>
+        </td>
+        <td style="font-family:var(--font-mono);font-size:0.8rem;color:#93C5FD;">${u.email || '—'}</td>
+        <td>
+          <span style="background:${roleColor}22;color:${roleColor};border:1px solid ${roleColor}55;padding:0.2rem 0.6rem;border-radius:4px;font-family:var(--font-mono);font-size:0.7rem;font-weight:700;white-space:nowrap;">${u.role || 'VIEWER'}</span>
+        </td>
+        <td>
+          <span style="background:${statusBg};color:${statusColor};border:1px solid ${statusColor}55;padding:0.2rem 0.6rem;border-radius:4px;font-family:var(--font-mono);font-size:0.7rem;font-weight:700;">${u.status || 'ACTIVE'}</span>
+        </td>
+        <td style="color:var(--gray-light);font-size:0.8rem;">${u.createdAt || '—'}</td>
+        <td style="text-align:center;">
+          <div style="display:flex;gap:0.4rem;justify-content:center;">
+            <button class="btn-action-edit" onclick="openUserModal('edit','${u.id}')" style="padding:0.3rem 0.7rem;font-size:0.75rem;">✏️ EDIT</button>
+            ${u.id !== 'u_1' ? `<button class="btn-action-del" onclick="deleteUser('${u.id}')" style="padding:0.3rem 0.7rem;font-size:0.75rem;">🗑️ HAPUS</button>` : '<span style="color:var(--gray-light);font-size:0.72rem;font-family:var(--font-mono);">PROTECTED</span>'}
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function openUserModal(mode, userId) {
+  const modal = document.getElementById('userCrudModal');
+  const title = document.getElementById('userModalTitle');
+  const formAlert = document.getElementById('userFormAlert');
+  if (!modal) return;
+
+  // Reset form
+  document.getElementById('userCrudForm').reset();
+  document.getElementById('userId').value = '';
+  if (formAlert) { formAlert.style.display = 'none'; formAlert.textContent = ''; }
+
+  if (mode === 'edit' && userId) {
+    const users = (db && db.users) ? db.users : [];
+    const user = users.find(u => u.id === userId);
+    if (!user) return;
+    if (title) title.textContent = 'EDIT OPERATOR: ' + (user.name || '').toUpperCase();
+    document.getElementById('userId').value = user.id;
+    document.getElementById('userName').value = user.name || '';
+    document.getElementById('userEmail').value = user.email || '';
+    document.getElementById('userPassword').value = '';
+    document.getElementById('userPasswordConfirm').value = '';
+    document.getElementById('userRole').value = user.role || 'TACTICAL OPERATOR';
+    document.getElementById('userStatus').value = user.status || 'ACTIVE';
+    document.getElementById('userNotes').value = user.notes || '';
+    const submitBtn = document.getElementById('userModalSubmitBtn');
+    if (submitBtn) submitBtn.textContent = '💾 SIMPAN PERUBAHAN';
+  } else {
+    if (title) title.textContent = 'TAMBAH ADMIN BARU';
+    const submitBtn = document.getElementById('userModalSubmitBtn');
+    if (submitBtn) submitBtn.textContent = '💾 TAMBAH SEKARANG';
+  }
+
+  modal.classList.add('open');
+}
+
+function deleteUser(userId) {
+  if (!confirm('Yakin ingin menghapus akun admin ini? Tindakan tidak bisa dibatalkan.')) return;
+  if (!db.users) return;
+  const idx = db.users.findIndex(u => u.id === userId);
+  if (idx === -1) return;
+  db.users.splice(idx, 1);
+  saveMothraData(db);
+  renderUsersTable();
+  showToast('🗑️ Akun admin berhasil dihapus.');
+}
+
+// Toggle password visibility
+const togglePwd = document.getElementById('toggleUserPwd');
+if (togglePwd) {
+  togglePwd.addEventListener('click', () => {
+    const pwdInput = document.getElementById('userPassword');
+    if (!pwdInput) return;
+    if (pwdInput.type === 'password') {
+      pwdInput.type = 'text';
+      togglePwd.textContent = '🙈';
+    } else {
+      pwdInput.type = 'password';
+      togglePwd.textContent = '👁';
+    }
+  });
+}
+
+// Add User Button
+const btnAddUser = document.getElementById('btnAddUser');
+if (btnAddUser) {
+  btnAddUser.addEventListener('click', () => openUserModal('add'));
+}
+
+// Refresh Users Button
+const btnRefreshUsers = document.getElementById('btnRefreshUsers');
+if (btnRefreshUsers) {
+  btnRefreshUsers.addEventListener('click', () => {
+    if (!db) db = getMothraData();
+    renderUsersTable();
+    showToast('🔄 Data pengguna berhasil diperbarui.');
+  });
+}
+
+// Cancel button for user modal specifically
+const userModalCancelBtn = document.getElementById('userModalCancelBtn');
+if (userModalCancelBtn) {
+  userModalCancelBtn.addEventListener('click', () => {
+    const modal = document.getElementById('userCrudModal');
+    if (modal) modal.classList.remove('open');
+  });
+}
+
+// User CRUD Form Submit
+const userCrudForm = document.getElementById('userCrudForm');
+if (userCrudForm) {
+  userCrudForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const formAlert = document.getElementById('userFormAlert');
+    const showFormErr = (msg) => {
+      if (formAlert) { formAlert.style.display = 'block'; formAlert.textContent = msg; }
+    };
+
+    const id      = (document.getElementById('userId').value || '').trim();
+    const name    = (document.getElementById('userName').value || '').trim();
+    const email   = (document.getElementById('userEmail').value || '').trim().toLowerCase();
+    const pwd     = (document.getElementById('userPassword').value || '').trim();
+    const pwdConf = (document.getElementById('userPasswordConfirm').value || '').trim();
+    const role    = document.getElementById('userRole').value;
+    const status  = document.getElementById('userStatus').value;
+    const notes   = (document.getElementById('userNotes').value || '').trim();
+
+    if (!name) return showFormErr('Nama operator wajib diisi.');
+    if (!email || !email.includes('@')) return showFormErr('Email login harus valid.');
+
+    if (!db.users) db.users = [];
+    const isEdit = !!id;
+
+    // Duplicate email check
+    const dupEmail = db.users.find(u => u.email === email && u.id !== id);
+    if (dupEmail) return showFormErr('Email ' + email + ' sudah digunakan oleh operator lain.');
+
+    if (isEdit) {
+      const idx = db.users.findIndex(u => u.id === id);
+      if (idx === -1) return showFormErr('User tidak ditemukan.');
+      if (pwd) {
+        if (pwd.length < 6) return showFormErr('Password minimal 6 karakter.');
+        if (pwd !== pwdConf) return showFormErr('Konfirmasi password tidak cocok.');
+        db.users[idx].password = pwd;
+      }
+      db.users[idx].name   = name;
+      db.users[idx].email  = email;
+      db.users[idx].role   = role;
+      db.users[idx].status = status;
+      db.users[idx].notes  = notes;
+    } else {
+      if (!pwd) return showFormErr('Password wajib diisi untuk akun baru.');
+      if (pwd.length < 6) return showFormErr('Password minimal 6 karakter.');
+      if (pwd !== pwdConf) return showFormErr('Konfirmasi password tidak cocok.');
+      db.users.push({
+        id:        generateUserId(),
+        name:      name,
+        email:     email,
+        password:  pwd,
+        role:      role,
+        status:    status,
+        notes:     notes,
+        avatar:    'assets/mothra-logo.png',
+        createdAt: new Date().toISOString().split('T')[0]
+      });
+    }
+
+    saveMothraData(db);
+    renderUsersTable();
+    const modal = document.getElementById('userCrudModal');
+    if (modal) modal.classList.remove('open');
+    showToast(isEdit ? '✅ Data operator berhasil diperbarui dan disinkronkan ke Supabase!' : '✅ Akun admin baru berhasil ditambahkan dan disinkronkan ke Supabase!');
+  });
+}
+

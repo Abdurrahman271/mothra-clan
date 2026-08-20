@@ -18,6 +18,28 @@ const DEFAULT_MOTHRA_DATA = {
     "loadingName": "MOTHRA",
     "loadingText": "ESTABLISHING TACTICAL UPLINK..."
   },
+  "users": [
+    {
+      "id": "u_1",
+      "name": "Abdurrahman",
+      "email": "abdurrrahman09@gmail.com",
+      "password": "Senayan@18",
+      "role": "SUPER ADMIN",
+      "status": "ACTIVE",
+      "avatar": "assets/mothra-logo.png",
+      "createdAt": "2026-08-20"
+    },
+    {
+      "id": "u_2",
+      "name": "Tactical Operator",
+      "email": "admin@mothra.com",
+      "password": "Admin@2026",
+      "role": "TACTICAL OPERATOR",
+      "status": "ACTIVE",
+      "avatar": "assets/mothra-logo.png",
+      "createdAt": "2026-08-21"
+    }
+  ],
   "dossier": {
     "tagline": "DISIPLIN. LOYALITAS. INSTING.",
     "description": "MOTHRA lahir dari satu keyakinan: tim yang hebat dibangun dari pejuang yang mau tumbuh bersama. Sejak 2020, kami menjadikan setiap match sebagai ruang belajar dan setiap panggung turnamen sebagai arena pembuktian mental juara.",
@@ -482,6 +504,9 @@ function sanitizeMothraData(data) {
   }
   if (!data.branding) {
     data.branding = JSON.parse(JSON.stringify(DEFAULT_MOTHRA_DATA.branding));
+  }
+  if (!data.users || !Array.isArray(data.users) || data.users.length === 0) {
+    data.users = JSON.parse(JSON.stringify(DEFAULT_MOTHRA_DATA.users));
   }
 }
 

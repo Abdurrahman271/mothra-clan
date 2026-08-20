@@ -111,10 +111,29 @@ CREATE TABLE IF NOT EXISTS public.mothra_branding (
     updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+-- Tabel Management Admin Panel (Users)
+CREATE TABLE IF NOT EXISTS public.mothra_users (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE,
+    password TEXT NOT NULL,
+    role TEXT NOT NULL DEFAULT 'TACTICAL OPERATOR',
+    status TEXT DEFAULT 'ACTIVE',
+    notes TEXT,
+    avatar TEXT,
+    created_at TEXT DEFAULT to_char(NOW(), 'YYYY-MM-DD')
+);
+
+-- Seed initial Super Admin
+INSERT INTO public.mothra_users (id, name, email, password, role, status, created_at)
+VALUES ('u_1', 'Abdurrahman', 'abdurrrahman09@gmail.com', 'Senayan@18', 'SUPER ADMIN', 'ACTIVE', '2026-08-20')
+ON CONFLICT (id) DO NOTHING;
+
 -- 3. KONFIGURASI ROW LEVEL SECURITY (RLS) & POLICIES
 -- Aktifkan RLS di setiap tabel
 ALTER TABLE public.mothra_cms ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.mothra_branding ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.mothra_users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.mothra_categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.mothra_lineup ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.mothra_schedule_matches ENABLE ROW LEVEL SECURITY;
@@ -157,6 +176,10 @@ CREATE POLICY "Allow public all on mothra_records" ON public.mothra_records FOR 
 DROP POLICY IF EXISTS "Allow public all on mothra_gallery" ON public.mothra_gallery;
 CREATE POLICY "Allow public all on mothra_gallery" ON public.mothra_gallery FOR ALL USING (true) WITH CHECK (true);
 
+-- Policies untuk tabel mothra_users
+DROP POLICY IF EXISTS "Allow public all on mothra_users" ON public.mothra_users;
+CREATE POLICY "Allow public all on mothra_users" ON public.mothra_users FOR ALL USING (true) WITH CHECK (true);
+
 -- 4. AKTIFKAN SUPABASE REALTIME REPLICATION
 -- Menambahkan tabel mothra_cms dan mothra_branding ke publication supabase_realtime
 DO $$
@@ -172,6 +195,12 @@ BEGIN
         WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'mothra_branding'
     ) THEN
         ALTER PUBLICATION supabase_realtime ADD TABLE public.mothra_branding;
+    END IF;
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables 
+        WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'mothra_users'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.mothra_users;
     END IF;
 END
 $$;
