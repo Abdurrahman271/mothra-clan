@@ -91,9 +91,25 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 // ============================================================
-// 2. DASHBOARD NAVIGATION TABS
+// 2. DASHBOARD NAVIGATION TABS & REALTIME DATA SYNC
 // ============================================================
 function initDashboard() {
+  db = getMothraData();
+  renderAllPanels();
+
+  // Tarik data online terbaru dari Supabase
+  if (typeof fetchMothraDataOnline === 'function') {
+    fetchMothraDataOnline().then((onlineData) => {
+      if (onlineData) {
+        db = onlineData;
+        renderAllPanels();
+        console.log('✅ [ADMIN] Data online Supabase berhasil disinkronkan ke panel admin.');
+      }
+    }).catch(() => {});
+  }
+}
+
+function renderAllPanels() {
   if (!db) db = getMothraData();
   renderOverviewStats();
   renderDossierForm();
@@ -106,6 +122,14 @@ function initDashboard() {
   renderGalleryTable();
   renderSupabasePanel();
 }
+
+// Dengarkan event update data realtime dari Supabase
+window.addEventListener('mothra_data_updated', (e) => {
+  if (sessionStorage.getItem(AUTH_SESSION_KEY) === 'true') {
+    db = e.detail || getMothraData();
+    renderAllPanels();
+  }
+});
 
 const navItems = document.querySelectorAll('.nav-item');
 const panels   = document.querySelectorAll('.admin-panel');
