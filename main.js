@@ -74,6 +74,14 @@ function syncCmsData() {
     if (footerTagline && b.tagline) footerTagline.textContent = b.tagline;
     if (footerDesc && b.description) footerDesc.textContent = b.description;
 
+    // Loading Screen Brand
+    const loaderLogoImg = document.querySelector('.loader-logo-img');
+    const loaderLogoText = document.querySelector('.loader-logo');
+    const loaderTextEl = document.getElementById('loaderText');
+    if (loaderLogoImg) loaderLogoImg.src = b.loadingLogo || b.logo || 'assets/mothra-logo.png';
+    if (loaderLogoText) loaderLogoText.textContent = b.loadingName || b.clanName || 'MOTHRA';
+    if (loaderTextEl && b.loadingText) loaderTextEl.textContent = b.loadingText;
+
     // Favicon & Page Title
     const favIcon = document.querySelector('link[rel="icon"]');
     if (favIcon && logoIconSrc) favIcon.href = logoIconSrc;
@@ -337,8 +345,22 @@ syncCmsData();
   const loader = document.getElementById('loader');
   const loaderFill = document.getElementById('loaderFill');
   const loaderText = document.getElementById('loaderText');
+  const loaderLogoImg = document.querySelector('.loader-logo-img');
+  const loaderLogoText = document.querySelector('.loader-logo');
 
   if (!loader || !loaderFill) return;
+
+  // Apply initial loading branding immediately from cache
+  try {
+    if (typeof getMothraData === 'function') {
+      const db = getMothraData();
+      if (db && db.branding) {
+        if (loaderLogoImg) loaderLogoImg.src = db.branding.loadingLogo || db.branding.logo || 'assets/mothra-logo.png';
+        if (loaderLogoText) loaderLogoText.textContent = db.branding.loadingName || db.branding.clanName || 'MOTHRA';
+        if (loaderText && db.branding.loadingText) loaderText.textContent = db.branding.loadingText;
+      }
+    }
+  } catch (e) {}
 
   const steps = [
     { pct: 25, text: 'SYNCHRONIZING TACTICAL ASSETS...' },

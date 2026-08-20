@@ -160,8 +160,48 @@
               </div>
             </div>
 
+            <!-- Kustomisasi Loading Screen (Preloader) -->
+            <div style="margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--border-dim);">
+              <h4 style="font-family:var(--font-display);font-size:1.25rem;color:var(--gold);margin-bottom:0.35rem;letter-spacing:0.05em;">
+                ⚡ KUSTOMISASI LAYAR LOADING (PRELOADER SCREEN)
+              </h4>
+              <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:1.25rem;">
+                Atur nama tim, teks sambutan, dan upload logo khusus untuk layar loading awal saat website dibuka.
+              </p>
+
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;">
+                <div class="form-group">
+                  <label class="form-label">NAMA PADA LAYAR LOADING *</label>
+                  <input type="text" id="bLoadingName" class="form-input" placeholder="MOTHRA" />
+                  <small style="color:var(--gray-light);font-size:0.75rem;">Nama tim berukuran besar di layar loading.</small>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">TEKS STATUS AWAL LOADING</label>
+                  <input type="text" id="bLoadingText" class="form-input" placeholder="ESTABLISHING TACTICAL UPLINK..." />
+                  <small style="color:var(--gray-light);font-size:0.75rem;">Teks status taktis di bawah progress bar.</small>
+                </div>
+              </div>
+
+              <!-- Upload Logo Khusus Loading Screen -->
+              <div class="upload-section" style="margin-top:0.75rem;">
+                <div class="form-group">
+                  <label class="form-label">📁 UPLOAD LOGO KHUSUS LOADING SCREEN DARI KOMPUTER (LOCAL PC)</label>
+                  <input type="file" id="bLoadingLogoFile" accept="image/*" class="file-upload-input" />
+                </div>
+                <div style="display:flex;gap:1rem;align-items:center;">
+                  <div class="form-group" style="flex:1;margin-bottom:0;">
+                    <label class="form-label">ATAU URL / PATH LOGO LOADING</label>
+                    <input type="text" id="bLoadingLogo" class="form-input" placeholder="assets/mothra-logo.png" />
+                  </div>
+                  <div class="upload-preview-box" style="width:75px;height:75px;background:rgba(0,0,0,0.5);">
+                    <img id="bLoadingLogoPreviewTag" src="assets/mothra-logo.png" alt="Preview Loading Logo" style="width:100%;height:100%;object-fit:contain;border-radius:4px;" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <button type="submit" class="btn-add" style="margin-top:1.75rem;font-size:1.05rem;padding:0.8rem 2rem;background:#10B981;border-color:#10B981;">
-              💾 SIMPAN PERUBAHAN NAMA &amp; LOGO CLAN &rarr;
+              💾 SIMPAN PERUBAHAN NAMA, LOGO &amp; LOADING SCREEN &rarr;
             </button>
           </form>
         </div>

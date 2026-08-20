@@ -224,6 +224,7 @@ function setupImageUploader(fileInputId, textInputId, previewImgId, maxW = 1000,
 // Initialize File Uploaders
 setupImageUploader('bLogoFile', 'bLogo', 'bLogoPreviewTag', 600, 600);
 setupImageUploader('bLogoIconFile', 'bLogoIcon', 'bLogoIconPreviewTag', 400, 400);
+setupImageUploader('bLoadingLogoFile', 'bLoadingLogo', 'bLoadingLogoPreviewTag', 600, 600);
 setupImageUploader('pImgFile', 'pImg', 'pImgPreviewTag', 800, 1000);
 setupImageUploader('gImgFile', 'gImg', 'gImgPreviewTag', 1200, 800);
 setupImageUploader('paLogoFile', 'paLogo', 'paLogoPreviewTag', 600, 600);
@@ -252,6 +253,16 @@ function renderBrandingForm() {
   const logoIconPrev = document.getElementById('bLogoIconPreviewTag');
   if (logoIconPrev) logoIconPrev.src = b.logoIcon || 'assets/Logo_Clan_MOTHRA_-_Transparan_NO_TEXT.png';
 
+  // Loading Screen Branding
+  const loadNameEl = document.getElementById('bLoadingName');
+  if (loadNameEl) loadNameEl.value = b.loadingName || b.clanName || 'MOTHRA';
+  const loadTextEl = document.getElementById('bLoadingText');
+  if (loadTextEl) loadTextEl.value = b.loadingText || 'ESTABLISHING TACTICAL UPLINK...';
+  const loadLogoEl = document.getElementById('bLoadingLogo');
+  if (loadLogoEl) loadLogoEl.value = b.loadingLogo || b.logo || 'assets/mothra-logo.png';
+  const loadLogoPrev = document.getElementById('bLoadingLogoPreviewTag');
+  if (loadLogoPrev) loadLogoPrev.src = b.loadingLogo || b.logo || 'assets/mothra-logo.png';
+
   // Live update admin sidebar brand & logo
   const adminLogo = document.getElementById('adminSidebarLogo');
   if (adminLogo && b.logo) adminLogo.src = b.logo;
@@ -268,11 +279,14 @@ if (brandingForm) {
       tagline: (document.getElementById('bTagline').value || '').trim(),
       description: (document.getElementById('bDesc').value || '').trim(),
       logo: (document.getElementById('bLogo').value || 'assets/mothra-logo.png').trim(),
-      logoIcon: (document.getElementById('bLogoIcon').value || 'assets/Logo_Clan_MOTHRA_-_Transparan_NO_TEXT.png').trim()
+      logoIcon: (document.getElementById('bLogoIcon').value || 'assets/Logo_Clan_MOTHRA_-_Transparan_NO_TEXT.png').trim(),
+      loadingName: (document.getElementById('bLoadingName').value || document.getElementById('bClanName').value || 'MOTHRA').trim(),
+      loadingText: (document.getElementById('bLoadingText').value || 'ESTABLISHING TACTICAL UPLINK...').trim(),
+      loadingLogo: (document.getElementById('bLoadingLogo').value || document.getElementById('bLogo').value || 'assets/mothra-logo.png').trim()
     };
     saveMothraData(db);
     renderBrandingForm();
-    showToast('🛡️ Identitas & Logo Clan berhasil disimpan dan disinkronkan ke Supabase!');
+    showToast('🛡️ Identitas, Logo & Loading Screen berhasil disimpan dan disinkronkan ke Supabase!');
   });
 }
 
