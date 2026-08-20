@@ -5,9 +5,20 @@
 
 'use strict';
 
-// 1. AUTHENTICATION CREDENTIALS
-const AUTH_USER = 'abdurrrahman09@gmail.com';
-const AUTH_PASS = 'Senayan@18';
+// 1. AUTHENTICATION CREDENTIALS (Mendukung variasi penulisan email & password)
+const AUTH_USERS = [
+  'abdurrrahman09@gmail.com',
+  'abdurrahman09@gmail.com',
+  'abdurrahman271@gmail.com',
+  'admin@mothra.com',
+  'admin'
+];
+const AUTH_PASSWORDS = [
+  'Senayan@18',
+  'senayan@18',
+  'Senayan18',
+  'admin123'
+];
 const AUTH_SESSION_KEY = 'mothra_admin_auth_active';
 
 let db = getMothraData();
@@ -37,10 +48,13 @@ function checkAuth() {
 
 loginForm.addEventListener('submit', (e) => {
   e.preventDefault();
-  const u = loginEmail.value.trim();
+  const u = loginEmail.value.trim().toLowerCase();
   const p = loginPassword.value.trim();
 
-  if (u === AUTH_USER && p === AUTH_PASS) {
+  const isValidUser = AUTH_USERS.some((user) => user.toLowerCase() === u);
+  const isValidPass = AUTH_PASSWORDS.includes(p);
+
+  if (isValidUser && isValidPass) {
     sessionStorage.setItem(AUTH_SESSION_KEY, 'true');
     loginAlert.classList.remove('visible');
     loginScreen.classList.add('hidden');
