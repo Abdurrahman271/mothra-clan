@@ -96,9 +96,22 @@ CREATE TABLE IF NOT EXISTS public.mothra_gallery (
     created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+-- Tabel Identitas & Logo Clan (Branding)
+CREATE TABLE IF NOT EXISTS public.mothra_branding (
+    id TEXT PRIMARY KEY DEFAULT 'main',
+    clan_name TEXT NOT NULL DEFAULT 'MOTHRA',
+    clan_full_name TEXT DEFAULT 'MOTHRA ESPORTS',
+    tagline TEXT DEFAULT 'TACTICAL ESPORTS SQUAD • NO FEAR. NO EXCUSES.',
+    description TEXT,
+    logo TEXT DEFAULT 'assets/mothra-logo.png',
+    logo_icon TEXT DEFAULT 'assets/Logo_Clan_MOTHRA_-_Transparan_NO_TEXT.png',
+    updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
 -- 3. KONFIGURASI ROW LEVEL SECURITY (RLS) & POLICIES
 -- Aktifkan RLS di setiap tabel
 ALTER TABLE public.mothra_cms ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.mothra_branding ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.mothra_categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.mothra_lineup ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.mothra_schedule_matches ENABLE ROW LEVEL SECURITY;
@@ -119,7 +132,10 @@ CREATE POLICY "Allow public update access on mothra_cms" ON public.mothra_cms FO
 DROP POLICY IF EXISTS "Allow public delete access on mothra_cms" ON public.mothra_cms;
 CREATE POLICY "Allow public delete access on mothra_cms" ON public.mothra_cms FOR DELETE USING (true);
 
--- Policies untuk tabel relasional
+-- Policies untuk tabel relasional & branding
+DROP POLICY IF EXISTS "Allow public all on mothra_branding" ON public.mothra_branding;
+CREATE POLICY "Allow public all on mothra_branding" ON public.mothra_branding FOR ALL USING (true) WITH CHECK (true);
+
 DROP POLICY IF EXISTS "Allow public all on mothra_categories" ON public.mothra_categories;
 CREATE POLICY "Allow public all on mothra_categories" ON public.mothra_categories FOR ALL USING (true) WITH CHECK (true);
 
@@ -139,7 +155,7 @@ DROP POLICY IF EXISTS "Allow public all on mothra_gallery" ON public.mothra_gall
 CREATE POLICY "Allow public all on mothra_gallery" ON public.mothra_gallery FOR ALL USING (true) WITH CHECK (true);
 
 -- 4. AKTIFKAN SUPABASE REALTIME REPLICATION
--- Menambahkan tabel mothra_cms ke publication supabase_realtime
+-- Menambahkan tabel mothra_cms dan mothra_branding ke publication supabase_realtime
 DO $$
 BEGIN
     IF NOT EXISTS (
@@ -147,6 +163,12 @@ BEGIN
         WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'mothra_cms'
     ) THEN
         ALTER PUBLICATION supabase_realtime ADD TABLE public.mothra_cms;
+    END IF;
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables 
+        WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'mothra_branding'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.mothra_branding;
     END IF;
 END
 $$;

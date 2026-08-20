@@ -37,6 +37,51 @@ function syncCmsData() {
   const db = getMothraData();
   if (!db) return;
 
+  // 0. Sync Clan Identity & Branding (Logo, Nama, Tagline, Favicon)
+  if (db.branding) {
+    const b = db.branding;
+    const clanName = b.clanName || 'MOTHRA';
+    const logoSrc = b.logo || 'assets/mothra-logo.png';
+    const logoIconSrc = b.logoIcon || b.logo || 'assets/mothra-logo.png';
+
+    // Navbar Brand
+    const navLogoImg = document.querySelector('.nav-logo-img');
+    const logoText = document.querySelector('.nav-logo .logo-text');
+    if (navLogoImg && logoSrc) navLogoImg.src = logoSrc;
+    if (logoText && clanName) logoText.textContent = clanName;
+
+    // Mobile Menu Brand
+    const mobileHeaderBrandImg = document.querySelector('.mobile-header-brand img');
+    const mobileHeaderBrandText = document.querySelector('.mobile-header-brand span');
+    if (mobileHeaderBrandImg && logoSrc) mobileHeaderBrandImg.src = logoSrc;
+    if (mobileHeaderBrandText && clanName) mobileHeaderBrandText.textContent = clanName;
+
+    // Hero Brand (Bottom bar)
+    const heroBrandLogo = document.querySelector('.hero-brand-logo');
+    const heroBrandText = document.querySelector('.hero-brand-text');
+    const heroBrandSub = document.querySelector('.hero-brand-sub');
+    if (heroBrandLogo && logoSrc) heroBrandLogo.src = logoSrc;
+    if (heroBrandText && clanName) heroBrandText.textContent = clanName;
+    if (heroBrandSub && b.tagline) heroBrandSub.textContent = b.tagline;
+
+    // Footer Brand
+    const footerLogoImg = document.querySelector('.footer-brand-logo, .footer-brand img');
+    const footerLogoText = document.querySelector('.footer-logo');
+    const footerTagline = document.querySelector('.footer-tagline');
+    const footerDesc = document.querySelector('.footer-desc');
+    if (footerLogoImg && logoSrc) footerLogoImg.src = logoSrc;
+    if (footerLogoText && clanName) footerLogoText.textContent = clanName;
+    if (footerTagline && b.tagline) footerTagline.textContent = b.tagline;
+    if (footerDesc && b.description) footerDesc.textContent = b.description;
+
+    // Favicon & Page Title
+    const favIcon = document.querySelector('link[rel="icon"]');
+    if (favIcon && logoIconSrc) favIcon.href = logoIconSrc;
+    if (clanName && document.title.includes('MOTHRA')) {
+      document.title = document.title.replace('MOTHRA', clanName);
+    }
+  }
+
   // 1. Sync Dossier & Hero stats
   if (db.dossier) {
     const d = db.dossier;

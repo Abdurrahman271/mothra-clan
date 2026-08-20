@@ -1060,33 +1060,48 @@ button {
   position: absolute;
   bottom: 0; left: 0; right: 0;
   padding: 1.5rem;
-  background: linear-gradient(0deg, rgba(8, 8, 8, 0.98) 0%, rgba(8, 8, 8, 0.75) 65%, transparent 100%);
+  background: linear-gradient(0deg, rgba(8, 8, 8, 0.98) 0%, rgba(8, 8, 8, 0.78) 65%, transparent 100%);
+  box-sizing: border-box;
+  max-width: 100%;
+  z-index: 2;
 }
-.player-card--featured .player-info { padding: 2.25rem; }
+.player-card--featured .player-info { padding: 2rem 1.5rem; }
 .player-role {
   font-family: var(--font-mono);
   font-size: 0.68rem;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.18em;
   color: var(--gold);
   display: block;
   margin-bottom: 0.35rem;
   text-transform: uppercase;
+  word-break: break-word;
 }
 .player-name {
   font-family: var(--font-display);
-  font-size: 1.45rem;
+  font-size: clamp(1.15rem, 3.2vw, 1.45rem);
   font-weight: 900;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
   color: var(--white);
   text-transform: uppercase;
-  line-height: 1.1;
+  line-height: 1.15;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  hyphens: auto;
 }
-.player-card--featured .player-name { font-size: 2.4rem; }
+.player-card--featured .player-name {
+  font-size: clamp(1.45rem, 5vw, 2.3rem);
+  line-height: 1.12;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
 .player-realname {
   font-family: var(--font-body);
   font-size: 0.85rem;
   color: var(--gray-light);
   margin-top: 0.3rem;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .players-grid-side {
@@ -2271,10 +2286,15 @@ button {
   .about-grid { gap: 2rem; }
   
   .players-grid-side { grid-template-columns: 1fr; }
+  .player-info { padding: 1.25rem 1rem; }
+  .player-card--featured .player-info { padding: 1.35rem 1.1rem; }
   .player-card--featured .player-img-wrap { min-height: 340px; }
+  .player-card--featured .player-name { font-size: clamp(1.35rem, 6.8vw, 1.85rem); line-height: 1.15; }
+  .player-name { font-size: clamp(1.1rem, 5.2vw, 1.35rem); line-height: 1.15; }
   
   .player-modal { padding: 0.75rem; }
   .player-modal-content { padding: 1.5rem 1.25rem; }
+  .player-modal-name { font-size: clamp(1.5rem, 7vw, 2.2rem); word-break: break-word; overflow-wrap: anywhere; }
   .player-modal-stats-grid { grid-template-columns: 1fr; gap: 0.75rem; }
   
   .achievement-item { grid-template-columns: 60px 1fr; gap: 0.75rem; }

@@ -42,7 +42,7 @@
       </form>
 
       <div style="margin-top:1.5rem;text-align:center;">
-        <a href="index.html" style="font-family:var(--font-mono);font-size:0.75rem;color:var(--gray-light);text-decoration:none;">&larr; Kembali ke Website Utama</a>
+        <a href="./" style="font-family:var(--font-mono);font-size:0.75rem;color:var(--gray-light);text-decoration:none;">&larr; Kembali ke Website Utama</a>
       </div>
     </div>
   </div>
@@ -52,15 +52,16 @@
     <!-- Sidebar -->
     <aside class="admin-sidebar">
       <div class="sidebar-header">
-        <img src="assets/mothra-logo.png" alt="MOTHRA" class="sidebar-logo" />
+        <img src="assets/mothra-logo.png" alt="MOTHRA" class="sidebar-logo" id="adminSidebarLogo" />
         <div>
-          <div class="sidebar-brand-text">MOTHRA</div>
+          <div class="sidebar-brand-text" id="adminSidebarBrandText">MOTHRA</div>
           <span class="sidebar-brand-sub">TACTICAL CMS v2.5</span>
         </div>
       </div>
 
       <nav class="sidebar-nav">
         <button class="nav-item active" data-panel="panelOverview">📊 Overview</button>
+        <button class="nav-item" data-panel="panelBranding">🛡️ Identitas &amp; Logo Clan</button>
         <button class="nav-item" data-panel="panelDossier">📜 The Dossier</button>
         <button class="nav-item" data-panel="panelCategories">🏆 Kategori Turnamen</button>
         <button class="nav-item" data-panel="panelLineup">🎮 The Lineup (Roster)</button>
@@ -73,7 +74,7 @@
       </nav>
 
       <div class="sidebar-footer">
-        <a href="index.html" target="_blank" class="btn-view-site">
+        <a href="./" target="_blank" class="btn-view-site">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
           Lihat Live Website
         </a>
@@ -92,6 +93,79 @@
           OPERATOR: abdurrrahman09@gmail.com
         </div>
       </div>
+
+      <!-- 0. IDENTITAS & LOGO CLAN PANEL -->
+      <section class="admin-panel" id="panelBranding">
+        <div class="card-box">
+          <h3 class="card-box-title">🛡️ IDENTITAS CLAN &amp; KUSTOMISASI LOGO</h3>
+          <p style="color:var(--text-muted);font-size:0.9rem;margin-top:0.25rem;">
+            Ubah nama clan, slogan/tagline, dan upload logo baru langsung dari PC. Perubahan akan <strong style="color:var(--gold);">otomatis tersimpan ke Supabase</strong> dan terupdate realtime di seluruh halaman website publik!
+          </p>
+
+          <form id="brandingForm" style="margin-top:1.5rem;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;">
+              <div class="form-group">
+                <label class="form-label">NAMA CLAN (IN-GAME / SHORT BRAND) *</label>
+                <input type="text" id="bClanName" class="form-input" placeholder="MOTHRA" required />
+                <small style="color:var(--gray-light);font-size:0.75rem;">Ditampilkan di navbar, judul tab browser, header &amp; footer.</small>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">NAMA RESMI / FULL IDENTITY *</label>
+                <input type="text" id="bClanFullName" class="form-input" placeholder="MOTHRA ESPORTS" required />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">SLOGAN / BRAND TAGLINE *</label>
+              <input type="text" id="bTagline" class="form-input" placeholder="TACTICAL ESPORTS SQUAD • NO FEAR. NO EXCUSES." required />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">DESKRIPSI SINGKAT BRAND (FOOTER) *</label>
+              <textarea id="bDesc" class="form-input" rows="3" placeholder="Deskripsi identitas clan di footer website..."></textarea>
+            </div>
+
+            <!-- Upload Logo Utama -->
+            <div class="upload-section" style="margin-top:1.25rem;">
+              <div class="form-group">
+                <label class="form-label">📁 UPLOAD LOGO CLAN UTAMA DARI KOMPUTER (LOCAL PC)</label>
+                <input type="file" id="bLogoFile" accept="image/*" class="file-upload-input" />
+              </div>
+              <div style="display:flex;gap:1rem;align-items:center;">
+                <div class="form-group" style="flex:1;margin-bottom:0;">
+                  <label class="form-label">ATAU URL / PATH LOGO</label>
+                  <input type="text" id="bLogo" class="form-input" placeholder="assets/mothra-logo.png" required />
+                </div>
+                <div class="upload-preview-box" style="width:75px;height:75px;background:rgba(0,0,0,0.5);">
+                  <img id="bLogoPreviewTag" src="assets/mothra-logo.png" alt="Preview Logo" style="width:100%;height:100%;object-fit:contain;border-radius:4px;" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Upload Logo Transparan / Favicon Icon -->
+            <div class="upload-section" style="margin-top:1rem;">
+              <div class="form-group">
+                <label class="form-label">📁 UPLOAD LOGO TRANSPARAN / ICON FAVICON</label>
+                <input type="file" id="bLogoIconFile" accept="image/*" class="file-upload-input" />
+              </div>
+              <div style="display:flex;gap:1rem;align-items:center;">
+                <div class="form-group" style="flex:1;margin-bottom:0;">
+                  <label class="form-label">ATAU URL / PATH ICON</label>
+                  <input type="text" id="bLogoIcon" class="form-input" placeholder="assets/Logo_Clan_MOTHRA_-_Transparan_NO_TEXT.png" />
+                </div>
+                <div class="upload-preview-box" style="width:75px;height:75px;background:rgba(0,0,0,0.5);">
+                  <img id="bLogoIconPreviewTag" src="assets/Logo_Clan_MOTHRA_-_Transparan_NO_TEXT.png" alt="Preview Icon" style="width:100%;height:100%;object-fit:contain;border-radius:4px;" />
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" class="btn-add" style="margin-top:1.75rem;font-size:1.05rem;padding:0.8rem 2rem;background:#10B981;border-color:#10B981;">
+              💾 SIMPAN PERUBAHAN NAMA &amp; LOGO CLAN &rarr;
+            </button>
+          </form>
+        </div>
+      </section>
 
       <!-- 1. OVERVIEW PANEL -->
       <section class="admin-panel active" id="panelOverview">

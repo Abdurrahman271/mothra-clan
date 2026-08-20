@@ -6,6 +6,15 @@
 const DEFAULT_MOTHRA_DATA = {
   "dataVersion": 1787240130085,
   "updatedAt": "2026-08-20T15:35:30.085Z",
+  "branding": {
+    "clanName": "MOTHRA",
+    "clanFullName": "MOTHRA ESPORTS",
+    "tagline": "TACTICAL ESPORTS SQUAD • NO FEAR. NO EXCUSES.",
+    "description": "Clan Point Blank Indonesia kompetitif berbasis disiplin, loyalitas, dan insting tempur tingkat tinggi. Bersaing di kancah PBNC, PBSC, dan PBIC.",
+    "logo": "assets/mothra-logo.png",
+    "logoIcon": "assets/Logo_Clan_MOTHRA_-_Transparan_NO_TEXT.png",
+    "logoGold": "assets/mothra-gold-logo.png"
+  },
   "dossier": {
     "tagline": "DISIPLIN. LOYALITAS. INSTING.",
     "description": "MOTHRA lahir dari satu keyakinan: tim yang hebat dibangun dari pejuang yang mau tumbuh bersama. Sejak 2020, kami menjadikan setiap match sebagai ruang belajar dan setiap panggung turnamen sebagai arena pembuktian mental juara.",
@@ -467,6 +476,9 @@ function sanitizeMothraData(data) {
   }
   if (!data.dossier) {
     data.dossier = JSON.parse(JSON.stringify(DEFAULT_MOTHRA_DATA.dossier));
+  }
+  if (!data.branding) {
+    data.branding = JSON.parse(JSON.stringify(DEFAULT_MOTHRA_DATA.branding));
   }
 }
 

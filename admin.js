@@ -112,6 +112,7 @@ function initDashboard() {
 function renderAllPanels() {
   if (!db) db = getMothraData();
   renderOverviewStats();
+  renderBrandingForm();
   renderDossierForm();
   renderCategoriesTable();
   populateCategoryDropdown();
@@ -221,10 +222,59 @@ function setupImageUploader(fileInputId, textInputId, previewImgId, maxW = 1000,
 }
 
 // Initialize File Uploaders
+setupImageUploader('bLogoFile', 'bLogo', 'bLogoPreviewTag', 600, 600);
+setupImageUploader('bLogoIconFile', 'bLogoIcon', 'bLogoIconPreviewTag', 400, 400);
 setupImageUploader('pImgFile', 'pImg', 'pImgPreviewTag', 800, 1000);
 setupImageUploader('gImgFile', 'gImg', 'gImgPreviewTag', 1200, 800);
 setupImageUploader('paLogoFile', 'paLogo', 'paLogoPreviewTag', 600, 600);
 setupImageUploader('bannerImgFile', 'bannerImgUrl', 'bannerPreviewImg', 1200, 700);
+
+/* ============================================================
+   00 / BRANDING & CLAN IDENTITY CMS
+   ============================================================ */
+const brandingForm = document.getElementById('brandingForm');
+function renderBrandingForm() {
+  const b = db.branding || {};
+  const nameEl = document.getElementById('bClanName');
+  if (nameEl) nameEl.value = b.clanName || 'MOTHRA';
+  const fullNameEl = document.getElementById('bClanFullName');
+  if (fullNameEl) fullNameEl.value = b.clanFullName || 'MOTHRA ESPORTS';
+  const taglineEl = document.getElementById('bTagline');
+  if (taglineEl) taglineEl.value = b.tagline || 'TACTICAL ESPORTS SQUAD • NO FEAR. NO EXCUSES.';
+  const descEl = document.getElementById('bDesc');
+  if (descEl) descEl.value = b.description || 'Clan Point Blank Indonesia kompetitif berbasis disiplin, loyalitas, dan insting tempur tingkat tinggi.';
+  const logoEl = document.getElementById('bLogo');
+  if (logoEl) logoEl.value = b.logo || 'assets/mothra-logo.png';
+  const logoPrev = document.getElementById('bLogoPreviewTag');
+  if (logoPrev) logoPrev.src = b.logo || 'assets/mothra-logo.png';
+  const logoIconEl = document.getElementById('bLogoIcon');
+  if (logoIconEl) logoIconEl.value = b.logoIcon || 'assets/Logo_Clan_MOTHRA_-_Transparan_NO_TEXT.png';
+  const logoIconPrev = document.getElementById('bLogoIconPreviewTag');
+  if (logoIconPrev) logoIconPrev.src = b.logoIcon || 'assets/Logo_Clan_MOTHRA_-_Transparan_NO_TEXT.png';
+
+  // Live update admin sidebar brand & logo
+  const adminLogo = document.getElementById('adminSidebarLogo');
+  if (adminLogo && b.logo) adminLogo.src = b.logo;
+  const adminText = document.getElementById('adminSidebarBrandText');
+  if (adminText && b.clanName) adminText.textContent = b.clanName;
+}
+
+if (brandingForm) {
+  brandingForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    db.branding = {
+      clanName: (document.getElementById('bClanName').value || 'MOTHRA').trim(),
+      clanFullName: (document.getElementById('bClanFullName').value || 'MOTHRA ESPORTS').trim(),
+      tagline: (document.getElementById('bTagline').value || '').trim(),
+      description: (document.getElementById('bDesc').value || '').trim(),
+      logo: (document.getElementById('bLogo').value || 'assets/mothra-logo.png').trim(),
+      logoIcon: (document.getElementById('bLogoIcon').value || 'assets/Logo_Clan_MOTHRA_-_Transparan_NO_TEXT.png').trim()
+    };
+    saveMothraData(db);
+    renderBrandingForm();
+    showToast('🛡️ Identitas & Logo Clan berhasil disimpan dan disinkronkan ke Supabase!');
+  });
+}
 
 /* ============================================================
    OVERVIEW PANEL
