@@ -247,6 +247,8 @@ function renderAllPanels() {
   renderDossierForm();
   renderCategoriesTable();
   populateCategoryDropdown();
+  renderRolesTable();
+  populateRoleDropdown();
   renderLineupTable();
   renderScheduleTable();
   renderPartnershipsTable();
@@ -678,6 +680,147 @@ categoryForm.addEventListener('submit', (e) => {
 });
 
 /* ============================================================
+   02B / MANAJEMEN ROLE TACTICAL CRUD (IGL, RUSHER, SNIPER, DLL)
+   ============================================================ */
+const rolesTableBody = document.getElementById('rolesTableBody');
+const roleModal = document.getElementById('roleCrudModal');
+const roleForm = document.getElementById('roleCrudForm');
+let editingRoleId = null;
+
+function renderRolesTable() {
+  if (!rolesTableBody) return;
+  if (!Array.isArray(db.roles) || db.roles.length === 0) {
+    db.roles = [
+      { id: "igl", label: "IGL / CAPTAIN", description: "In-Game Leader & Tactical Shotcaller" },
+      { id: "rusher", label: "RUSHER / ATTACKER", description: "Frontline Entry Fragger & Assault" },
+      { id: "sniper", label: "SNIPER / MARKSMAN", description: "Long-Range Precision Specialist" },
+      { id: "pointman", label: "POINTMAN / HITTER", description: "Fast SMG & CQC Specialist" },
+      { id: "support", label: "SUPPORT / BACKUP", description: "Utility, Cover & Secondary Fragger" },
+      { id: "flex", label: "FLEX / SIXTH MAN", description: "Multi-Role Tactical Sub & Rotation" },
+      { id: "ba", label: "BRAND AMBASSADOR", description: "Official Brand Ambassador & Streamer" },
+      { id: "coach", label: "HEAD COACH", description: "Tactical Strategist & Analyst" }
+    ];
+  }
+
+  rolesTableBody.innerHTML = '';
+  db.roles.forEach((r) => {
+    const playerCount = (db.lineup || []).filter((p) => p.role && (p.role.toLowerCase() === r.label.toLowerCase() || p.role.toLowerCase() === r.id.toLowerCase())).length;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><span class="badge-tag badge-tag--gold">${r.id}</span></td>
+      <td><strong style="color:var(--white);">${r.label}</strong></td>
+      <td style="color:var(--gray-light);font-size:0.85rem;">${r.description || '-'}</td>
+      <td><strong style="color:var(--gold);">${playerCount} Roster</strong></td>
+      <td>
+        <div class="action-btns">
+          <button class="btn-action-edit" onclick="editRole('${r.id}')">Edit</button>
+          <button class="btn-action-del" onclick="deleteRole('${r.id}')">Hapus</button>
+        </div>
+      </td>
+    `;
+    rolesTableBody.appendChild(tr);
+  });
+  populateRoleDropdown();
+}
+
+function populateRoleDropdown() {
+  const pRole = document.getElementById('pRole');
+  if (!pRole) return;
+  const currentVal = pRole.value;
+  pRole.innerHTML = '';
+
+  if (!Array.isArray(db.roles) || db.roles.length === 0) {
+    db.roles = [
+      { id: "igl", label: "IGL / CAPTAIN", description: "In-Game Leader & Tactical Shotcaller" },
+      { id: "rusher", label: "RUSHER / ATTACKER", description: "Frontline Entry Fragger & Assault" },
+      { id: "sniper", label: "SNIPER / MARKSMAN", description: "Long-Range Precision Specialist" },
+      { id: "pointman", label: "POINTMAN / HITTER", description: "Fast SMG & CQC Specialist" },
+      { id: "support", label: "SUPPORT / BACKUP", description: "Utility, Cover & Secondary Fragger" },
+      { id: "flex", label: "FLEX / SIXTH MAN", description: "Multi-Role Tactical Sub & Rotation" },
+      { id: "ba", label: "BRAND AMBASSADOR", description: "Official Brand Ambassador & Streamer" },
+      { id: "coach", label: "HEAD COACH", description: "Tactical Strategist & Analyst" }
+    ];
+  }
+
+  (db.roles || []).forEach((r) => {
+    const opt = document.createElement('option');
+    opt.value = r.label;
+    opt.textContent = `${r.label} ${r.description ? '— ' + r.description : ''}`;
+    pRole.appendChild(opt);
+  });
+
+  if (currentVal) {
+    pRole.value = currentVal;
+  }
+}
+
+window.openAddRoleModal = function() {
+  editingRoleId = null;
+  document.getElementById('roleModalTitle').textContent = 'TAMBAH ROLE TACTICAL BARU';
+  if (roleForm) roleForm.reset();
+  const idEl = document.getElementById('rId');
+  if (idEl) idEl.readOnly = false;
+  if (roleModal) roleModal.classList.add('open');
+};
+
+window.editRole = function(id) {
+  const r = (db.roles || []).find((x) => x.id === id);
+  if (!r) return;
+  editingRoleId = id;
+  document.getElementById('roleModalTitle').textContent = `EDIT ROLE: ${r.label}`;
+  const idEl = document.getElementById('rId');
+  if (idEl) {
+    idEl.value = r.id;
+    idEl.readOnly = true;
+  }
+  document.getElementById('rLabel').value = r.label;
+  document.getElementById('rDesc').value = r.description || '';
+  if (roleModal) roleModal.classList.add('open');
+};
+
+window.deleteRole = function(id) {
+  const r = (db.roles || []).find((x) => x.id === id);
+  const roleName = r ? r.label : id;
+  if (confirm(`Yakin ingin menghapus role "${roleName}"? Role pada pemain terkait akan tetap tersimpan.`)) {
+    db.roles = (db.roles || []).filter((x) => x.id !== id);
+    saveMothraData(db);
+    renderRolesTable();
+    populateRoleDropdown();
+    showToast('Role tactical berhasil dihapus.');
+  }
+};
+
+if (roleForm) {
+  roleForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const rId = document.getElementById('rId').value.trim().toLowerCase().replace(/\s+/g, '_');
+    const rLabel = document.getElementById('rLabel').value.trim();
+    const rDesc = document.getElementById('rDesc').value.trim();
+
+    if (!Array.isArray(db.roles)) db.roles = [];
+
+    if (editingRoleId) {
+      const idx = db.roles.findIndex((x) => x.id === editingRoleId);
+      if (idx !== -1) {
+        db.roles[idx] = { id: editingRoleId, label: rLabel, description: rDesc };
+      }
+    } else {
+      if (db.roles.some((x) => x.id === rId)) {
+        alert('Kode Role sudah ada! Harap gunakan kode lain.');
+        return;
+      }
+      db.roles.push({ id: rId, label: rLabel, description: rDesc });
+    }
+
+    saveMothraData(db);
+    renderRolesTable();
+    populateRoleDropdown();
+    if (roleModal) roleModal.classList.remove('open');
+    showToast(editingRoleId ? 'Role tactical berhasil diperbarui!' : 'Role tactical baru berhasil ditambahkan!');
+  });
+}
+
+/* ============================================================
    03 / THE LINEUP (ROSTER CRUD)
    ============================================================ */
 const lineupTableBody = document.getElementById('lineupTableBody');
@@ -718,8 +861,11 @@ window.openAddPlayerModal = function() {
   document.getElementById('playerModalTitle').textContent = 'TAMBAH ROSTER / BA BARU';
   playerForm.reset();
   populateCategoryDropdown();
+  populateRoleDropdown();
   const pCat = document.getElementById('pCategory');
   if (pCat && pCat.options.length) pCat.selectedIndex = 0;
+  const pRole = document.getElementById('pRole');
+  if (pRole && pRole.options.length) pRole.selectedIndex = 0;
   document.getElementById('pImg').value = 'assets/player-captain.jpg';
   document.getElementById('pImgPreviewTag').src = 'assets/player-captain.jpg';
   playerModal.classList.add('open');
@@ -732,7 +878,20 @@ window.editPlayer = function(id) {
   document.getElementById('playerModalTitle').textContent = `EDIT ROSTER: ${p.name}`;
   document.getElementById('pName').value = p.name;
   document.getElementById('pRealname').value = p.realname || '';
-  document.getElementById('pRole').value = p.role;
+
+  populateRoleDropdown();
+  const pRole = document.getElementById('pRole');
+  if (pRole) {
+    let exists = Array.from(pRole.options).some(opt => opt.value.toLowerCase() === (p.role || '').toLowerCase());
+    if (!exists && p.role) {
+      const customOpt = document.createElement('option');
+      customOpt.value = p.role;
+      customOpt.textContent = p.role;
+      pRole.appendChild(customOpt);
+    }
+    pRole.value = p.role;
+  }
+
   populateCategoryDropdown();
   document.getElementById('pCategory').value = p.category || (db.categories.length ? db.categories[0].id : 'pbnc');
   document.getElementById('pNum').value = p.num || '00';

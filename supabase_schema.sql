@@ -28,6 +28,14 @@ CREATE TABLE IF NOT EXISTS public.mothra_categories (
     created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+-- Tabel Role Tactical (Posisi Roster)
+CREATE TABLE IF NOT EXISTS public.mothra_roles (
+    id TEXT PRIMARY KEY,
+    label TEXT NOT NULL,
+    description TEXT,
+    created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
 -- Tabel Roster & Pemain (Lineup)
 CREATE TABLE IF NOT EXISTS public.mothra_lineup (
     id TEXT PRIMARY KEY,
@@ -177,6 +185,10 @@ CREATE POLICY "Allow public all on mothra_records" ON public.mothra_records FOR 
 DROP POLICY IF EXISTS "Allow public all on mothra_gallery" ON public.mothra_gallery;
 CREATE POLICY "Allow public all on mothra_gallery" ON public.mothra_gallery FOR ALL USING (true) WITH CHECK (true);
 
+-- Policies untuk tabel mothra_roles
+DROP POLICY IF EXISTS "Allow public all on mothra_roles" ON public.mothra_roles;
+CREATE POLICY "Allow public all on mothra_roles" ON public.mothra_roles FOR ALL USING (true) WITH CHECK (true);
+
 -- Policies untuk tabel mothra_users
 DROP POLICY IF EXISTS "Allow public all on mothra_users" ON public.mothra_users;
 CREATE POLICY "Allow public all on mothra_users" ON public.mothra_users FOR ALL USING (true) WITH CHECK (true);
@@ -202,6 +214,12 @@ BEGIN
         WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'mothra_users'
     ) THEN
         ALTER PUBLICATION supabase_realtime ADD TABLE public.mothra_users;
+    END IF;
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables 
+        WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'mothra_roles'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.mothra_roles;
     END IF;
 END
 $$;

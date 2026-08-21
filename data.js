@@ -83,6 +83,16 @@ const DEFAULT_MOTHRA_DATA = {
       "fullName": "Official Brand Ambassador & Streamer"
     }
   ],
+  "roles": [
+    { "id": "igl", "label": "IGL / CAPTAIN", "description": "In-Game Leader & Tactical Shotcaller" },
+    { "id": "rusher", "label": "RUSHER / ATTACKER", "description": "Frontline Entry Fragger & Assault" },
+    { "id": "sniper", "label": "SNIPER / MARKSMAN", "description": "Long-Range Precision Specialist" },
+    { "id": "pointman", "label": "POINTMAN / HITTER", "description": "Fast SMG & CQC Specialist" },
+    { "id": "support", "label": "SUPPORT / BACKUP", "description": "Utility, Cover & Secondary Fragger" },
+    { "id": "flex", "label": "FLEX / SIXTH MAN", "description": "Multi-Role Tactical Sub & Rotation" },
+    { "id": "ba", "label": "BRAND AMBASSADOR", "description": "Official Brand Ambassador & Streamer" },
+    { "id": "coach", "label": "HEAD COACH", "description": "Tactical Strategist & Analyst" }
+  ],
   "lineup": [
     {
       "id": "raven",
@@ -575,6 +585,9 @@ function sanitizeMothraData(data) {
   }
   if (!data.categories || !Array.isArray(data.categories) || data.categories.length === 0) {
     data.categories = JSON.parse(JSON.stringify(DEFAULT_MOTHRA_DATA.categories));
+  }
+  if (!data.roles || !Array.isArray(data.roles) || data.roles.length === 0) {
+    data.roles = JSON.parse(JSON.stringify(DEFAULT_MOTHRA_DATA.roles));
   }
   if (!data.lineup || !Array.isArray(data.lineup) || data.lineup.length === 0) {
     data.lineup = JSON.parse(JSON.stringify(DEFAULT_MOTHRA_DATA.lineup));
