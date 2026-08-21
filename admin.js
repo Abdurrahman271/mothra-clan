@@ -442,7 +442,7 @@ function renderDossierForm() {
   document.getElementById('dosStatus').value = d.status || 'ACTIVE ROSTER';
   document.getElementById('dosWinrate').value = d.winrate || 95;
   document.getElementById('dosMembers').value = (d.activeMembers !== undefined && d.activeMembers !== null) ? d.activeMembers : 250;
-  document.getElementById('dosTournaments').value = d.tournamentsWon || 3;
+  document.getElementById('dosTournaments').value = (d.tournamentsWon !== undefined && d.tournamentsWon !== null) ? d.tournamentsWon : 3;
 }
 
 dossierForm.addEventListener('submit', (e) => {
@@ -455,7 +455,7 @@ dossierForm.addEventListener('submit', (e) => {
     status: document.getElementById('dosStatus').value.trim(),
     winrate: parseInt(document.getElementById('dosWinrate').value, 10) || 95,
     activeMembers: Math.min(250, Math.max(1, parseInt(document.getElementById('dosMembers').value, 10) || 250)),
-    tournamentsWon: parseInt(document.getElementById('dosTournaments').value, 10) || 3
+    tournamentsWon: (function(){ const v = parseInt(document.getElementById('dosTournaments').value, 10); return isNaN(v) ? 0 : Math.max(0, v); })()
   };
   saveMothraData(db);
   showToast('The Dossier & Statistik Clan berhasil diperbarui!');
