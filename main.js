@@ -1138,7 +1138,12 @@ function initCollabModal() {
     if (successMsg) successMsg.classList.add('visible');
   };
 }
-initCollabModal();
+// Inisialisasi partnership modal setelah DOM selesai dimuat
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initCollabModal);
+} else {
+  initCollabModal();
+}
 
 /* ============================================================
    13. RECRUITMENT PORTAL FORM CONTROLLER
