@@ -1423,7 +1423,19 @@ button {
   align-items: center;
   gap: 0.4rem;
   font-weight: bold;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  outline: none;
+  transition: color var(--transition), gap var(--transition), letter-spacing var(--transition);
 }
+.partner-action:hover, .partner-action:focus-visible {
+  color: var(--gold-bright);
+  gap: 0.6rem;
+  letter-spacing: 0.2em;
+}
+.partner-card { cursor: pointer; }
 .partner-card:hover .partner-action { color: var(--gold-bright); gap: 0.6rem; }
 
 /* ============================================================

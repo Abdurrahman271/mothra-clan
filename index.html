@@ -635,7 +635,7 @@
 
         <div class="partnership-grid">
           <!-- 1. Friendly Match / Scrim -->
-          <div class="partner-card reveal-fade" data-delay="0">
+          <div class="partner-card reveal-fade" data-delay="0" onclick="window.openCollabModal && window.openCollabModal('scrim')" role="button" tabindex="0" aria-label="Ajukan Friendly Match atau Scrim">
             <div>
               <div class="partner-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 17.5L3 6V3h3l11.5 11.5"/><path d="M13 19l6-6"/><path d="M16 16l4 4"/><path d="M19 21l2-2"/></svg>
@@ -643,11 +643,11 @@
               <h3 class="partner-title">FRIENDLY MATCH / SCRIM</h3>
               <p class="partner-desc">Tantang skuad MOTHRA dalam 5v5 Bomb Mission Scrim (Rule PBNC / Clan War). Jadwal malam fleksibel.</p>
             </div>
-            <button type="button" class="partner-action open-collab-btn" data-type="Friendly Match / Scrim Request">AJUKAN SPARRING &rarr;</button>
+            <button type="button" class="partner-action open-collab-btn" data-type="scrim" onclick="event.stopPropagation(); window.openCollabModal && window.openCollabModal('scrim');">AJUKAN SPARRING &rarr;</button>
           </div>
 
           <!-- 2. Sponsorship -->
-          <div class="partner-card reveal-fade" data-delay="100">
+          <div class="partner-card reveal-fade" data-delay="100" onclick="window.openCollabModal && window.openCollabModal('sponsor')" role="button" tabindex="0" aria-label="Ajukan Sponsorship dan Brand">
             <div>
               <div class="partner-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
@@ -655,11 +655,11 @@
               <h3 class="partner-title">SPONSORSHIP &amp; BRAND</h3>
               <p class="partner-desc">Integrasi brand Anda di jersey resmi, banner turnamen, live stream overlay, dan media sosial Clan MOTHRA.</p>
             </div>
-            <button type="button" class="partner-action open-collab-btn" data-type="Sponsorship & Brand Inquiry">AJUKAN PROPOSAL &rarr;</button>
+            <button type="button" class="partner-action open-collab-btn" data-type="sponsor" onclick="event.stopPropagation(); window.openCollabModal && window.openCollabModal('sponsor');">AJUKAN PROPOSAL &rarr;</button>
           </div>
 
           <!-- 3. Design Partner -->
-          <div class="partner-card reveal-fade" data-delay="200">
+          <div class="partner-card reveal-fade" data-delay="200" onclick="window.openCollabModal && window.openCollabModal('design')" role="button" tabindex="0" aria-label="Gabung Design Partner">
             <div>
               <div class="partner-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
@@ -667,11 +667,11 @@
               <h3 class="partner-title">DESIGN PARTNER</h3>
               <p class="partner-desc">Kolaborasi tim kreatif: Jersey design, Point Blank 3D animation, poster pertandingan, VFX/GFX &amp; video motion.</p>
             </div>
-            <button type="button" class="partner-action open-collab-btn" data-type="Design & Creative Partnership">GABUNG CREATIVE &rarr;</button>
+            <button type="button" class="partner-action open-collab-btn" data-type="design" onclick="event.stopPropagation(); window.openCollabModal && window.openCollabModal('design');">GABUNG CREATIVE &rarr;</button>
           </div>
 
           <!-- 4. Brand Ambassador -->
-          <div class="partner-card reveal-fade" data-delay="300">
+          <div class="partner-card reveal-fade" data-delay="300" onclick="window.openCollabModal && window.openCollabModal('ba')" role="button" tabindex="0" aria-label="Daftar Talent atau Brand Ambassador">
             <div>
               <div class="partner-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
@@ -679,7 +679,7 @@
               <h3 class="partner-title">BRAND AMBASSADOR</h3>
               <p class="partner-desc">Bagi streamer dan gaming influencer yang ingin menjadi Brand Ambassador / Talent resmi Clan MOTHRA.</p>
             </div>
-            <button type="button" class="partner-action open-collab-btn" data-type="Brand Ambassador & Talent">DAFTAR TALENT / BA &rarr;</button>
+            <button type="button" class="partner-action open-collab-btn" data-type="ba" onclick="event.stopPropagation(); window.openCollabModal && window.openCollabModal('ba');">DAFTAR TALENT / BA &rarr;</button>
           </div>
         </div>
       </div>

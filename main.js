@@ -1034,9 +1034,13 @@ function initCollabModal() {
   openButtons.forEach((btn) => {
     btn.onclick = (e) => {
       e.preventDefault();
+      e.stopPropagation();
       openModal(btn.dataset.type || '');
     };
   });
+
+  // Expose globally so inline onclick attributes in HTML can call it directly
+  window.openCollabModal = openModal;
 
   if (closeBtn) closeBtn.onclick = closeModal;
   if (backdrop) backdrop.onclick = closeModal;
