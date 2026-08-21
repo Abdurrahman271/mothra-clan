@@ -132,30 +132,40 @@ function syncCmsData() {
     if (d.description && aboutDesc) aboutDesc.textContent = d.description;
     if (d.city && originCity) originCity.innerHTML = d.city.replace(/\n/g, '<br/>');
 
-    // Stats Synchronizer (Hero & Dossier)
-    const statCards = document.querySelectorAll('.hero-stat');
-    if (statCards.length >= 3) {
-      // 1. Winrate
-      const winEl = statCards[0].querySelector('.hero-stat-num');
-      if (winEl) {
-        winEl.dataset.count = d.winrate || 95;
-        winEl.textContent = d.winrate || 95;
+    // Stats Synchronizer (Hero & Dossier) — keyed by label to avoid index dependency
+    const allStatNums = document.querySelectorAll('.hero-stat-num');
+
+    allStatNums.forEach((el) => {
+      const label = el.closest('.hero-stat') && el.closest('.hero-stat').querySelector('.hero-stat-label');
+      const labelText = label ? label.textContent.trim().toLowerCase() : '';
+
+      let newVal = null;
+      if (labelText.includes('win rate') || labelText.includes('winrate')) {
+        newVal = (d.winrate !== undefined && d.winrate !== null) ? d.winrate : 95;
+      } else if (labelText.includes('roster') || labelText.includes('member') || labelText.includes('ba')) {
+        newVal = (d.activeMembers !== undefined && d.activeMembers !== null) ? d.activeMembers : 250;
+      } else if (labelText.includes('juara') || labelText.includes('tournament') || labelText.includes('turnamen')) {
+        newVal = (d.tournamentsWon !== undefined && d.tournamentsWon !== null) ? d.tournamentsWon : 3;
       }
-      // 2. Member Aktif (up to 250)
-      const memEl = statCards[1].querySelector('.hero-stat-num');
-      if (memEl) {
-        const memCount = (d.activeMembers !== undefined && d.activeMembers !== null) ? d.activeMembers : 250;
-        memEl.dataset.count = memCount;
-        memEl.textContent = memCount;
+
+      if (newVal !== null) {
+        el.dataset.count = newVal;
+        // Re-animate the counter so new value visually counts up
+        const target = parseInt(newVal, 10) || 0;
+        const duration = 1200;
+        const start = performance.now();
+        function animateStep(now) {
+          const progress = Math.min((now - start) / duration, 1);
+          const eased = 1 - Math.pow(1 - progress, 4);
+          el.textContent = Math.floor(eased * target);
+          if (progress < 1) requestAnimationFrame(animateStep);
+          else el.textContent = target;
+        }
+        requestAnimationFrame(animateStep);
       }
-      // 3. Juara Turnamen
-      const tourEl = statCards[2].querySelector('.hero-stat-num');
-      if (tourEl) {
-        tourEl.dataset.count = d.tournamentsWon || 3;
-        tourEl.textContent = d.tournamentsWon || 3;
-      }
-    }
+    });
   }
+
 
   // 2. Sync Tournament Categories & Filter Tabs
   const rosterFiltersWrap = document.querySelector('.roster-filters');
