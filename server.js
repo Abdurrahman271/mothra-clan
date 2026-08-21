@@ -307,12 +307,25 @@ if (typeof window !== 'undefined') {
     return;
   }
 
-  // Clean URL mapping: '/' -> 'index.html', '/admin' -> 'admin.html'
-  let safePath = path.normalize(decodeURIComponent(req.url)).replace(/^(\.\.[\/\\])+/, '');
+  // Clean URL mapping & direct .html extension blocking
+  let rawUrl = decodeURIComponent(req.url.split('?')[0]);
+  let safePath = path.normalize(rawUrl).replace(/^(\.\.[\/\\])+/, '');
+
+  // Block direct .html access
+  if (safePath === '/index.html' || safePath === '\\index.html' ||
+      safePath === '/admin.html' || safePath === '\\admin.html' ||
+      safePath === '/admin/index.html' || safePath === '\\admin\\index.html') {
+    const errorPage = fs.readFileSync(path.join(PUBLIC_DIR, '404.html'), 'utf8');
+    res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.end(errorPage);
+    return;
+  }
+
+  // Clean URL mapping: '/' -> 'index.html', '/admin' -> 'admin/index.html'
   if (safePath === '/' || safePath === '\\') {
     safePath = '/index.html';
   } else if (safePath === '/admin' || safePath === '\\admin' || safePath === '/admin/' || safePath === '\\admin\\') {
-    safePath = '/admin.html';
+    safePath = '/admin/index.html';
   }
 
   const filePath = path.join(PUBLIC_DIR, safePath);

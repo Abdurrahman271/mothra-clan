@@ -3,23 +3,197 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MOTHRA HQ — Routing Gateway</title>
+  <title>404 Not Found — MOTHRA CLAN</title>
+  <link rel="icon" type="image/png" href="assets/mothra-logo.png" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,800;0,900;1,700&family=Barlow:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #08080a;
+      color: #fff;
+      font-family: 'Barlow', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+    .error-card {
+      max-width: 560px;
+      width: 100%;
+      background: #111115;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      border-radius: 8px;
+      padding: 2.5rem 2rem;
+      text-align: center;
+      box-shadow: 0 0 40px rgba(239, 68, 68, 0.15);
+      position: relative;
+      overflow: hidden;
+    }
+    .error-top-bar {
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 4px;
+      background: linear-gradient(90deg, #EF4444, #D4AF37, #EF4444);
+    }
+    .error-logo {
+      width: 72px;
+      height: 72px;
+      margin: 0 auto 1.25rem;
+      display: block;
+      filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.4));
+    }
+    .error-tag {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.85rem;
+      color: #EF4444;
+      letter-spacing: 0.15em;
+      margin-bottom: 0.5rem;
+    }
+    .error-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 2.8rem;
+      font-weight: 900;
+      color: #fff;
+      margin: 0 0 0.75rem;
+      letter-spacing: 0.04em;
+      line-height: 1;
+    }
+    .error-box {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      border-radius: 6px;
+      padding: 0.75rem 1rem;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.8rem;
+      color: #FCA5A5;
+      margin-bottom: 1.5rem;
+      text-align: left;
+      line-height: 1.6;
+    }
+    .error-desc {
+      color: #94A3B8;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      margin: 0 0 1.75rem;
+    }
+    .error-desc code {
+      color: #D4AF37;
+      background: rgba(212, 175, 55, 0.1);
+      padding: 0.15rem 0.4rem;
+      border-radius: 3px;
+    }
+    .btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .btn-main {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.85rem 1.5rem;
+      background: #D4AF37;
+      color: #000;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-decoration: none;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+    .btn-main:hover {
+      background: #E5C158;
+      transform: translateY(-1px);
+    }
+    .btn-sub {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.85rem 1.5rem;
+      background: #1A1A22;
+      color: #D4AF37;
+      border: 1px solid #D4AF37;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-decoration: none;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+    .btn-sub:hover {
+      background: rgba(212, 175, 55, 0.15);
+      transform: translateY(-1px);
+    }
+    .error-footer {
+      margin-top: 1.5rem;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.75rem;
+      color: #64748B;
+    }
+  </style>
+</head>
+<body>
+  <div class="error-card">
+    <div class="error-top-bar"></div>
+    <img src="assets/mothra-logo.png" alt="MOTHRA" class="error-logo" onerror="this.style.display='none'" />
+    <div class="error-tag">[ ⚠️ 404 NOT FOUND • ACCESS RESTRICTED ]</div>
+    <h1 class="error-title">404 NOT FOUND</h1>
+
+    <div class="error-box">
+      <div>&bull; STATUS: <span style="color:#EF4444;">HTTP 404 NOT FOUND</span></div>
+      <div>&bull; REASON: Direct (.html) extension access is blocked by Tactical Firewall</div>
+      <div>&bull; TARGET: <span id="targetPath">/</span></div>
+    </div>
+
+    <p class="error-desc">
+      Halaman dengan ekstensi langsung <code>.html</code> atau URL yang tidak terdaftar tidak dapat diakses demi keamanan sistem. Silakan gunakan URL resmi:
+    </p>
+
+    <div class="btn-group">
+      <a href="./" id="btnHome" class="btn-main">
+        🌐 AKSES WEBSITE RESMI (mothra-clan/)
+      </a>
+      <a href="admin" id="btnAdmin" class="btn-sub">
+        🔐 MENUJU ADMIN PANEL (mothra-clan/admin)
+      </a>
+    </div>
+
+    <div class="error-footer">
+      MOTHRA ESPORTS &bull; SECURE TACTICAL GATEWAY
+    </div>
+  </div>
+
   <script>
-    (function () {
-      var path = window.location.pathname;
-      // Handle /admin or /admin/ route redirect
-      if (path.indexOf('/admin') !== -1) {
-        window.location.replace('admin.html');
-      } else {
-        window.location.replace('index.html');
+    (function() {
+      var p = window.location.pathname;
+      var pathEl = document.getElementById('targetPath');
+      if (pathEl) pathEl.textContent = p;
+
+      // Hitung base path untuk GitHub Pages / custom domain
+      var raw = window.location.href;
+      var segments = window.location.pathname.split('/').filter(Boolean);
+      var rootPath = './';
+      var adminPath = 'admin';
+
+      if (segments.length > 0 && segments[0] === 'mothra-clan') {
+        rootPath = '/mothra-clan/';
+        adminPath = '/mothra-clan/admin';
       }
+
+      var btnHome = document.getElementById('btnHome');
+      var btnAdmin = document.getElementById('btnAdmin');
+      if (btnHome) btnHome.href = rootPath;
+      if (btnAdmin) btnAdmin.href = adminPath;
     })();
   </script>
-</head>
-<body style="background:#0b0b0d;color:#d4af37;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;">
-  <div style="text-align:center;">
-    <h2 style="letter-spacing:0.1em;">MOTHRA HQ &mdash; REDIRECTING...</h2>
-    <p style="color:#888;">Mohon tunggu, mengalihkan ke halaman...</p>
-  </div>
 </body>
 </html>

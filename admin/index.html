@@ -4,6 +4,61 @@
   <base href="../">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Security: Block Direct .html Extension Access -->
+  <script>
+    (function blockDirectAdminIndexHtmlAccess() {
+      var p = window.location.pathname.toLowerCase();
+      if (p.endsWith('.html') || p.endsWith('.htm') || p.indexOf('index.html') !== -1) {
+        document.title = "404 Not Found — MOTHRA CLAN";
+        var rawUrl = window.location.href;
+        var rootUrl = rawUrl.substring(0, rawUrl.toLowerCase().indexOf('admin/index.html'));
+        if (!rootUrl) rootUrl = rawUrl.substring(0, rawUrl.toLowerCase().indexOf('index.html'));
+        if (!rootUrl.endsWith('/')) rootUrl += '/';
+        var adminUrl = rootUrl + 'admin';
+
+        var render404 = function() {
+          document.body.style.margin = '0';
+          document.body.style.padding = '0';
+          document.body.style.background = '#08080a';
+          document.body.style.overflow = 'hidden';
+          document.body.innerHTML = '<div style="min-height:100vh;width:100vw;background:#08080a;color:#fff;font-family:\'Barlow\',sans-serif;display:flex;align-items:center;justify-content:center;padding:1.5rem;box-sizing:border-box;position:fixed;top:0;left:0;z-index:99999999;">' +
+            '<div style="max-width:560px;width:100%;background:#111115;border:1px solid rgba(239,68,68,0.4);border-radius:8px;padding:2.5rem 2rem;text-align:center;box-shadow:0 0 40px rgba(239,68,68,0.15);position:relative;overflow:hidden;">' +
+            '<div style="position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#EF4444,#D4AF37,#EF4444);"></div>' +
+            '<img src="assets/mothra-logo.png" alt="MOTHRA" style="width:72px;height:72px;margin:0 auto 1.25rem;display:block;filter:drop-shadow(0 0 10px rgba(212,175,55,0.4));" onerror="this.style.display=\'none\'" />' +
+            '<div style="font-family:\'Share Tech Mono\',monospace;font-size:0.85rem;color:#EF4444;letter-spacing:0.15em;margin-bottom:0.5rem;">[ ⚠️ 404 NOT FOUND • ACCESS RESTRICTED ]</div>' +
+            '<h1 style="font-family:\'Barlow Condensed\',sans-serif;font-size:2.8rem;font-weight:900;color:#fff;margin:0 0 0.75rem;letter-spacing:0.04em;line-height:1;">404 NOT FOUND</h1>' +
+            '<div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);border-radius:6px;padding:0.75rem 1rem;font-family:\'Share Tech Mono\',monospace;font-size:0.8rem;color:#FCA5A5;margin-bottom:1.5rem;text-align:left;line-height:1.6;">' +
+            '<div>&bull; STATUS: <span style="color:#EF4444;">HTTP 404 NOT FOUND</span></div>' +
+            '<div>&bull; REASON: Direct (.html) extension access is blocked by Tactical Firewall</div>' +
+            '<div>&bull; TARGET: ' + window.location.pathname + '</div>' +
+            '</div>' +
+            '<p style="color:#94A3B8;font-size:0.95rem;line-height:1.6;margin:0 0 1.75rem;">' +
+            'Halaman dengan ekstensi langsung <code style="color:#D4AF37;background:rgba(212,175,55,0.1);padding:0.15rem 0.4rem;border-radius:3px;">.html</code> tidak dapat diakses demi keamanan. Silakan gunakan URL resmi:' +
+            '</p>' +
+            '<div style="display:flex;flex-direction:column;gap:0.75rem;">' +
+            '<a href="' + rootUrl + '" style="display:flex;align-items:center;justify-content:center;gap:0.5rem;padding:0.85rem 1.5rem;background:#D4AF37;color:#000;font-family:\'Barlow Condensed\',sans-serif;font-size:1.15rem;font-weight:800;letter-spacing:0.05em;text-decoration:none;border-radius:4px;">' +
+            '🌐 AKSES WEBSITE RESMI (mothra-clan/)' +
+            '</a>' +
+            '<a href="' + adminUrl + '" style="display:flex;align-items:center;justify-content:center;gap:0.5rem;padding:0.85rem 1.5rem;background:#1A1A22;color:#D4AF37;border:1px solid #D4AF37;font-family:\'Barlow Condensed\',sans-serif;font-size:1.15rem;font-weight:800;letter-spacing:0.05em;text-decoration:none;border-radius:4px;">' +
+            '🔐 MENUJU ADMIN PANEL (mothra-clan/admin)' +
+            '</a>' +
+            '</div>' +
+            '<div style="margin-top:1.5rem;font-family:\'Share Tech Mono\',monospace;font-size:0.75rem;color:#64748B;">' +
+            'MOTHRA ESPORTS &bull; SECURE TACTICAL GATEWAY' +
+            '</div>' +
+            '</div></div>';
+        };
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', render404);
+        } else {
+          render404();
+        }
+      }
+    })();
+  </script>
+
   <title>MOTHRA HQ — Admin Panel &amp; CMS</title>
   <link rel="icon" type="image/png" href="assets/mothra-logo.png" />
 
@@ -12,7 +67,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,800;0,900;1,700&family=Barlow:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="admin.css?v=3.0" />
+  <link rel="stylesheet" href="admin.css?v=3.5" />
 </head>
 <body>
 
