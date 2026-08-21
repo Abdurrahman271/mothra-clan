@@ -412,10 +412,72 @@ syncCmsData();
 /* ============================================================
    1. LOADER INITIALIZATION
    ============================================================ */
+/* ============================================================
+   1. ADVANCED TACTICAL CYBER LOADER & SYNTH SOUND ENGINE
+   ============================================================ */
+// Tactical Web Audio API sound synthesizer
+const TacticalAudio = (function() {
+  let audioCtx = null;
+  function getCtx() {
+    if (!audioCtx && (window.AudioContext || window.webkitAudioContext)) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume().catch(() => {});
+    }
+    return audioCtx;
+  }
+
+  return {
+    playBlip(freq = 880, type = 'sine', duration = 0.05, vol = 0.05) {
+      try {
+        const ctx = getCtx();
+        if (!ctx) return;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        gain.gain.setValueAtTime(vol, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + duration);
+      } catch (e) {}
+    },
+    playClick() {
+      this.playBlip(1200, 'triangle', 0.04, 0.04);
+    },
+    playTab() {
+      this.playBlip(950, 'sine', 0.06, 0.06);
+    },
+    playSuccess() {
+      try {
+        const ctx = getCtx();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + i * 0.08);
+          gain.gain.setValueAtTime(0.04, now + i * 0.08);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.2);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + i * 0.08);
+          osc.stop(now + i * 0.08 + 0.22);
+        });
+      } catch (e) {}
+    }
+  };
+})();
+
 (function initLoader() {
   const loader = document.getElementById('loader');
   const loaderFill = document.getElementById('loaderFill');
   const loaderText = document.getElementById('loaderText');
+  const loaderPercent = document.getElementById('loaderPercent');
   const loaderLogoImg = document.querySelector('.loader-logo-img');
   const loaderLogoText = document.querySelector('.loader-logo');
 
@@ -434,37 +496,55 @@ syncCmsData();
   } catch (e) {}
 
   const steps = [
-    { pct: 25, text: 'SYNCHRONIZING TACTICAL ASSETS...' },
-    { pct: 60, text: 'DECRYPTING SQUAD DOSSIER...' },
-    { pct: 90, text: 'ESTABLISHING SECURE PROTOCOL...' },
-    { pct: 100, text: 'SYSTEM ARMED & READY.' },
+    { pct: 20, text: 'ESTABLISHING TACTICAL UPLINK...' },
+    { pct: 45, text: 'SYNCHRONIZING SUPABASE TELEMETRY...' },
+    { pct: 75, text: 'DECRYPTING SQUAD DOSSIER & ROSTER...' },
+    { pct: 95, text: 'CONFIGURING ALLIANCE PROTOCOL...' },
+    { pct: 100, text: 'TACTICAL SYSTEMS ARMED & READY.' },
   ];
 
+  let currentPercent = 0;
+  let targetPercent = 0;
   let stepIdx = 0;
   document.body.classList.add('loading');
 
+  function updatePercentDisplay() {
+    if (currentPercent < targetPercent) {
+      currentPercent += 1;
+      loaderFill.style.width = currentPercent + '%';
+      if (loaderPercent) loaderPercent.textContent = currentPercent + '%';
+      requestAnimationFrame(updatePercentDisplay);
+    }
+  }
+
   function nextStep() {
     if (stepIdx >= steps.length) {
+      targetPercent = 100;
+      updatePercentDisplay();
       setTimeout(() => {
+        TacticalAudio.playSuccess();
         loader.classList.add('hidden');
         document.body.classList.remove('loading');
         initHeroParticles();
         initCounters();
         refreshScrollReveal();
-      }, 300);
+        init3DCardParallax();
+      }, 350);
       return;
     }
     const current = steps[stepIdx++];
-    loaderFill.style.width = current.pct + '%';
+    targetPercent = current.pct;
+    updatePercentDisplay();
     if (loaderText) loaderText.textContent = current.text;
-    setTimeout(nextStep, stepIdx === steps.length ? 400 : 300);
+    TacticalAudio.playBlip(700 + stepIdx * 100, 'sine', 0.03, 0.02);
+    setTimeout(nextStep, stepIdx === steps.length ? 300 : 250);
   }
   
-  setTimeout(nextStep, 100);
+  setTimeout(nextStep, 150);
 })();
 
 /* ============================================================
-   2. CUSTOM CURSOR
+   2. INTERACTIVE RETICLE CURSOR & 3D TILT EFFECT
    ============================================================ */
 (function initCursor() {
   const cursor = document.getElementById('cursor');
@@ -484,23 +564,24 @@ syncCmsData();
   });
 
   function renderFollower() {
-    followerX += (mouseX - followerX) * 0.12;
-    followerY += (mouseY - followerY) * 0.12;
+    followerX += (mouseX - followerX) * 0.15;
+    followerY += (mouseY - followerY) * 0.15;
     follower.style.left = followerX + 'px';
     follower.style.top = followerY + 'px';
     requestAnimationFrame(renderFollower);
   }
   renderFollower();
 
-  const interactiveElements = document.querySelectorAll('a, button, .player-card, .gallery-item, .value-item, .achievement-item, .schedule-banner-wrap, .partner-card');
+  const interactiveElements = document.querySelectorAll('a, button, .player-card, .gallery-item, .value-item, .achievement-item, .schedule-banner-wrap, .partner-card, .collab-tab');
   interactiveElements.forEach((el) => {
     el.addEventListener('mouseenter', () => {
-      cursor.style.width = '16px';
-      cursor.style.height = '16px';
+      cursor.style.width = '14px';
+      cursor.style.height = '14px';
       cursor.style.background = '#FFFFFF';
-      follower.style.width = '52px';
-      follower.style.height = '52px';
+      follower.style.width = '48px';
+      follower.style.height = '48px';
       follower.style.borderColor = 'rgba(212, 175, 55, 0.9)';
+      follower.style.boxShadow = '0 0 16px rgba(212, 175, 55, 0.4)';
     });
     el.addEventListener('mouseleave', () => {
       cursor.style.width = '8px';
@@ -509,9 +590,37 @@ syncCmsData();
       follower.style.width = '34px';
       follower.style.height = '34px';
       follower.style.borderColor = 'rgba(212, 175, 55, 0.6)';
+      follower.style.boxShadow = 'none';
+    });
+    el.addEventListener('click', () => {
+      TacticalAudio.playClick();
     });
   });
 })();
+
+// 3D Card Parallax & Glare Hover Engine
+function init3DCardParallax() {
+  const cards = document.querySelectorAll('.partner-card, .player-card, .schedule-banner-wrap, .record-card, .gallery-item');
+  cards.forEach((card) => {
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+      const rotateX = ((y - centerY) / centerY) * -6;
+      const rotateY = ((x - centerX) / centerX) * 6;
+
+      card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-4px)`;
+      card.style.transition = 'transform 0.1s ease-out';
+    });
+
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0)';
+      card.style.transition = 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+    });
+  });
+}
 
 /* ============================================================
    3. HERO CANVAS PARTICLES
@@ -982,47 +1091,136 @@ bindPlayerCardClickEvents();
 /* ============================================================
    12. COLLABORATION & PARTNERSHIP PROPOSAL MODAL CONTROLLER
    ============================================================ */
+/* ============================================================
+   12. BESPOKE COLLABORATION & PARTNERSHIP PROPOSAL CONTROLLER
+   ============================================================ */
 function initCollabModal() {
   const modal = document.getElementById('collabModal');
   const backdrop = document.getElementById('collabModalBackdrop');
   const closeBtn = document.getElementById('collabModalClose');
   const form = document.getElementById('collabForm');
-  const typeSelect = document.getElementById('collabType');
-  const contactTypeSelect = document.getElementById('collabContactType');
+  const collabTypeHidden = document.getElementById('collabType');
+  const tabs = document.querySelectorAll('.collab-tab');
+  
+  const badgeText = document.getElementById('collabCategoryBadgeText');
+  const modalTitle = document.getElementById('collabModalTitle');
+  const modalDesc = document.getElementById('collabModalDesc');
+  const notesLabel = document.getElementById('collabNotesLabel');
+  const notesInput = document.getElementById('collabNotes');
+  const submitBtnText = document.getElementById('collabSubmitBtnText');
+  const submitBtn = document.getElementById('collabSubmitBtn');
+  
   const successMsg = document.getElementById('collabSuccess');
   const successText = document.getElementById('collabSuccessText');
+  const successCloseBtn = document.getElementById('collabSuccessCloseBtn');
   const warningMsg = document.getElementById('collabWarning');
-  const submitBtn = document.getElementById('collabSubmitBtn');
   const openButtons = document.querySelectorAll('.open-collab-btn, [data-open-collab]');
+
+  const groupScrim = document.getElementById('groupScrim');
+  const groupSponsor = document.getElementById('groupSponsor');
+  const groupDesign = document.getElementById('groupDesign');
+  const groupBa = document.getElementById('groupBa');
 
   if (!modal || !form) return;
 
-  function openModal(defaultType) {
-    if (typeSelect && defaultType) {
-      const search = defaultType.toLowerCase();
-      for (let i = 0; i < typeSelect.options.length; i++) {
-        const optVal = typeSelect.options[i].value.toLowerCase();
-        const optText = typeSelect.options[i].text.toLowerCase();
-        if (optVal === search || optText.includes(search) ||
-            (search.includes('sparring') && optVal === 'scrim') ||
-            (search.includes('scrim') && optVal === 'scrim') ||
-            (search.includes('sponsor') && optVal === 'sponsor') ||
-            (search.includes('proposal') && optVal === 'sponsor') ||
-            (search.includes('creative') && optVal === 'design') ||
-            (search.includes('design') && optVal === 'design') ||
-            (search.includes('talent') && optVal === 'ba') ||
-            (search.includes('ambassador') && optVal === 'ba') ||
-            (search.includes('ba') && optVal === 'ba')) {
-          typeSelect.selectedIndex = i;
-          break;
-        }
-      }
+  const CATEGORY_CONFIG = {
+    scrim: {
+      type: 'scrim',
+      badge: 'ALLIANCE PROTOCOL • SCRIM REQUEST',
+      title: 'TANTANG SKUAD <span class="text-gold">MOTHRA 5v5 SCRIM</span>',
+      desc: 'Ajukan jadwal Friendly Match / Clan War melawan skuad resmi Clan MOTHRA. Formulir ini otomatis tercatat di HQ Admin & diteruskan langsung ke email manajemen.',
+      notesLabel: 'RINCIAN PERTANDINGAN / REQUEST SERVER & ROOM *',
+      notesPlaceholder: 'Tuliskan detail rules khusus, server/channel pilihan, jumlah match (BO3/BO1), atau pesan untuk tim MOTHRA...',
+      btnText: 'KIRIM PENGAJUAN SPARRING KE HQ →',
+      groupEl: groupScrim
+    },
+    sponsor: {
+      type: 'sponsor',
+      badge: 'ALLIANCE PROTOCOL • SPONSORSHIP & BRAND',
+      title: 'KOLABORASI <span class="text-gold">SPONSORSHIP & BRAND</span>',
+      desc: 'Bermitra strategis bersama Clan MOTHRA melalui jersey placement, turnamen esports, live stream overlay, dan social media activation.',
+      notesLabel: 'DETAIL PROPOSAL & PENAWARAN KERJASAMA *',
+      notesPlaceholder: 'Jelaskan bentuk promosi brand yang diinginkan, timeline kerjasama, benefit bersama, atau pesan dari tim marketing Anda...',
+      btnText: 'KIRIM PROPOSAL SPONSORSHIP KE HQ →',
+      groupEl: groupSponsor
+    },
+    design: {
+      type: 'design',
+      badge: 'ALLIANCE PROTOCOL • CREATIVE PARTNER',
+      title: 'GABUNG TIM <span class="text-gold">CREATIVE & DESIGN</span>',
+      desc: 'Berkolaborasi membuat jersey 3D, animasi Point Blank, VFX/GFX banner turnamen, dan visual motion bersama tim kreatif MOTHRA.',
+      notesLabel: 'MOTIVASI & PORTOFOLIO SINGKAT *',
+      notesPlaceholder: 'Ceritakan pengalaman software desain (Blender / Photoshop / Premiere / After Effects), ide visual, dan motivasi kolaborasi...',
+      btnText: 'KIRIM APLIKASI CREATIVE DESIGN KE HQ →',
+      groupEl: groupDesign
+    },
+    ba: {
+      type: 'ba',
+      badge: 'ALLIANCE PROTOCOL • TALENT & BRAND AMBASSADOR',
+      title: 'AUDISI <span class="text-gold">BRAND AMBASSADOR / TALENT</span>',
+      desc: 'Jadilah wajah dan representasi resmi Clan MOTHRA di platform live stream (TikTok, YouTube, Twitch) dengan benefit dan gear eksklusif.',
+      notesLabel: 'MOTIVASI & JADWAL STREAMING *',
+      notesPlaceholder: 'Ceritakan jadwal rutin streaming, game yang dimainkan selain Point Blank, dan alasan ingin bergabung sebagai Brand Ambassador MOTHRA...',
+      btnText: 'KIRIM AUDISI TALENT / BA KE HQ →',
+      groupEl: groupBa
     }
+  };
+
+  function setCategory(catKey) {
+    const key = CATEGORY_CONFIG[catKey] ? catKey : 'scrim';
+    const cfg = CATEGORY_CONFIG[key];
+
+    if (collabTypeHidden) collabTypeHidden.value = key;
+
+    // Update Tabs
+    tabs.forEach((tab) => {
+      const isCurrent = tab.dataset.type === key;
+      tab.classList.toggle('active', isCurrent);
+      tab.setAttribute('aria-selected', isCurrent ? 'true' : 'false');
+    });
+
+    // Toggle Field Groups
+    [groupScrim, groupSponsor, groupDesign, groupBa].forEach((grp) => {
+      if (grp) grp.style.display = 'none';
+    });
+    if (cfg.groupEl) cfg.groupEl.style.display = 'block';
+
+    // Update Content
+    if (badgeText) badgeText.textContent = cfg.badge;
+    if (modalTitle) modalTitle.innerHTML = cfg.title;
+    if (modalDesc) modalDesc.textContent = cfg.desc;
+    if (notesLabel) notesLabel.textContent = cfg.notesLabel;
+    if (notesInput) notesInput.placeholder = cfg.notesPlaceholder;
+    if (submitBtnText) submitBtnText.textContent = cfg.btnText;
+
+    if (warningMsg) warningMsg.classList.remove('visible');
+  }
+
+  // Bind tab click events
+  tabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      TacticalAudio.playTab();
+      setCategory(tab.dataset.type);
+    });
+  });
+
+  function openModal(defaultType = 'scrim') {
+    let key = (defaultType || 'scrim').toLowerCase().trim();
+    if (key.includes('sparring') || key.includes('scrim') || key.includes('match')) key = 'scrim';
+    else if (key.includes('sponsor') || key.includes('proposal') || key.includes('brand')) key = 'sponsor';
+    else if (key.includes('design') || key.includes('creative') || key.includes('gfx')) key = 'design';
+    else if (key.includes('ba') || key.includes('talent') || key.includes('ambassador')) key = 'ba';
+    else key = 'scrim';
+
+    setCategory(key);
+
     modal.classList.add('open');
     modal.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
+
     if (successMsg) successMsg.classList.remove('visible');
     if (warningMsg) warningMsg.classList.remove('visible');
+    TacticalAudio.playClick();
   }
 
   function closeModal() {
@@ -1035,62 +1233,147 @@ function initCollabModal() {
     btn.onclick = (e) => {
       e.preventDefault();
       e.stopPropagation();
-      openModal(btn.dataset.type || '');
+      openModal(btn.dataset.type || 'scrim');
     };
   });
 
-  // Expose globally so inline onclick attributes in HTML can call it directly
+  // Expose globally
   window.openCollabModal = openModal;
 
   if (closeBtn) closeBtn.onclick = closeModal;
   if (backdrop) backdrop.onclick = closeModal;
+  if (successCloseBtn) successCloseBtn.onclick = closeModal;
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && modal.classList.contains('open')) closeModal();
   });
 
+  // Form Submit Handler
   form.onsubmit = async (e) => {
     e.preventDefault();
 
-    const name = document.getElementById('collabName').value.trim();
-    const contact = document.getElementById('collabContact').value.trim();
+    const currentType = (collabTypeHidden ? collabTypeHidden.value : 'scrim') || 'scrim';
+    const contactTypeSelect = document.getElementById('collabContactType');
     const contactType = contactTypeSelect ? contactTypeSelect.value : 'WhatsApp';
-    const typeVal = typeSelect ? typeSelect.value : 'scrim';
-    const notes = document.getElementById('collabNotes').value.trim();
+    const contact = (document.getElementById('collabContact') ? document.getElementById('collabContact').value : '').trim();
+    const notes = (notesInput ? notesInput.value : '').trim();
 
-    if (!name || !contact || !notes) {
-      if (warningMsg) {
-        warningMsg.textContent = 'Harap lengkapi semua kolom formulir sebelum mengirim.';
-        warningMsg.classList.add('visible');
+    let primaryName = '';
+    let extraDetails = {};
+    let typeDisplay = 'Friendly Match / Scrim';
+
+    if (currentType === 'scrim') {
+      typeDisplay = 'Friendly Match / Scrim (Clan War)';
+      const clanName = (document.getElementById('scrimClanName') ? document.getElementById('scrimClanName').value : '').trim();
+      const picName = (document.getElementById('scrimPicName') ? document.getElementById('scrimPicName').value : '').trim();
+      const rules = (document.getElementById('scrimRules') ? document.getElementById('scrimRules').value : 'PBNC Official 5v5');
+      const schedule = (document.getElementById('scrimSchedule') ? document.getElementById('scrimSchedule').value : '').trim();
+
+      if (!clanName || !picName || !schedule) {
+        showWarning('Harap isi Nama Clan, Nama PIC, dan Usulan Jadwal Match.');
+        return;
       }
+      primaryName = clanName;
+      extraDetails = {
+        'Nama Clan': clanName,
+        'PIC / Leader': picName,
+        'Mode & Rules': rules,
+        'Jadwal Usulan': schedule
+      };
+    } else if (currentType === 'sponsor') {
+      typeDisplay = 'Sponsorship & Brand Collaboration';
+      const brandName = (document.getElementById('sponsorBrandName') ? document.getElementById('sponsorBrandName').value : '').trim();
+      const picName = (document.getElementById('sponsorPicName') ? document.getElementById('sponsorPicName').value : '').trim();
+      const sponsorType = (document.getElementById('sponsorTypeSelect') ? document.getElementById('sponsorTypeSelect').value : 'Jersey Placement');
+      const link = (document.getElementById('sponsorLink') ? document.getElementById('sponsorLink').value : '').trim();
+
+      if (!brandName || !picName) {
+        showWarning('Harap isi Nama Brand / Perusahaan dan Nama PIC.');
+        return;
+      }
+      primaryName = brandName;
+      extraDetails = {
+        'Nama Brand / Perusahaan': brandName,
+        'Nama PIC': picName,
+        'Bentuk Kerjasama': sponsorType,
+        'Link Proposal / Web': link || '-'
+      };
+    } else if (currentType === 'design') {
+      typeDisplay = 'Design & Creative Media Partner';
+      const creatorName = (document.getElementById('designCreatorName') ? document.getElementById('designCreatorName').value : '').trim();
+      const specialty = (document.getElementById('designSpecialty') ? document.getElementById('designSpecialty').value : '3D Jersey Design');
+      const portfolio = (document.getElementById('designPortfolio') ? document.getElementById('designPortfolio').value : '').trim();
+
+      if (!creatorName || !portfolio) {
+        showWarning('Harap isi Nama Kreator dan Link Portofolio Anda.');
+        return;
+      }
+      primaryName = creatorName;
+      extraDetails = {
+        'Nama Kreator': creatorName,
+        'Keahlian Utama': specialty,
+        'Link Portofolio': portfolio
+      };
+    } else if (currentType === 'ba') {
+      typeDisplay = 'Brand Ambassador & Talent Audition';
+      const talentName = (document.getElementById('baTalentName') ? document.getElementById('baTalentName').value : '').trim();
+      const platform = (document.getElementById('baPlatform') ? document.getElementById('baPlatform').value : 'TikTok Live');
+      const channel = (document.getElementById('baChannelLink') ? document.getElementById('baChannelLink').value : '').trim();
+      const followers = (document.getElementById('baFollowers') ? document.getElementById('baFollowers').value : '').trim();
+
+      if (!talentName || !channel || !followers) {
+        showWarning('Harap isi Nama Talent, Link Channel, dan Estimasi Followers/Viewers.');
+        return;
+      }
+      primaryName = talentName;
+      extraDetails = {
+        'Nama Talent': talentName,
+        'Platform Live': platform,
+        'Link Channel': channel,
+        'Followers / Viewers': followers
+      };
+    }
+
+    if (!contact) {
+      showWarning('Harap cantumkan kontak aktif (WhatsApp / Discord / Instagram / Email).');
+      return;
+    }
+    if (!notes) {
+      showWarning('Harap tuliskan detail rincian pengajuan atau pesan proposal.');
       return;
     }
 
-    const typeLabelMap = {
-      scrim: 'Friendly Match / Scrim Request',
-      sponsor: 'Sponsorship & Brand Inquiry',
-      design: 'Design & Creative Partnership',
-      ba: 'Brand Ambassador & Talent'
-    };
-    const typeKey = ['scrim', 'sponsor', 'design', 'ba'].includes(typeVal) ? typeVal : 'scrim';
-    const typeLabel = typeLabelMap[typeKey] || (typeSelect && typeSelect.options[typeSelect.selectedIndex] ? typeSelect.options[typeSelect.selectedIndex].text : 'Partnership');
+    function showWarning(txt) {
+      if (warningMsg) {
+        warningMsg.textContent = txt;
+        warningMsg.classList.add('visible');
+        warningMsg.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+      TacticalAudio.playBlip(350, 'sawtooth', 0.15, 0.08);
+    }
 
-    const origBtn = submitBtn.innerHTML;
-    submitBtn.innerHTML = '<span>MENGIRIMKAN KE DATABASE &amp; EMAIL...</span>';
+    // Format rich combined notes for storage
+    const formattedNotes = `[${typeDisplay.toUpperCase()}]\n` +
+      Object.entries(extraDetails).map(([k, v]) => `• ${k}: ${v}`).join('\n') +
+      `\n• Pesan: ${notes}`;
+
+    const origBtnHtml = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<span>MENYINKRONKAN KE DATABASE HQ & CLOUD...</span>';
     submitBtn.disabled = true;
 
-    // 1. Simpan ke Database Lokal & Supabase Realtime (Admin Panel "The Alliance")
+    // 1. Simpan ke Database Lokal & Supabase Cloud
     try {
       const newPartnership = {
         id: 'pa_' + Date.now(),
-        type: typeKey,
-        typeLabel: typeLabel,
-        name: name,
+        type: currentType,
+        typeLabel: typeDisplay,
+        name: primaryName,
         contact: contact,
         contactType: contactType,
         status: 'PENDING',
         date: new Date().toISOString().slice(0, 10),
         logo: 'assets/mothra-logo.png',
-        notes: notes
+        notes: formattedNotes,
+        extra: extraDetails
       };
 
       const db = typeof getMothraData === 'function' ? getMothraData() : null;
@@ -1107,35 +1390,39 @@ function initCollabModal() {
 
     // 2. Kirim Notifikasi Email ke abdurrrahman09@gmail.com
     try {
+      const emailPayload = {
+        _subject: `[MOTHRA HQ ALLIANCE] Pengajuan Baru: ${typeDisplay} - ${primaryName}`,
+        _template: 'table',
+        _captcha: 'false',
+        'Kategori Kolaborasi': typeDisplay,
+        'Nama Entitas / PIC': primaryName,
+        'Platform Kontak': contactType,
+        'Kontak PIC': contact,
+        ...extraDetails,
+        'Pesan / Rincian Proposal': notes,
+        'Status Database Cloud': 'PENDING (Tersimpan di Supabase Realtime & Admin Panel)',
+        'Timestamp Pengajuan': new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })
+      };
+
       await fetch('https://formsubmit.co/ajax/abdurrrahman09@gmail.com', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify({
-          _subject: `[MOTHRA ALLIANCE] Pengajuan Baru: ${typeLabel} - ${name}`,
-          _template: 'table',
-          _captcha: 'false',
-          'Jenis Kolaborasi': typeLabel,
-          'Nama Clan / Brand / Talent': name,
-          'Platform Kontak': contactType,
-          'Kontak PIC': contact,
-          'Rincian Proposal': notes,
-          'Status Database': 'PENDING (Tersimpan di Cloud Supabase & Admin Panel)',
-          'Waktu Kirim': new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })
-        })
+        body: JSON.stringify(emailPayload)
       });
     } catch (err) {
       console.warn('Partnership email dispatch notice:', err);
     }
 
-    submitBtn.innerHTML = origBtn;
+    submitBtn.innerHTML = origBtnHtml;
     submitBtn.disabled = false;
     form.reset();
 
     if (warningMsg) warningMsg.classList.remove('visible');
     if (successText) {
-      successText.innerHTML = `Terima kasih <strong>${name}</strong>! Pengajuan untuk <strong>${typeLabel}</strong> telah otomatis tersimpan ke Database Cloud Supabase &amp; Admin Panel, serta diteruskan ke email <strong>abdurrrahman09@gmail.com</strong>. Tim manajemen akan segera menghubungi Anda.`;
+      successText.innerHTML = `Terima kasih <strong>${primaryName}</strong>! Pengajuan untuk <strong>${typeDisplay}</strong> telah otomatis tersimpan ke Database Cloud Supabase &amp; Admin Panel, serta diteruskan ke email <strong>abdurrrahman09@gmail.com</strong>. Tim manajemen Clan MOTHRA akan segera menghubungi kontak Anda.`;
     }
     if (successMsg) successMsg.classList.add('visible');
+    TacticalAudio.playSuccess();
   };
 }
 // Inisialisasi partnership modal setelah DOM selesai dimuat

@@ -131,71 +131,163 @@ button {
   .cursor, .cursor-follower { display: none; }
 }
 
-/* ---- LOADER ---- */
+/* ---- ADVANCED TACTICAL CYBER LOADER ---- */
 .loader {
   position: fixed;
   inset: 0;
-  background: #060606;
-  z-index: 9000;
+  background: #040404;
+  z-index: 99999;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: opacity 0.5s ease, visibility 0.5s ease;
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
 }
 .loader.hidden {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
+  transform: scale(1.04);
+}
+.loader-scanline {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(212, 175, 55, 0) 0%, rgba(212, 175, 55, 0.08) 50%, rgba(212, 175, 55, 0) 100%);
+  background-size: 100% 8px;
+  pointer-events: none;
+  opacity: 0.6;
 }
 .loader-inner {
   text-align: center;
-  width: 280px;
+  width: 320px;
+  max-width: 90vw;
+  position: relative;
+  z-index: 2;
 }
-.loader-logo-wrap {
+.loader-radar {
+  position: relative;
+  width: 110px;
+  height: 110px;
+  margin: 0 auto 1.25rem;
+  border-radius: 50%;
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  box-shadow: 0 0 30px rgba(212, 175, 55, 0.15), inset 0 0 20px rgba(212, 175, 55, 0.1);
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
+  justify-content: center;
+  overflow: hidden;
+}
+.loader-radar::before {
+  content: '';
+  position: absolute;
+  inset: 12px;
+  border-radius: 50%;
+  border: 1px dashed rgba(212, 175, 55, 0.3);
+}
+.loader-radar-sweep {
+  position: absolute;
+  inset: 0;
+  background: conic-gradient(from 0deg, transparent 0deg, transparent 270deg, rgba(212, 175, 55, 0.4) 360deg);
+  border-radius: 50%;
+  animation: radarSpin 2s linear infinite;
+}
+@keyframes radarSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 .loader-logo-img {
-  width: 70px;
-  height: 75px;
+  width: 60px;
+  height: 65px;
   object-fit: contain;
-  filter: drop-shadow(0 0 15px rgba(212, 175, 55, 0.6));
-  animation: pulse 1.4s ease-in-out infinite;
+  position: relative;
+  z-index: 2;
+  filter: drop-shadow(0 0 15px rgba(212, 175, 55, 0.8));
+  animation: pulseLogo 1.6s ease-in-out infinite alternate;
+}
+@keyframes pulseLogo {
+  0% { transform: scale(0.96); filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.5)); }
+  100% { transform: scale(1.05); filter: drop-shadow(0 0 22px rgba(245, 197, 24, 0.9)); }
 }
 .loader-logo {
   font-family: var(--font-display);
-  font-size: 2.5rem;
+  font-size: 2.75rem;
   font-weight: 900;
-  letter-spacing: 0.15em;
+  letter-spacing: 0.18em;
   color: var(--gold);
+  line-height: 1;
+  text-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
 }
-@keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.7; transform: scale(0.96); }
+.loader-subtag {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.22em;
+  color: var(--gray-light);
+  margin-top: 0.35rem;
+  margin-bottom: 1.5rem;
+}
+.loader-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.6rem;
 }
 .loader-bar {
-  width: 100%;
-  height: 3px;
-  background: var(--dark-3);
+  flex: 1;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 99px;
   overflow: hidden;
-  margin-bottom: 0.75rem;
+  border: 1px solid rgba(212, 175, 55, 0.2);
 }
 .loader-fill {
   height: 100%;
   width: 0%;
-  background: linear-gradient(90deg, var(--gold-dark), var(--gold-bright), #fff);
-  box-shadow: 0 0 10px var(--gold-bright);
-  transition: width 0.15s linear;
+  background: linear-gradient(90deg, var(--gold-dark), var(--gold-bright), #FFFFFF);
+  box-shadow: 0 0 15px var(--gold-bright);
+  transition: width 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.loader-percent {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: bold;
+  color: var(--gold-bright);
+  min-width: 38px;
+  text-align: right;
 }
 .loader-text {
   font-family: var(--font-mono);
   font-size: 0.7rem;
-  color: var(--gray-light);
-  letter-spacing: 0.2em;
+  color: var(--gold);
+  letter-spacing: 0.18em;
+  min-height: 1.2em;
+  margin-bottom: 1.25rem;
+  text-transform: uppercase;
+}
+.loader-wave {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  height: 16px;
+}
+.loader-wave span {
+  display: inline-block;
+  width: 3px;
+  height: 100%;
+  background: var(--gold);
+  border-radius: 2px;
+  animation: waveAnim 1s ease-in-out infinite alternate;
+}
+.loader-wave span:nth-child(1) { animation-delay: 0.1s; }
+.loader-wave span:nth-child(2) { animation-delay: 0.2s; }
+.loader-wave span:nth-child(3) { animation-delay: 0.3s; }
+.loader-wave span:nth-child(4) { animation-delay: 0.4s; }
+.loader-wave span:nth-child(5) { animation-delay: 0.5s; }
+.loader-wave span:nth-child(6) { animation-delay: 0.6s; }
+.loader-wave span:nth-child(7) { animation-delay: 0.7s; }
+@keyframes waveAnim {
+  0% { transform: scaleY(0.2); opacity: 0.3; }
+  100% { transform: scaleY(1); opacity: 1; background: var(--gold-bright); }
 }
 
 /* ---- NAVIGATION ---- */
@@ -1854,7 +1946,7 @@ button {
 }
 
 /* ============================================================
-   COLLABORATION / PARTNERSHIP MODAL
+   COLLABORATION / PARTNERSHIP BESPOKE MODAL
    ============================================================ */
 .collab-modal {
   position: fixed;
@@ -1866,7 +1958,7 @@ button {
   padding: 1.5rem;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.35s ease, visibility 0.35s ease;
+  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.35s;
 }
 .collab-modal.open {
   opacity: 1;
@@ -1875,21 +1967,22 @@ button {
 .collab-modal-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(6, 6, 6, 0.92);
-  backdrop-filter: blur(16px);
+  background: rgba(4, 4, 4, 0.94);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 .collab-modal-container {
   position: relative;
   z-index: 2;
   width: 100%;
-  max-width: 650px;
+  max-width: 720px;
   max-height: 90vh;
   overflow-y: auto;
-  background: var(--dark-1);
+  background: #0F0F0F;
   border: 1px solid var(--border-strong);
   padding: 2.5rem;
   border-radius: var(--radius);
-  box-shadow: 0 30px 80px rgba(0,0,0,0.95), 0 0 40px rgba(212, 175, 55, 0.25);
+  box-shadow: 0 30px 90px rgba(0,0,0,0.98), 0 0 50px rgba(212, 175, 55, 0.25);
   transform: scale(0.92) translateY(20px);
   transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -1908,23 +2001,115 @@ button {
   align-items: center;
   justify-content: center;
   font-size: 1.1rem;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
 }
 .collab-modal-close:hover {
   background: var(--red);
   color: var(--white);
+  transform: rotate(90deg);
+}
+
+/* Category Tabs */
+.collab-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border-dim);
+}
+.collab-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.65rem 0.5rem;
+  background: var(--dark-2);
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius);
+  color: var(--gray-light);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: center;
+}
+.collab-tab .tab-icon {
+  font-size: 1.15rem;
+  filter: grayscale(0.6);
+  transition: filter 0.2s, transform 0.2s;
+}
+.collab-tab .tab-text {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.collab-tab:hover {
+  background: var(--dark-3);
+  color: var(--white);
+  border-color: rgba(212, 175, 55, 0.4);
+}
+.collab-tab:hover .tab-icon {
+  filter: grayscale(0);
+  transform: scale(1.15);
+}
+.collab-tab.active {
+  background: rgba(212, 175, 55, 0.15);
+  border-color: var(--gold);
+  color: var(--gold-bright);
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
+}
+.collab-tab.active .tab-icon {
+  filter: grayscale(0);
+  transform: scale(1.2);
+}
+
+/* Header & Title */
+.collab-header-wrap {
+  margin-bottom: 1.5rem;
+}
+.collab-title {
+  font-family: var(--font-display);
+  font-size: 1.9rem;
+  font-weight: 900;
+  color: var(--white);
+  letter-spacing: 0.05em;
+  margin: 0.4rem 0 0.35rem;
+  line-height: 1.15;
+}
+.collab-desc {
+  color: var(--gray-light);
+  font-size: 0.88rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Form Layout */
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.collab-section-group {
+  animation: fadeInGroup 0.3s ease-out;
+}
+@keyframes fadeInGroup {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .collab-modal .form-group {
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.15rem;
 }
 .collab-modal .form-label {
   display: block;
   font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.15em;
   color: var(--gold);
-  margin-bottom: 0.45rem;
+  margin-bottom: 0.4rem;
 }
 .collab-modal .form-input,
 .collab-modal select.form-input,
@@ -1939,18 +2124,39 @@ button {
   font-size: 0.92rem;
   transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
 }
+.collab-modal select.form-input {
+  cursor: pointer;
+}
+.collab-modal select.form-input option {
+  background: #141414;
+  color: #FFF;
+}
 .collab-modal .form-input:focus,
 .collab-modal select.form-input:focus,
 .collab-modal textarea.form-input:focus {
   outline: none;
-  border-color: var(--gold);
-  box-shadow: 0 0 12px rgba(212, 175, 55, 0.25);
+  border-color: var(--gold-bright);
+  box-shadow: 0 0 14px rgba(212, 175, 55, 0.35);
   background: var(--dark-3);
 }
 
 @media (max-width: 640px) {
   .collab-modal-container {
-    padding: 1.75rem 1.25rem;
+    padding: 1.5rem 1.15rem;
+  }
+  .collab-tabs {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.4rem;
+  }
+  .collab-tab {
+    padding: 0.5rem 0.35rem;
+  }
+  .collab-title {
+    font-size: 1.45rem;
+  }
+  .form-grid-2 {
+    grid-template-columns: 1fr;
+    gap: 0;
   }
 }
 

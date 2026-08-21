@@ -36,15 +36,27 @@
   <div class="cursor" id="cursor"></div>
   <div class="cursor-follower" id="cursorFollower"></div>
 
-  <!-- LOADER -->
+  <!-- ADVANCED TACTICAL CYBER LOADER -->
   <div class="loader" id="loader">
+    <div class="loader-scanline"></div>
     <div class="loader-inner">
-      <div class="loader-logo-wrap">
-        <img src="assets/mothra-logo.png" alt="MOTHRA Logo" class="loader-logo-img" width="70" height="75" />
-        <div class="loader-logo">MOTHRA</div>
+      <div class="loader-radar">
+        <div class="loader-radar-sweep"></div>
+        <img src="assets/mothra-logo.png" alt="MOTHRA Logo" class="loader-logo-img" width="84" height="90" />
       </div>
-      <div class="loader-bar"><div class="loader-fill" id="loaderFill"></div></div>
-      <div class="loader-text" id="loaderText">ESTABLISHING TACTICAL UPLINK...</div>
+      <div class="loader-logo">MOTHRA</div>
+      <div class="loader-subtag">TACTICAL ESPORTS SQUAD &bull; HQ UPLINK</div>
+      
+      <div class="loader-bar-wrap">
+        <div class="loader-bar"><div class="loader-fill" id="loaderFill"></div></div>
+        <div class="loader-percent" id="loaderPercent">0%</div>
+      </div>
+
+      <div class="loader-text" id="loaderText">INITIALIZING TACTICAL PROTOCOLS...</div>
+      
+      <div class="loader-wave">
+        <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+      </div>
     </div>
   </div>
 
@@ -967,58 +979,188 @@
     </div>
   </div>
 
-  <!-- ===================== COLLABORATION & PARTNERSHIP PROPOSAL MODAL ===================== -->
+  <!-- ===================== BESPOKE COLLABORATION & PARTNERSHIP PROPOSAL MODAL ===================== -->
   <div class="collab-modal" id="collabModal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="collabModalTitle">
     <div class="collab-modal-backdrop" id="collabModalBackdrop"></div>
     <div class="collab-modal-container">
       <button class="collab-modal-close" id="collabModalClose" aria-label="Tutup popup">&times;</button>
       
-      <div style="margin-bottom: 1.5rem;">
-        <div class="section-tag" style="font-size: 0.72rem; margin-bottom: 0.35rem;">04 / ALLIANCE PORTAL</div>
-        <h3 id="collabModalTitle" style="font-family: var(--font-display); font-size: 1.85rem; font-weight: 900; color: var(--white); letter-spacing: 0.05em; margin: 0 0 0.4rem;">
-          PENGAJUAN <span class="text-gold">KEMITRAAN &amp; SPARRING</span>
+      <!-- Category Switcher Tabs -->
+      <div class="collab-tabs" id="collabTabs" role="tablist">
+        <button type="button" class="collab-tab active" data-type="scrim" role="tab" aria-selected="true">
+          <span class="tab-icon">⚔️</span>
+          <span class="tab-text">SPARRING / SCRIM</span>
+        </button>
+        <button type="button" class="collab-tab" data-type="sponsor" role="tab" aria-selected="false">
+          <span class="tab-icon">🤝</span>
+          <span class="tab-text">SPONSORSHIP</span>
+        </button>
+        <button type="button" class="collab-tab" data-type="design" role="tab" aria-selected="false">
+          <span class="tab-icon">🎨</span>
+          <span class="tab-text">DESIGN PARTNER</span>
+        </button>
+        <button type="button" class="collab-tab" data-type="ba" role="tab" aria-selected="false">
+          <span class="tab-icon">👑</span>
+          <span class="tab-text">TALENT / BA</span>
+        </button>
+      </div>
+
+      <!-- Header Info -->
+      <div class="collab-header-wrap">
+        <div class="form-badge" id="collabCategoryBadge">
+          <span class="badge-dot"></span>
+          <span id="collabCategoryBadgeText">ALLIANCE PROTOCOL &bull; SCRIM REQUEST</span>
+        </div>
+        <h3 id="collabModalTitle" class="collab-title">
+          TANTANG SKUSAD <span class="text-gold">MOTHRA 5v5 SCRIM</span>
         </h3>
-        <p style="color: var(--gray-light); font-size: 0.88rem; line-height: 1.5; margin: 0;">
-          Isi detail pengajuan kolaborasi Anda. Data otomatis tercatat ke Database HQ Admin dan diteruskan ke email manajemen Clan MOTHRA.
+        <p id="collabModalDesc" class="collab-desc">
+          Ajukan jadwal Friendly Match / Clan War melawan skuad resmi Clan MOTHRA. Formulir ini otomatis tercatat di HQ Admin &amp; diteruskan langsung ke email manajemen.
         </p>
       </div>
 
-      <div class="form-warning" id="collabWarning" style="margin-bottom: 1rem;"></div>
+      <div class="form-warning" id="collabWarning"></div>
 
-      <div class="form-success" id="collabSuccess" style="margin-bottom: 1rem;">
+      <!-- Success Card -->
+      <div class="form-success" id="collabSuccess">
         <div class="success-icon-wrap">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
         </div>
         <div class="success-body">
-          <div class="success-title">PROPOSAL BERHASIL TERKIRIM &amp; DICATAT!</div>
+          <div class="success-title">PENGAJUAN BERHASIL TERCATAT KE DATABASE HQ!</div>
           <p class="success-text" id="collabSuccessText">
-            Terima kasih! Pengajuan kemitraan Anda telah otomatis tersimpan ke Database Cloud Supabase Clan MOTHRA dan terkirim ke email <strong>abdurrrahman09@gmail.com</strong>. Tim manajemen akan segera menghubungi PIC Anda.
+            Terima kasih! Pengajuan kemitraan Anda telah otomatis tersimpan ke Database Cloud Supabase Clan MOTHRA dan terkirim ke email <strong>abdurrrahman09@gmail.com</strong>. Tim manajemen akan segera menghubungi kontak Anda.
           </p>
           <div class="success-actions">
-            <button type="button" class="btn btn--ghost btn--sm" id="collabSuccessCloseBtn" onclick="document.getElementById('collabModal').classList.remove('open'); document.body.style.overflow='';">TUTUP POPUP</button>
+            <button type="button" class="btn btn--ghost btn--sm" id="collabSuccessCloseBtn">TUTUP POPUP</button>
           </div>
         </div>
       </div>
 
+      <!-- Dynamic Form -->
       <form id="collabForm" novalidate>
-        <div class="form-group">
-          <label for="collabType" class="form-label">JENIS PENGAJUAN / KERJASAMA *</label>
-          <select id="collabType" class="form-input" required>
-            <option value="scrim">⚔️ Friendly Match / Scrim Request (Clan War)</option>
-            <option value="sponsor">🤝 Sponsorship &amp; Brand Endorsement</option>
-            <option value="design">🎨 Design &amp; Creative Media Partner</option>
-            <option value="ba">👑 Brand Ambassador &amp; Talent Streamer</option>
-          </select>
-        </div>
+        <input type="hidden" id="collabType" value="scrim" />
 
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.25rem;">
-          <div class="form-group" style="margin-bottom: 0;">
-            <label for="collabName" class="form-label">NAMA CLAN / BRAND / TALENT *</label>
-            <input type="text" id="collabName" class="form-input" placeholder="Contoh: RRQ Academy / Brand XYZ" required />
+        <!-- 1. FIELD GRUP: SCRIM / SPARRING -->
+        <div class="collab-section-group" id="groupScrim">
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label for="scrimClanName" class="form-label">NAMA CLAN PENANTANG *</label>
+              <input type="text" id="scrimClanName" class="form-input" placeholder="Contoh: Clan RRQ / Endeavour / Reborn" />
+            </div>
+            <div class="form-group">
+              <label for="scrimPicName" class="form-label">NAMA PIC / LEADER / CAPTAIN *</label>
+              <input type="text" id="scrimPicName" class="form-input" placeholder="Contoh: Captain Andi / Leader Rizky" />
+            </div>
           </div>
 
-          <div class="form-group" style="margin-bottom: 0;">
-            <label for="collabContactType" class="form-label">PLATFORM KONTAK *</label>
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label for="scrimRules" class="form-label">RULE / MODE PERTANDINGAN *</label>
+              <select id="scrimRules" class="form-input">
+                <option value="PBNC Official 5v5 (Bomb Mission)">PBNC Official 5v5 (Bomb Mission)</option>
+                <option value="Clan War Standard (5v5)">Clan War Standard (5v5)</option>
+                <option value="Deathmatch / All Weapon Match">Deathmatch / All Weapon Match</option>
+                <option value="Custom Friendly Rules">Custom Friendly Rules</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="scrimSchedule" class="form-label">USULAN JADWAL &amp; WAKTU MATCH *</label>
+              <input type="text" id="scrimSchedule" class="form-input" placeholder="Contoh: Sabtu, 21:00 WIB / Malam Ini" />
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. FIELD GRUP: SPONSORSHIP & BRAND -->
+        <div class="collab-section-group" id="groupSponsor" style="display:none;">
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label for="sponsorBrandName" class="form-label">NAMA BRAND / PERUSAHAAN / MEDIA *</label>
+              <input type="text" id="sponsorBrandName" class="form-input" placeholder="Contoh: Brand Peripheral / Gaming Cafe / Minuman" />
+            </div>
+            <div class="form-group">
+              <label for="sponsorPicName" class="form-label">NAMA PIC &amp; JABATAN *</label>
+              <input type="text" id="sponsorPicName" class="form-input" placeholder="Contoh: Budi Pratama (Marketing Lead)" />
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label for="sponsorTypeSelect" class="form-label">BENTUK KERJASAMA / SPONSORSHIP *</label>
+              <select id="sponsorTypeSelect" class="form-input">
+                <option value="Official Jersey Placement & Logo">Official Jersey Placement &amp; Logo</option>
+                <option value="Tournament / Event Partnership">Tournament / Event Partnership</option>
+                <option value="Live Stream & YouTube Overlay Sponsor">Live Stream &amp; YouTube Overlay Sponsor</option>
+                <option value="Product Review & Social Media Campaign">Product Review &amp; Social Media Campaign</option>
+                <option value="Exclusive Clan Sponsor (Main Partner)">Exclusive Clan Sponsor (Main Partner)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="sponsorLink" class="form-label">LINK PROPOSAL / WEBSITE RESMI</label>
+              <input type="text" id="sponsorLink" class="form-input" placeholder="https://drive.google.com/... / https://brand.com" />
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. FIELD GRUP: DESIGN PARTNER -->
+        <div class="collab-section-group" id="groupDesign" style="display:none;">
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label for="designCreatorName" class="form-label">NAMA KREATOR / STUDIO / NICKNAME *</label>
+              <input type="text" id="designCreatorName" class="form-input" placeholder="Contoh: Studio Veloce / GFX Budi" />
+            </div>
+            <div class="form-group">
+              <label for="designSpecialty" class="form-label">KEAHLIAN UTAMA DESAIN *</label>
+              <select id="designSpecialty" class="form-input">
+                <option value="Jersey Esports & 3D Mockup Design">Jersey Esports &amp; 3D Mockup Design</option>
+                <option value="Point Blank 3D Character Animation & Render">Point Blank 3D Character Animation &amp; Render</option>
+                <option value="Match Poster, Banner & Social Media GFX">Match Poster, Banner &amp; Social Media GFX</option>
+                <option value="Video Montage, Highlights & VFX Motion">Video Montage, Highlights &amp; VFX Motion</option>
+                <option value="Full Creative Partner (All-in-One)">Full Creative Partner (All-in-One)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="designPortfolio" class="form-label">LINK PORTOFOLIO / KARYA TERBAIK *</label>
+            <input type="text" id="designPortfolio" class="form-input" placeholder="https://behance.net/... / https://instagram.com/... / Google Drive Link" />
+          </div>
+        </div>
+
+        <!-- 4. FIELD GRUP: BRAND AMBASSADOR & TALENT -->
+        <div class="collab-section-group" id="groupBa" style="display:none;">
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label for="baTalentName" class="form-label">NAMA LENGKAP &amp; STAGE NAME (NICKNAME) *</label>
+              <input type="text" id="baTalentName" class="form-input" placeholder="Contoh: Sarah 'Valkyrie' Amanda" />
+            </div>
+            <div class="form-group">
+              <label for="baPlatform" class="form-label">PLATFORM LIVE STREAMING UTAMA *</label>
+              <select id="baPlatform" class="form-input">
+                <option value="TikTok Live & Video Content">TikTok Live &amp; Video Content</option>
+                <option value="YouTube Gaming Live Stream">YouTube Gaming Live Stream</option>
+                <option value="Twitch / Kick Gaming">Twitch / Kick Gaming</option>
+                <option value="Instagram Creator & Cosplay">Instagram Creator &amp; Cosplay</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label for="baChannelLink" class="form-label">LINK CHANNEL / PROFIL SOSIAL MEDIA *</label>
+              <input type="text" id="baChannelLink" class="form-input" placeholder="https://tiktok.com/@... / https://youtube.com/@..." />
+            </div>
+            <div class="form-group">
+              <label for="baFollowers" class="form-label">ESTIMASI FOLLOWERS / AVG VIEWERS *</label>
+              <input type="text" id="baFollowers" class="form-input" placeholder="Contoh: 25k Followers / 200 CCV" />
+            </div>
+          </div>
+        </div>
+
+        <!-- COMMON CONTACT SECTION -->
+        <div class="form-grid-2" style="margin-top: 0.5rem;">
+          <div class="form-group">
+            <label for="collabContactType" class="form-label">PLATFORM KONTAK UTAMA *</label>
             <select id="collabContactType" class="form-input" required>
               <option value="WhatsApp">WhatsApp</option>
               <option value="Discord">Discord</option>
@@ -1026,20 +1168,21 @@
               <option value="Email">Email</option>
             </select>
           </div>
+
+          <div class="form-group">
+            <label for="collabContact" class="form-label">NOMOR HP / USERNAME / EMAIL PIC *</label>
+            <input type="text" id="collabContact" class="form-input" placeholder="081234567890 / discord#0000 / @user" required />
+          </div>
         </div>
 
+        <!-- DETAIL / CATATAN PROPOSAL -->
         <div class="form-group">
-          <label for="collabContact" class="form-label">NOMOR HP / USERNAME / EMAIL PIC *</label>
-          <input type="text" id="collabContact" class="form-input" placeholder="Contoh: 081234567890 / discord_user#0000 / @instagram" required />
-        </div>
-
-        <div class="form-group">
-          <label for="collabNotes" class="form-label">RINCIAN PENGAJUAN / PESAN PROPOSAL *</label>
-          <textarea id="collabNotes" class="form-input" rows="4" placeholder="Jelaskan jadwal sparring, bentuk kerjasama sponsorship, portofolio desain, atau link channel streaming Anda..." required></textarea>
+          <label for="collabNotes" class="form-label" id="collabNotesLabel">RINCIAN PENGAJUAN / CATATAN MATCH *</label>
+          <textarea id="collabNotes" class="form-input" rows="3" placeholder="Tuliskan detail jadwal sparring, catatan server room, penawaran sponsorship, ide kolaborasi desain, atau motivasi talent..." required></textarea>
         </div>
 
         <button type="submit" class="btn btn--primary btn--full" id="collabSubmitBtn" style="padding: 1rem; width: 100%;">
-          <span>KIRIM PENGAJUAN &amp; SIMPAN KE HQ &rarr;</span>
+          <span id="collabSubmitBtnText">KIRIM PENGAJUAN SPARRING KE HQ &rarr;</span>
         </button>
       </form>
     </div>

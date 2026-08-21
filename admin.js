@@ -157,18 +157,78 @@ window.addEventListener('mothra_data_updated', (e) => {
   }
 });
 
+// Unified Navigation: Sidebar Items & Mobile Quick-Nav Items
 const navItems = document.querySelectorAll('.nav-item');
+const quickNavItems = document.querySelectorAll('.mobile-quick-item');
 const panels   = document.querySelectorAll('.admin-panel');
+const adminSidebar = document.getElementById('adminSidebar');
+const adminSidebarBackdrop = document.getElementById('adminSidebarBackdrop');
+const adminMobileToggle = document.getElementById('adminMobileToggle');
+const adminSidebarClose = document.getElementById('adminSidebarClose');
+const mobileLogoutBtn = document.getElementById('mobileLogoutBtn');
 
-navItems.forEach((btn) => {
-  btn.addEventListener('click', () => {
-    navItems.forEach((b) => b.classList.remove('active'));
-    panels.forEach((p)   => p.classList.remove('active'));
-    btn.classList.add('active');
-    const target = document.getElementById(btn.dataset.panel);
-    if (target) target.classList.add('active');
+function switchAdminPanel(panelId) {
+  if (!panelId) return;
+
+  // Update Sidebar Nav
+  navItems.forEach((b) => b.classList.toggle('active', b.dataset.panel === panelId));
+  
+  // Update Mobile Quick Nav
+  quickNavItems.forEach((b) => {
+    const isTarget = b.dataset.panel === panelId;
+    b.classList.toggle('active', isTarget);
+    if (isTarget && b.scrollIntoView) {
+      b.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    }
   });
+
+  // Switch Panel
+  panels.forEach((p) => p.classList.remove('active'));
+  const target = document.getElementById(panelId);
+  if (target) {
+    target.classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // Close Mobile Drawer
+  closeAdminDrawer();
+}
+
+function openAdminDrawer() {
+  if (adminSidebar) adminSidebar.classList.add('open');
+  if (adminSidebarBackdrop) adminSidebarBackdrop.classList.add('visible');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeAdminDrawer() {
+  if (adminSidebar) adminSidebar.classList.remove('open');
+  if (adminSidebarBackdrop) adminSidebarBackdrop.classList.remove('visible');
+  document.body.style.overflow = '';
+}
+
+// Bind Sidebar Items
+navItems.forEach((btn) => {
+  btn.addEventListener('click', () => switchAdminPanel(btn.dataset.panel));
 });
+
+// Bind Mobile Quick Nav Items
+quickNavItems.forEach((btn) => {
+  btn.addEventListener('click', () => switchAdminPanel(btn.dataset.panel));
+});
+
+// Bind Mobile Drawer Controls
+if (adminMobileToggle) adminMobileToggle.addEventListener('click', openAdminDrawer);
+if (adminSidebarClose) adminSidebarClose.addEventListener('click', closeAdminDrawer);
+if (adminSidebarBackdrop) adminSidebarBackdrop.addEventListener('click', closeAdminDrawer);
+
+if (mobileLogoutBtn) {
+  mobileLogoutBtn.addEventListener('click', () => {
+    sessionStorage.removeItem(AUTH_SESSION_KEY);
+    sessionStorage.removeItem(AUTH_USER_KEY);
+    checkAuth();
+    showToast('Berhasil keluar dari panel admin.');
+  });
+}
 
 
 /* ============================================================
@@ -793,19 +853,27 @@ function renderPartnershipsTable(filterType = currentPartnerFilter) {
 
   items.forEach((p) => {
     const logoSrc = p.logo || 'assets/mothra-logo.png';
+    const cleanPhone = (p.contact || '').replace(/[^0-9]/g, '');
+    const isPhone = cleanPhone.length >= 9;
+    const waLink = isPhone ? `https://wa.me/${cleanPhone.startsWith('0') ? '62' + cleanPhone.slice(1) : cleanPhone}` : null;
+
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><img src="${logoSrc}" alt="${p.name}" class="table-thumb" style="width:40px;height:40px;object-fit:contain;" onerror="this.src='assets/mothra-logo.png'" /></td>
       <td>${getPartnerTypeBadge(p.type)}</td>
-      <td><strong>${p.name}</strong></td>
+      <td>
+        <strong style="color:var(--white);">${p.name}</strong>
+        ${p.typeLabel ? `<div style="font-size:0.75rem;color:var(--gray-light);font-family:var(--font-mono);">${p.typeLabel}</div>` : ''}
+      </td>
       <td>
         <span style="font-family:var(--font-mono);font-size:0.85rem;color:var(--gold);">${p.contact || '-'}</span>
-        ${p.contactType ? `<br/><small style="color:var(--gray-light);">(${p.contactType})</small>` : ''}
+        ${p.contactType ? `<br/><small style="color:var(--gray-light);">[${p.contactType}]</small>` : ''}
+        ${waLink ? `<br/><a href="${waLink}" target="_blank" style="color:#86EFAC;font-size:0.75rem;text-decoration:underline;">Chat WhatsApp &rarr;</a>` : ''}
       </td>
       <td>${getPartnerStatusBadge(p.status)}</td>
       <td style="font-family:var(--font-mono);font-size:0.8rem;color:var(--gray-light);">${p.date || '-'}</td>
       <td>
-        <div class="notes-cell" title="${(p.notes || '').replace(/"/g, '&quot;')}">${p.notes || '-'}</div>
+        <div class="notes-cell" title="${(p.notes || '').replace(/"/g, '&quot;')}" style="white-space:pre-line;max-height:60px;overflow-y:auto;font-size:0.78rem;">${p.notes || '-'}</div>
       </td>
       <td>
         <div class="action-btns">

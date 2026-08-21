@@ -48,26 +48,78 @@
 
   <!-- ===================== ADMIN DASHBOARD ===================== -->
   <div class="dashboard-wrap hidden" id="dashboardWrap">
-    <!-- Sidebar -->
-    <aside class="admin-sidebar">
-      <div class="sidebar-header">
-        <img src="assets/mothra-logo.png" alt="MOTHRA" class="sidebar-logo" id="adminSidebarLogo" />
-        <div>
-          <div class="sidebar-brand-text" id="adminSidebarBrandText">MOTHRA</div>
-          <span class="sidebar-brand-sub">TACTICAL CMS v2.5</span>
+    
+    <!-- Mobile Backdrop -->
+    <div class="admin-sidebar-backdrop" id="adminSidebarBackdrop"></div>
+
+    <!-- Mobile Top Header Bar -->
+    <header class="mobile-admin-header">
+      <div class="mobile-header-left">
+        <button class="mobile-nav-toggle" id="adminMobileToggle" aria-label="Buka Menu Admin">
+          <span></span><span></span><span></span>
+        </button>
+        <div class="mobile-brand">
+          <img src="assets/mothra-logo.png" alt="MOTHRA" class="mobile-brand-logo" />
+          <div>
+            <span class="mobile-brand-title">MOTHRA HQ</span>
+            <span class="mobile-brand-status">ONLINE CMS</span>
+          </div>
         </div>
+      </div>
+      <div class="mobile-header-right">
+        <a href="./" target="_blank" class="mobile-view-site-btn" title="Lihat Website">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </a>
+        <button class="mobile-logout-btn" id="mobileLogoutBtn" title="Logout">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Mobile Horizontal Quick-Nav Scroll Bar -->
+    <nav class="mobile-quick-nav" id="mobileQuickNav" aria-label="Quick Category Switcher">
+      <button class="mobile-quick-item active" data-panel="panelOverview">📊 Overview</button>
+      <button class="mobile-quick-item" data-panel="panelPartnership">🤝 The Alliance</button>
+      <button class="mobile-quick-item" data-panel="panelLineup">🎮 Roster</button>
+      <button class="mobile-quick-item" data-panel="panelSchedule">📅 Schedule</button>
+      <button class="mobile-quick-item" data-panel="panelBranding">🛡️ Branding</button>
+      <button class="mobile-quick-item" data-panel="panelCategories">🏆 Kategori</button>
+      <button class="mobile-quick-item" data-panel="panelDossier">📜 Dossier</button>
+      <button class="mobile-quick-item" data-panel="panelRecord">🏅 Record</button>
+      <button class="mobile-quick-item" data-panel="panelGallery">📸 Galeri</button>
+      <button class="mobile-quick-item" data-panel="panelDatabase">☁️ Database</button>
+      <button class="mobile-quick-item" data-panel="panelBackup">💾 Backup</button>
+      <button class="mobile-quick-item" data-panel="panelUsers">👥 Users</button>
+    </nav>
+
+    <!-- Sidebar / Drawer -->
+    <aside class="admin-sidebar" id="adminSidebar">
+      <div class="sidebar-header">
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+          <img src="assets/mothra-logo.png" alt="MOTHRA" class="sidebar-logo" id="adminSidebarLogo" />
+          <div>
+            <div class="sidebar-brand-text" id="adminSidebarBrandText">MOTHRA</div>
+            <span class="sidebar-brand-sub">TACTICAL CMS v2.5</span>
+          </div>
+        </div>
+        <button class="sidebar-close-btn" id="adminSidebarClose" aria-label="Tutup Drawer">&times;</button>
       </div>
 
       <nav class="sidebar-nav">
+        <div class="sidebar-nav-section">COMMAND CENTER</div>
         <button class="nav-item active" data-panel="panelOverview">📊 Overview</button>
-        <button class="nav-item" data-panel="panelBranding">🛡️ Identitas &amp; Logo Clan</button>
-        <button class="nav-item" data-panel="panelDossier">📜 The Dossier</button>
+        <button class="nav-item" data-panel="panelPartnership">🤝 The Alliance (Partnership)</button>
+        <button class="nav-item" data-panel="panelSchedule">📅 Match Schedule</button>
+
+        <div class="sidebar-nav-section" style="margin-top:0.75rem;">SQUAD &amp; CONTENT</div>
         <button class="nav-item" data-panel="panelCategories">🏆 Kategori Turnamen</button>
         <button class="nav-item" data-panel="panelLineup">🎮 The Lineup (Roster)</button>
-        <button class="nav-item" data-panel="panelSchedule">📅 Match Schedule</button>
-        <button class="nav-item" data-panel="panelPartnership">🤝 The Alliance (Partnership)</button>
+        <button class="nav-item" data-panel="panelDossier">📜 The Dossier</button>
         <button class="nav-item" data-panel="panelRecord">🏅 The Record (Prestasi)</button>
         <button class="nav-item" data-panel="panelGallery">📸 Field Notes (Galeri)</button>
+
+        <div class="sidebar-nav-section" style="margin-top:0.75rem;">SYSTEM &amp; CLOUD</div>
+        <button class="nav-item" data-panel="panelBranding">🛡️ Identitas &amp; Logo Clan</button>
         <button class="nav-item" data-panel="panelDatabase">☁️ Database Online (Supabase)</button>
         <button class="nav-item" data-panel="panelBackup">💾 Backup &amp; Restore</button>
         <button class="nav-item" data-panel="panelUsers">👥 Management User</button>
@@ -89,8 +141,9 @@
           <h2 class="top-title">COMMAND CENTER</h2>
           <span class="top-sub">PANEL KONTROL KONTEN WEBSITE CLAN MOTHRA POINT BLANK</span>
         </div>
-        <div style="font-family:var(--font-mono);font-size:0.8rem;color:var(--gold);background:var(--dark-2);padding:0.5rem 1rem;border:1px solid var(--border);border-radius:var(--radius);">
-          OPERATOR: abdurrrahman09@gmail.com
+        <div class="operator-badge">
+          <span class="dot dot--green"></span>
+          <span>OPERATOR: abdurrrahman09@gmail.com</span>
         </div>
       </div>
 
