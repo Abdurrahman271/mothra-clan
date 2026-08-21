@@ -132,6 +132,8 @@ document.addEventListener('DOMContentLoaded', function () {
 // ============================================================
 // 2. DASHBOARD NAVIGATION TABS & REALTIME DATA SYNC
 // ============================================================
+let _justSaved = false; // Flag: cegah Supabase overwrite data yg baru saja disimpan (termasuk nilai 0)
+
 function initDashboard() {
   db = getMothraData();
   renderAllPanels();
@@ -139,7 +141,7 @@ function initDashboard() {
   // Tarik data online terbaru dari Supabase
   if (typeof fetchMothraDataOnline === 'function') {
     fetchMothraDataOnline().then((onlineData) => {
-      if (onlineData) {
+      if (onlineData && !_justSaved) {
         db = onlineData;
         renderAllPanels();
         console.log('✅ [ADMIN] Data online Supabase berhasil disinkronkan ke panel admin.');
@@ -457,6 +459,9 @@ dossierForm.addEventListener('submit', (e) => {
     activeMembers: Math.min(250, Math.max(1, parseInt(document.getElementById('dosMembers').value, 10) || 250)),
     tournamentsWon: (function(){ const v = parseInt(document.getElementById('dosTournaments').value, 10); return isNaN(v) ? 0 : Math.max(0, v); })()
   };
+  // Set flag agar Supabase fetch tidak overwrite nilai baru (termasuk 0) sebelum upsert selesai
+  _justSaved = true;
+  setTimeout(() => { _justSaved = false; }, 5000); // Reset setelah 5 detik
   saveMothraData(db);
   showToast('The Dossier & Statistik Clan berhasil diperbarui!');
 });
