@@ -71,6 +71,25 @@ function checkAuth() {
   }
 }
 
+// ============================================================
+// LOGIN HANDLER & BRUTE-FORCE SECURITY DEFENSE
+// ============================================================
+const LOGIN_ATTEMPTS_KEY = 'mothra_login_fail_count';
+const LOGIN_LOCKOUT_KEY  = 'mothra_login_lockout_until';
+const MAX_FAILED_ATTEMPTS = 5;
+const LOCKOUT_DURATION_MS = 60 * 1000; // 60 Detik cooldown
+
+function getLockoutRemaining() {
+  try {
+    const lockedUntil = parseInt(sessionStorage.getItem(LOGIN_LOCKOUT_KEY) || '0', 10);
+    const now = Date.now();
+    if (lockedUntil > now) {
+      return Math.ceil((lockedUntil - now) / 1000);
+    }
+  } catch (e) {}
+  return 0;
+}
+
 // Bind login form after DOM is ready
 document.addEventListener('DOMContentLoaded', function () {
   const loginForm     = document.getElementById('loginForm');
@@ -79,11 +98,63 @@ document.addEventListener('DOMContentLoaded', function () {
   const loginAlert    = document.getElementById('loginAlert');
   const logoutBtn     = document.getElementById('logoutBtn');
 
+  // Pastikan form login selalu KOSONG saat halaman pertama kali dibuka
+  if (loginEmail) {
+    loginEmail.value = '';
+    loginEmail.setAttribute('autocomplete', 'off');
+  }
+  if (loginPassword) {
+    loginPassword.value = '';
+    loginPassword.setAttribute('autocomplete', 'off');
+  }
+
+  // Cek apakah sedang dalam masa lockout keamanan
+  function checkLockoutState() {
+    const remaining = getLockoutRemaining();
+    if (remaining > 0) {
+      if (loginAlert) {
+        loginAlert.textContent = `🛡️ [SECURITY LOCKOUT] Terlalu banyak percobaan login gagal. Akses dikunci sementara selama ${remaining} detik untuk mencegah serangan brute-force.`;
+        loginAlert.classList.add('visible');
+      }
+      return true;
+    }
+    return false;
+  }
+
+  checkLockoutState();
+
   if (loginForm) {
     loginForm.addEventListener('submit', function (e) {
       e.preventDefault();
-      const inputEmail = ((loginEmail && loginEmail.value) || '').trim().toLowerCase();
-      const inputPwd   = ((loginPassword && loginPassword.value) || '').trim();
+
+      if (checkLockoutState()) return;
+
+      let rawEmail = ((loginEmail && loginEmail.value) || '').trim();
+      let rawPwd   = ((loginPassword && loginPassword.value) || '').trim();
+
+      if (!rawEmail || !rawPwd) {
+        if (loginAlert) {
+          loginAlert.textContent = 'Harap masukkan Email Operator dan Password secara manual.';
+          loginAlert.classList.add('visible');
+        }
+        return;
+      }
+
+      // Deteksi & Tangkal SQL Injection pada Form Login
+      const sqliPattern = /(\b(UNION|SELECT|INSERT|UPDATE|DELETE|DROP|ALTER|EXEC|OR\s+['"\d\w]+=|--|\/\*)\b)/i;
+      if (sqliPattern.test(rawEmail) || sqliPattern.test(rawPwd)) {
+        console.warn('⚠️ [CYBER SHIELD] Percobaan SQL Injection terdeteksi dan diblokir:', rawEmail);
+        if (loginAlert) {
+          loginAlert.textContent = '⛔ [BLOCKED] Karakter atau query SQL tidak valid terdeteksi oleh Tactical Firewall.';
+          loginAlert.classList.add('visible');
+        }
+        if (loginPassword) loginPassword.value = '';
+        return;
+      }
+
+      // Sanitasi input
+      const inputEmail = (typeof sanitizeSecurityInput === 'function' ? sanitizeSecurityInput(rawEmail) : rawEmail).toLowerCase();
+      const inputPwd   = rawPwd;
 
       // Get users from db (Supabase-synced) or fallback
       let users = FALLBACK_USERS;
@@ -101,15 +172,32 @@ document.addEventListener('DOMContentLoaded', function () {
       );
 
       if (matched) {
+        // Reset failed attempts upon successful login
+        sessionStorage.removeItem(LOGIN_ATTEMPTS_KEY);
+        sessionStorage.removeItem(LOGIN_LOCKOUT_KEY);
         sessionStorage.setItem(AUTH_SESSION_KEY, 'true');
         sessionStorage.setItem(AUTH_USER_KEY, JSON.stringify(matched));
         if (loginAlert) loginAlert.classList.remove('visible');
         checkAuth();
         showToast(`🎖️ Selamat datang, ${matched.name || matched.email}! [${matched.role}]`);
       } else {
-        if (loginAlert) {
-          loginAlert.textContent = 'Email atau Password salah, atau akun dinonaktifkan. Coba lagi.';
-          loginAlert.classList.add('visible');
+        // Increment failed attempts counter
+        let failCount = parseInt(sessionStorage.getItem(LOGIN_ATTEMPTS_KEY) || '0', 10) + 1;
+        sessionStorage.setItem(LOGIN_ATTEMPTS_KEY, failCount.toString());
+
+        if (failCount >= MAX_FAILED_ATTEMPTS) {
+          const lockUntil = Date.now() + LOCKOUT_DURATION_MS;
+          sessionStorage.setItem(LOGIN_LOCKOUT_KEY, lockUntil.toString());
+          if (loginAlert) {
+            loginAlert.textContent = `🛡️ [SECURITY LOCKOUT] 5 kali percobaan gagal berturut-turut. Akses ditangguhkan selama 60 detik untuk mencegah serangan brute-force.`;
+            loginAlert.classList.add('visible');
+          }
+        } else {
+          if (loginAlert) {
+            const sisa = MAX_FAILED_ATTEMPTS - failCount;
+            loginAlert.textContent = `Email atau Password salah, atau akun dinonaktifkan. (Sisa percobaan: ${sisa})`;
+            loginAlert.classList.add('visible');
+          }
         }
         if (loginPassword) { loginPassword.value = ''; loginPassword.focus(); }
       }
@@ -120,6 +208,8 @@ document.addEventListener('DOMContentLoaded', function () {
     logoutBtn.addEventListener('click', function () {
       sessionStorage.removeItem(AUTH_SESSION_KEY);
       sessionStorage.removeItem(AUTH_USER_KEY);
+      if (loginEmail) loginEmail.value = '';
+      if (loginPassword) loginPassword.value = '';
       checkAuth();
       showToast('Berhasil keluar dari panel admin.');
     });

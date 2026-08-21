@@ -479,7 +479,95 @@ function applyIncomingOnlineData(data) {
   return data;
 }
 
-// Auto-heal struktur data
+// ============================================================
+// CYBER SECURITY PROTECTION: ANTI-SQL INJECTION & ANTI-XSS SUITE
+// ============================================================
+
+/**
+ * Membersihkan input teks dari serangan SQL Injection, Stored XSS, dan payload berbahaya
+ * @param {string} val Input string
+ * @param {boolean} allowBase64 Apakah memperbolehkan data URL base64 gambar
+ * @returns {string} String yang sudah disanitasi dan aman
+ */
+function sanitizeSecurityInput(val, allowBase64 = true) {
+  if (val === null || val === undefined) return '';
+  if (typeof val !== 'string') return val;
+
+  let str = val;
+
+  // Jika merupakan base64 image yang valid, verifikasi prefix aman
+  if (allowBase64 && str.startsWith('data:image/')) {
+    // Pastikan hanya format image MIME yang diizinkan (png, jpeg, webp, gif, svg+xml)
+    if (/^data:image\/(png|jpeg|jpg|webp|gif|svg\+xml);base64,[A-Za-z0-9+/=]+$/.test(str.substring(0, 100))) {
+      return str;
+    }
+  }
+
+  // 1. Netralkan pola SQL Injection berbahaya
+  const sqlPatterns = [
+    /(\b(UNION(\s+ALL)?|SELECT|INSERT|UPDATE|DELETE|DROP|ALTER|TRUNCATE|EXEC|EXECUTE)\b\s+)/gi,
+    /(--|#|\/\*|\*\/)/g, // SQL comments
+    /(;\s*(DROP|DELETE|UPDATE|INSERT|SELECT|ALTER|CREATE))/gi, // Chained SQL queries
+    /(\bOR\b\s+['"\d\w]+\s*=\s*['"\d\w]+)/gi, // Tautology like OR 1=1
+    /(\bAND\b\s+['"\d\w]+\s*=\s*['"\d\w]+)/gi,
+    /(\b(pg_sleep|sleep|benchmark|waitfor\s+delay|load_file|into\s+outfile|information_schema|pg_catalog)\b)/gi
+  ];
+
+  sqlPatterns.forEach(pattern => {
+    str = str.replace(pattern, '');
+  });
+
+  // 2. Netralkan pola XSS (Cross Site Scripting) berbahaya
+  const xssPatterns = [
+    /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
+    /<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi,
+    /<object\b[^<]*(?:(?!<\/object>)<[^<]*)*<\/object>/gi,
+    /<embed\b[^<]*(?:(?!<\/embed>)<[^<]*)*<\/embed>/gi,
+    /javascript\s*:/gi,
+    /data\s*:\s*text\/html/gi,
+    /\bon\w+\s*=\s*["'][^"']*["']/gi, // Event handlers like onload="...", onerror="..."
+    /\bon\w+\s*=\s*[^>\s]+/gi // Event handlers without quotes
+  ];
+
+  xssPatterns.forEach(pattern => {
+    str = str.replace(pattern, '');
+  });
+
+  // 3. Batasi panjang string wajar untuk mencegah buffer/payload flood (kecuali image)
+  if (str.length > 5000 && !str.startsWith('data:image/')) {
+    str = str.substring(0, 5000);
+  }
+
+  return str.trim();
+}
+
+/**
+ * Sanitasi rekursif untuk seluruh pohon objek / array data sebelum disimpan ke database
+ */
+function sanitizeDataDeep(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+
+  if (Array.isArray(obj)) {
+    for (let i = 0; i < obj.length; i++) {
+      if (typeof obj[i] === 'string') {
+        obj[i] = sanitizeSecurityInput(obj[i]);
+      } else if (typeof obj[i] === 'object') {
+        sanitizeDataDeep(obj[i]);
+      }
+    }
+  } else {
+    for (const key of Object.keys(obj)) {
+      if (typeof obj[key] === 'string') {
+        obj[key] = sanitizeSecurityInput(obj[key]);
+      } else if (typeof obj[key] === 'object') {
+        sanitizeDataDeep(obj[key]);
+      }
+    }
+  }
+  return obj;
+}
+
+// Auto-heal dan sanitasi struktur data
 function sanitizeMothraData(data) {
   if (!data) return;
   if (!data.partnerships || !Array.isArray(data.partnerships) || data.partnerships.length === 0) {
@@ -509,6 +597,9 @@ function sanitizeMothraData(data) {
   if (!data.users || !Array.isArray(data.users) || data.users.length === 0) {
     data.users = JSON.parse(JSON.stringify(DEFAULT_MOTHRA_DATA.users));
   }
+
+  // Terapkan deep security sanitization
+  sanitizeDataDeep(data);
 }
 
 // Fungsi utama sinkron: Mengambil data saat ini dari memory/localStorage/default
@@ -539,6 +630,9 @@ function getMothraData() {
 // Fungsi simpan data: Menyimpan ke memory, LocalStorage, Supabase Online (Dual Sync), dan server lokal
 function saveMothraData(data) {
   try {
+    // Sanitasi data menyeluruh sebelum disimpan
+    sanitizeDataDeep(data);
+
     data.dataVersion = Date.now();
     data.updatedAt = new Date().toISOString();
     _mothraMemoryData = data;
@@ -621,6 +715,8 @@ if (typeof window !== 'undefined') {
   window.getMothraData = getMothraData;
   window.saveMothraData = saveMothraData;
   window.fetchMothraDataOnline = fetchMothraDataOnline;
+  window.sanitizeSecurityInput = sanitizeSecurityInput;
+  window.sanitizeDataDeep = sanitizeDataDeep;
   window.initSupabase = initSupabase;
   window.getSupabaseConfig = getSupabaseConfig;
   window.saveSupabaseConfig = function(url, key) {

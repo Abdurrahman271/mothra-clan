@@ -1268,11 +1268,15 @@ function initCollabModal() {
   form.onsubmit = async (e) => {
     e.preventDefault();
 
-    const currentType = (collabTypeHidden ? collabTypeHidden.value : 'scrim') || 'scrim';
+    const sanitize = (typeof window.sanitizeSecurityInput === 'function') 
+      ? window.sanitizeSecurityInput 
+      : (s) => (s ? s.replace(/<[^>]*>/g, '').replace(/(\b(UNION|SELECT|INSERT|UPDATE|DELETE|DROP)\b)/gi, '') : '');
+
+    const currentType = sanitize((collabTypeHidden ? collabTypeHidden.value : 'scrim') || 'scrim');
     const contactTypeSelect = document.getElementById('collabContactType');
-    const contactType = contactTypeSelect ? contactTypeSelect.value : 'WhatsApp';
-    const contact = (document.getElementById('collabContact') ? document.getElementById('collabContact').value : '').trim();
-    const notes = (notesInput ? notesInput.value : '').trim();
+    const contactType = sanitize(contactTypeSelect ? contactTypeSelect.value : 'WhatsApp');
+    const contact = sanitize((document.getElementById('collabContact') ? document.getElementById('collabContact').value : '').trim());
+    const notes = sanitize((notesInput ? notesInput.value : '').trim());
 
     let primaryName = '';
     let extraDetails = {};
@@ -1280,10 +1284,10 @@ function initCollabModal() {
 
     if (currentType === 'scrim') {
       typeDisplay = 'Friendly Match / Scrim (Clan War)';
-      const clanName = (document.getElementById('scrimClanName') ? document.getElementById('scrimClanName').value : '').trim();
-      const picName = (document.getElementById('scrimPicName') ? document.getElementById('scrimPicName').value : '').trim();
-      const rules = (document.getElementById('scrimRules') ? document.getElementById('scrimRules').value : 'PBNC Official 5v5');
-      const schedule = (document.getElementById('scrimSchedule') ? document.getElementById('scrimSchedule').value : '').trim();
+      const clanName = sanitize((document.getElementById('scrimClanName') ? document.getElementById('scrimClanName').value : '').trim());
+      const picName = sanitize((document.getElementById('scrimPicName') ? document.getElementById('scrimPicName').value : '').trim());
+      const rules = sanitize((document.getElementById('scrimRules') ? document.getElementById('scrimRules').value : 'PBNC Official 5v5'));
+      const schedule = sanitize((document.getElementById('scrimSchedule') ? document.getElementById('scrimSchedule').value : '').trim());
 
       if (!clanName || !picName || !schedule) {
         showWarning('Harap isi Nama Clan, Nama PIC, dan Usulan Jadwal Match.');
@@ -1298,10 +1302,10 @@ function initCollabModal() {
       };
     } else if (currentType === 'sponsor') {
       typeDisplay = 'Sponsorship & Brand Collaboration';
-      const brandName = (document.getElementById('sponsorBrandName') ? document.getElementById('sponsorBrandName').value : '').trim();
-      const picName = (document.getElementById('sponsorPicName') ? document.getElementById('sponsorPicName').value : '').trim();
-      const sponsorType = (document.getElementById('sponsorTypeSelect') ? document.getElementById('sponsorTypeSelect').value : 'Jersey Placement');
-      const link = (document.getElementById('sponsorLink') ? document.getElementById('sponsorLink').value : '').trim();
+      const brandName = sanitize((document.getElementById('sponsorBrandName') ? document.getElementById('sponsorBrandName').value : '').trim());
+      const picName = sanitize((document.getElementById('sponsorPicName') ? document.getElementById('sponsorPicName').value : '').trim());
+      const sponsorType = sanitize((document.getElementById('sponsorTypeSelect') ? document.getElementById('sponsorTypeSelect').value : 'Jersey Placement'));
+      const link = sanitize((document.getElementById('sponsorLink') ? document.getElementById('sponsorLink').value : '').trim());
 
       if (!brandName || !picName) {
         showWarning('Harap isi Nama Brand / Perusahaan dan Nama PIC.');
@@ -1316,9 +1320,9 @@ function initCollabModal() {
       };
     } else if (currentType === 'design') {
       typeDisplay = 'Design & Creative Media Partner';
-      const creatorName = (document.getElementById('designCreatorName') ? document.getElementById('designCreatorName').value : '').trim();
-      const specialty = (document.getElementById('designSpecialty') ? document.getElementById('designSpecialty').value : '3D Jersey Design');
-      const portfolio = (document.getElementById('designPortfolio') ? document.getElementById('designPortfolio').value : '').trim();
+      const creatorName = sanitize((document.getElementById('designCreatorName') ? document.getElementById('designCreatorName').value : '').trim());
+      const specialty = sanitize((document.getElementById('designSpecialty') ? document.getElementById('designSpecialty').value : '3D Jersey Design'));
+      const portfolio = sanitize((document.getElementById('designPortfolio') ? document.getElementById('designPortfolio').value : '').trim());
 
       if (!creatorName || !portfolio) {
         showWarning('Harap isi Nama Kreator dan Link Portofolio Anda.');
@@ -1332,10 +1336,10 @@ function initCollabModal() {
       };
     } else if (currentType === 'ba') {
       typeDisplay = 'Brand Ambassador & Talent Audition';
-      const talentName = (document.getElementById('baTalentName') ? document.getElementById('baTalentName').value : '').trim();
-      const platform = (document.getElementById('baPlatform') ? document.getElementById('baPlatform').value : 'TikTok Live');
-      const channel = (document.getElementById('baChannelLink') ? document.getElementById('baChannelLink').value : '').trim();
-      const followers = (document.getElementById('baFollowers') ? document.getElementById('baFollowers').value : '').trim();
+      const talentName = sanitize((document.getElementById('baTalentName') ? document.getElementById('baTalentName').value : '').trim());
+      const platform = sanitize((document.getElementById('baPlatform') ? document.getElementById('baPlatform').value : 'TikTok Live'));
+      const channel = sanitize((document.getElementById('baChannelLink') ? document.getElementById('baChannelLink').value : '').trim());
+      const followers = sanitize((document.getElementById('baFollowers') ? document.getElementById('baFollowers').value : '').trim());
 
       if (!talentName || !channel || !followers) {
         showWarning('Harap isi Nama Talent, Link Channel, dan Estimasi Followers/Viewers.');
@@ -1475,7 +1479,11 @@ if (document.readyState === 'loading') {
   }
 
   function sanitizeInput(str) {
-    return str.replace(/</g, '&lt;').replace(/>/g, '&gt;').trim();
+    if (!str) return '';
+    if (typeof window.sanitizeSecurityInput === 'function') {
+      return window.sanitizeSecurityInput(str);
+    }
+    return str.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/(\b(UNION|SELECT|INSERT|UPDATE|DELETE|DROP)\b)/gi, '').trim();
   }
 
   const inputs = form.querySelectorAll('.form-input[required]');
