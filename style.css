@@ -1902,6 +1902,46 @@ button {
   color: var(--white);
 }
 
+.collab-modal .form-group {
+  margin-bottom: 1.25rem;
+}
+.collab-modal .form-label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--gold);
+  margin-bottom: 0.45rem;
+}
+.collab-modal .form-input,
+.collab-modal select.form-input,
+.collab-modal textarea.form-input {
+  width: 100%;
+  padding: 0.85rem 1.15rem;
+  background: var(--dark-2);
+  border: 1px solid var(--border);
+  color: var(--white);
+  border-radius: var(--radius);
+  font-family: inherit;
+  font-size: 0.92rem;
+  transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
+}
+.collab-modal .form-input:focus,
+.collab-modal select.form-input:focus,
+.collab-modal textarea.form-input:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 12px rgba(212, 175, 55, 0.25);
+  background: var(--dark-3);
+}
+
+@media (max-width: 640px) {
+  .collab-modal-container {
+    padding: 1.75rem 1.25rem;
+  }
+}
+
 /* ---- PLAYER PROFILE MODAL ---- */
 .player-modal {
   position: fixed;

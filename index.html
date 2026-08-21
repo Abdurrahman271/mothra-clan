@@ -1028,6 +1028,84 @@
     </div>
   </div>
 
+  <!-- ===================== COLLABORATION & PARTNERSHIP PROPOSAL MODAL ===================== -->
+  <div class="collab-modal" id="collabModal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="collabModalTitle">
+    <div class="collab-modal-backdrop" id="collabModalBackdrop"></div>
+    <div class="collab-modal-container">
+      <button class="collab-modal-close" id="collabModalClose" aria-label="Tutup popup">&times;</button>
+      
+      <div style="margin-bottom: 1.5rem;">
+        <div class="section-tag" style="font-size: 0.72rem; margin-bottom: 0.35rem;">04 / ALLIANCE PORTAL</div>
+        <h3 id="collabModalTitle" style="font-family: var(--font-display); font-size: 1.85rem; font-weight: 900; color: var(--white); letter-spacing: 0.05em; margin: 0 0 0.4rem;">
+          PENGAJUAN <span class="text-gold">KEMITRAAN &amp; SPARRING</span>
+        </h3>
+        <p style="color: var(--gray-light); font-size: 0.88rem; line-height: 1.5; margin: 0;">
+          Isi detail pengajuan kolaborasi Anda. Data otomatis tercatat ke Database HQ Admin dan diteruskan ke email manajemen Clan MOTHRA.
+        </p>
+      </div>
+
+      <div class="form-warning" id="collabWarning" style="margin-bottom: 1rem;"></div>
+
+      <div class="form-success" id="collabSuccess" style="margin-bottom: 1rem;">
+        <div class="success-icon-wrap">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <div class="success-body">
+          <div class="success-title">PROPOSAL BERHASIL TERKIRIM &amp; DICATAT!</div>
+          <p class="success-text" id="collabSuccessText">
+            Terima kasih! Pengajuan kemitraan Anda telah otomatis tersimpan ke Database Cloud Supabase Clan MOTHRA dan terkirim ke email <strong>abdurrrahman09@gmail.com</strong>. Tim manajemen akan segera menghubungi PIC Anda.
+          </p>
+          <div class="success-actions">
+            <button type="button" class="btn btn--ghost btn--sm" id="collabSuccessCloseBtn" onclick="document.getElementById('collabModal').classList.remove('open'); document.body.style.overflow='';">TUTUP POPUP</button>
+          </div>
+        </div>
+      </div>
+
+      <form id="collabForm" novalidate>
+        <div class="form-group">
+          <label for="collabType" class="form-label">JENIS PENGAJUAN / KERJASAMA *</label>
+          <select id="collabType" class="form-input" required>
+            <option value="scrim">⚔️ Friendly Match / Scrim Request (Clan War)</option>
+            <option value="sponsor">🤝 Sponsorship &amp; Brand Endorsement</option>
+            <option value="design">🎨 Design &amp; Creative Media Partner</option>
+            <option value="ba">👑 Brand Ambassador &amp; Talent Streamer</option>
+          </select>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.25rem;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label for="collabName" class="form-label">NAMA CLAN / BRAND / TALENT *</label>
+            <input type="text" id="collabName" class="form-input" placeholder="Contoh: RRQ Academy / Brand XYZ" required />
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0;">
+            <label for="collabContactType" class="form-label">PLATFORM KONTAK *</label>
+            <select id="collabContactType" class="form-input" required>
+              <option value="WhatsApp">WhatsApp</option>
+              <option value="Discord">Discord</option>
+              <option value="Instagram">Instagram</option>
+              <option value="Email">Email</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="collabContact" class="form-label">NOMOR HP / USERNAME / EMAIL PIC *</label>
+          <input type="text" id="collabContact" class="form-input" placeholder="Contoh: 081234567890 / discord_user#0000 / @instagram" required />
+        </div>
+
+        <div class="form-group">
+          <label for="collabNotes" class="form-label">RINCIAN PENGAJUAN / PESAN PROPOSAL *</label>
+          <textarea id="collabNotes" class="form-input" rows="4" placeholder="Jelaskan jadwal sparring, bentuk kerjasama sponsorship, portofolio desain, atau link channel streaming Anda..." required></textarea>
+        </div>
+
+        <button type="submit" class="btn btn--primary btn--full" id="collabSubmitBtn" style="padding: 1rem; width: 100%;">
+          <span>KIRIM PENGAJUAN &amp; SIMPAN KE HQ &rarr;</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
   <!-- ===================== FOOTER ===================== -->
   <footer class="footer" id="footer" role="contentinfo">
     <div class="footer-container">

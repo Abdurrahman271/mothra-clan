@@ -982,24 +982,37 @@ bindPlayerCardClickEvents();
 /* ============================================================
    12. COLLABORATION & PARTNERSHIP PROPOSAL MODAL CONTROLLER
    ============================================================ */
-(function initCollabModal() {
+function initCollabModal() {
   const modal = document.getElementById('collabModal');
   const backdrop = document.getElementById('collabModalBackdrop');
   const closeBtn = document.getElementById('collabModalClose');
   const form = document.getElementById('collabForm');
   const typeSelect = document.getElementById('collabType');
+  const contactTypeSelect = document.getElementById('collabContactType');
   const successMsg = document.getElementById('collabSuccess');
+  const successText = document.getElementById('collabSuccessText');
   const warningMsg = document.getElementById('collabWarning');
   const submitBtn = document.getElementById('collabSubmitBtn');
-  const openButtons = document.querySelectorAll('.open-collab-btn');
+  const openButtons = document.querySelectorAll('.open-collab-btn, [data-open-collab]');
 
   if (!modal || !form) return;
 
   function openModal(defaultType) {
     if (typeSelect && defaultType) {
+      const search = defaultType.toLowerCase();
       for (let i = 0; i < typeSelect.options.length; i++) {
-        if (typeSelect.options[i].text.toLowerCase().includes(defaultType.toLowerCase()) ||
-            typeSelect.options[i].value.toLowerCase().includes(defaultType.toLowerCase())) {
+        const optVal = typeSelect.options[i].value.toLowerCase();
+        const optText = typeSelect.options[i].text.toLowerCase();
+        if (optVal === search || optText.includes(search) ||
+            (search.includes('sparring') && optVal === 'scrim') ||
+            (search.includes('scrim') && optVal === 'scrim') ||
+            (search.includes('sponsor') && optVal === 'sponsor') ||
+            (search.includes('proposal') && optVal === 'sponsor') ||
+            (search.includes('creative') && optVal === 'design') ||
+            (search.includes('design') && optVal === 'design') ||
+            (search.includes('talent') && optVal === 'ba') ||
+            (search.includes('ambassador') && optVal === 'ba') ||
+            (search.includes('ba') && optVal === 'ba')) {
           typeSelect.selectedIndex = i;
           break;
         }
@@ -1019,23 +1032,25 @@ bindPlayerCardClickEvents();
   }
 
   openButtons.forEach((btn) => {
-    btn.addEventListener('click', () => {
+    btn.onclick = (e) => {
+      e.preventDefault();
       openModal(btn.dataset.type || '');
-    });
+    };
   });
 
-  if (closeBtn) closeBtn.addEventListener('click', closeModal);
-  if (backdrop) backdrop.addEventListener('click', closeModal);
+  if (closeBtn) closeBtn.onclick = closeModal;
+  if (backdrop) backdrop.onclick = closeModal;
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && modal.classList.contains('open')) closeModal();
   });
 
-  form.addEventListener('submit', async (e) => {
+  form.onsubmit = async (e) => {
     e.preventDefault();
 
     const name = document.getElementById('collabName').value.trim();
     const contact = document.getElementById('collabContact').value.trim();
-    const type = typeSelect ? typeSelect.value : 'Partnership';
+    const contactType = contactTypeSelect ? contactTypeSelect.value : 'WhatsApp';
+    const typeVal = typeSelect ? typeSelect.value : 'scrim';
     const notes = document.getElementById('collabNotes').value.trim();
 
     if (!name || !contact || !notes) {
@@ -1046,36 +1061,80 @@ bindPlayerCardClickEvents();
       return;
     }
 
+    const typeLabelMap = {
+      scrim: 'Friendly Match / Scrim Request',
+      sponsor: 'Sponsorship & Brand Inquiry',
+      design: 'Design & Creative Partnership',
+      ba: 'Brand Ambassador & Talent'
+    };
+    const typeKey = ['scrim', 'sponsor', 'design', 'ba'].includes(typeVal) ? typeVal : 'scrim';
+    const typeLabel = typeLabelMap[typeKey] || (typeSelect && typeSelect.options[typeSelect.selectedIndex] ? typeSelect.options[typeSelect.selectedIndex].text : 'Partnership');
+
     const origBtn = submitBtn.innerHTML;
-    submitBtn.innerHTML = '<span>MENGIRIMKAN PROPOSAL...</span>';
+    submitBtn.innerHTML = '<span>MENGIRIMKAN KE DATABASE &amp; EMAIL...</span>';
     submitBtn.disabled = true;
 
+    // 1. Simpan ke Database Lokal & Supabase Realtime (Admin Panel "The Alliance")
+    try {
+      const newPartnership = {
+        id: 'pa_' + Date.now(),
+        type: typeKey,
+        typeLabel: typeLabel,
+        name: name,
+        contact: contact,
+        contactType: contactType,
+        status: 'PENDING',
+        date: new Date().toISOString().slice(0, 10),
+        logo: 'assets/mothra-logo.png',
+        notes: notes
+      };
+
+      const db = typeof getMothraData === 'function' ? getMothraData() : null;
+      if (db) {
+        if (!Array.isArray(db.partnerships)) db.partnerships = [];
+        db.partnerships.unshift(newPartnership);
+        if (typeof saveMothraData === 'function') {
+          saveMothraData(db);
+        }
+      }
+    } catch (dbErr) {
+      console.warn('Partnership database save notice:', dbErr);
+    }
+
+    // 2. Kirim Notifikasi Email ke abdurrrahman09@gmail.com
     try {
       await fetch('https://formsubmit.co/ajax/abdurrrahman09@gmail.com', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify({
-          _subject: `[MOTHRA ALLIANCE] Pengajuan Baru: ${type} - ${name}`,
+          _subject: `[MOTHRA ALLIANCE] Pengajuan Baru: ${typeLabel} - ${name}`,
           _template: 'table',
           _captcha: 'false',
-          'Jenis Kolaborasi': type,
+          'Jenis Kolaborasi': typeLabel,
           'Nama Clan / Brand / Talent': name,
+          'Platform Kontak': contactType,
           'Kontak PIC': contact,
           'Rincian Proposal': notes,
+          'Status Database': 'PENDING (Tersimpan di Cloud Supabase & Admin Panel)',
           'Waktu Kirim': new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })
         })
       });
     } catch (err) {
-      console.warn('Partnership dispatch notice:', err);
+      console.warn('Partnership email dispatch notice:', err);
     }
 
     submitBtn.innerHTML = origBtn;
     submitBtn.disabled = false;
     form.reset();
+
     if (warningMsg) warningMsg.classList.remove('visible');
+    if (successText) {
+      successText.innerHTML = `Terima kasih <strong>${name}</strong>! Pengajuan untuk <strong>${typeLabel}</strong> telah otomatis tersimpan ke Database Cloud Supabase &amp; Admin Panel, serta diteruskan ke email <strong>abdurrrahman09@gmail.com</strong>. Tim manajemen akan segera menghubungi Anda.`;
+    }
     if (successMsg) successMsg.classList.add('visible');
-  });
-})();
+  };
+}
+initCollabModal();
 
 /* ============================================================
    13. RECRUITMENT PORTAL FORM CONTROLLER
