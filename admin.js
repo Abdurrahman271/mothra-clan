@@ -51,6 +51,14 @@ function checkAuth() {
     loginLogoEl.src = db.branding.loginLogo || db.branding.logo || 'assets/mothra-logo.png';
   }
 
+  // Sync admin panel browser tab favicon from DB
+  if (db && db.branding) {
+    const adminFavicon = document.querySelector('link[rel="icon"]');
+    if (adminFavicon) {
+      adminFavicon.href = db.branding.logoIcon || db.branding.logo || 'assets/mothra-logo.png';
+    }
+  }
+
   const isAuth = sessionStorage.getItem(AUTH_SESSION_KEY) === 'true';
   if (isAuth) {
     loginScreen.classList.add('hidden');
@@ -375,6 +383,16 @@ function renderBrandingForm() {
   // Live update admin login logo
   const loginScreenLogo = document.getElementById('adminLoginLogo');
   if (loginScreenLogo) loginScreenLogo.src = b.loginLogo || b.logo || 'assets/mothra-logo.png';
+
+  // Live update admin panel browser tab favicon (icon di tab browser)
+  const adminFavicon = document.querySelector('link[rel="icon"]');
+  if (adminFavicon) {
+    const iconSrc = b.logoIcon || b.logo || 'assets/mothra-logo.png';
+    adminFavicon.href = iconSrc;
+  }
+  // Also update mobile brand logo in mobile header
+  const mobileLogo = document.querySelector('.mobile-brand-logo');
+  if (mobileLogo && b.logo) mobileLogo.src = b.logo;
 }
 
 if (brandingForm) {
