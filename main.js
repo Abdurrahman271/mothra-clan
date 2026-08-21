@@ -32,6 +32,39 @@
 /* ============================================================
    CMS DATA SYNCHRONIZATION & DYNAMIC REALTIME RENDERING
    ============================================================ */
+let currentRosterFilter = 'all';
+let isRosterExpanded = false;
+const MAX_SIDE_ROSTER_COLLAPSED = 4;
+
+function ensureLineupReadMoreElement() {
+  let readMoreWrap = document.getElementById('lineupReadMoreWrap');
+  const playersGrid = document.querySelector('.players-grid');
+  if (!playersGrid) return;
+
+  if (!readMoreWrap) {
+    readMoreWrap = document.createElement('div');
+    readMoreWrap.className = 'lineup-readmore-wrap';
+    readMoreWrap.id = 'lineupReadMoreWrap';
+    readMoreWrap.style.display = 'none';
+    readMoreWrap.innerHTML = `
+      <button type="button" class="lineup-readmore-btn" id="lineupReadMoreBtn" aria-label="Lihat Roster Lengkap">
+        <span>READ MORE ROSTER (LIHAT SEMUA UNIT)</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+    `;
+    playersGrid.insertAdjacentElement('afterend', readMoreWrap);
+  }
+
+  const btn = readMoreWrap.querySelector('#lineupReadMoreBtn');
+  if (btn && !btn._hasClickListener) {
+    btn._hasClickListener = true;
+    btn.addEventListener('click', () => {
+      isRosterExpanded = !isRosterExpanded;
+      applyRosterFilter(currentRosterFilter);
+    });
+  }
+}
+
 function syncCmsData() {
   if (typeof getMothraData !== 'function') return;
   const db = getMothraData();
@@ -120,112 +153,120 @@ function syncCmsData() {
   // 2. Sync Tournament Categories & Filter Tabs
   const rosterFiltersWrap = document.querySelector('.roster-filters');
   if (rosterFiltersWrap && Array.isArray(db.categories)) {
-    const activeFilterBtn = rosterFiltersWrap.querySelector('.filter-btn.active');
-    const currentActiveFilter = activeFilterBtn ? activeFilterBtn.dataset.filter : 'all';
-
     const totalRoster = (db.lineup || []).length;
-    let buttonsHtml = `<button class="filter-btn ${currentActiveFilter === 'all' ? 'active' : ''}" data-filter="all">SEMUA ROSTER (${totalRoster})</button>`;
+    let buttonsHtml = `<button class="filter-btn ${currentRosterFilter === 'all' ? 'active' : ''}" data-filter="all">SEMUA ROSTER (${totalRoster})</button>`;
 
     db.categories.forEach((cat) => {
-      const isActive = currentActiveFilter === cat.id ? 'active' : '';
+      const isActive = currentRosterFilter === cat.id ? 'active' : '';
       buttonsHtml += `<button class="filter-btn ${isActive}" data-filter="${cat.id}">${cat.label}</button>`;
     });
 
     rosterFiltersWrap.innerHTML = buttonsHtml;
-    // bindRosterFilterEvents will be called after player cards are rendered below
   }
 
   // 3. Sync The Lineup Cards
-  if (Array.isArray(db.lineup) && db.lineup.length > 0) {
+  if (Array.isArray(db.lineup)) {
     const playersGrid = document.querySelector('.players-grid');
     if (playersGrid) {
-      const featuredPlayer = db.lineup.find((p) => p.featured) || db.lineup[0];
-      const sidePlayers = db.lineup.filter((p) => p.id !== featuredPlayer.id);
-
-      const getCategoryBadge = (catId) => {
-        const catObj = (db.categories || []).find((c) => c.id === catId);
-        return catObj ? catObj.badge || catObj.label : (catId || 'PBNC').toUpperCase();
-      };
-
-      // Render Featured Player Card
-      let featuredHtml = `
-        <div class="player-card player-card--featured reveal-fade visible revealed"
-             data-category="${featuredPlayer.category || 'pbnc'}"
-             data-delay="0"
-             data-player="${featuredPlayer.id}"
-             data-name="${featuredPlayer.name}"
-             data-realname="${featuredPlayer.realname || ''}"
-             data-role="${featuredPlayer.role}"
-             data-num="${featuredPlayer.num || '01'}"
-             data-img="${featuredPlayer.img}"
-             data-weapon="${featuredPlayer.weapon || 'AUG A3 / Kriss S.V'}"
-             data-kd="${featuredPlayer.kd || '2.00'}"
-             data-hs="${featuredPlayer.hs || '60%'}"
-             data-experience="${featuredPlayer.experience || '3+ Tahun'}"
-             data-bio="${(featuredPlayer.bio || '').replace(/"/g, '&quot;')}"
-             tabindex="0"
-             role="button"
-             aria-label="Lihat profil ${featuredPlayer.name}">
-          <div class="player-img-wrap">
-            <img src="${featuredPlayer.img}" alt="${featuredPlayer.name}" loading="lazy" width="400" height="533" onerror="this.src='assets/player-captain.jpg'" />
-            <div class="player-num">${featuredPlayer.num || '01'}</div>
-            <div class="player-status"><span class="dot dot--green"></span> ${getCategoryBadge(featuredPlayer.category)}</div>
-            <div class="player-hover-action">
-              <span>VIEW DOSSIER <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17l9.2-9.2M17 17V8H8"/></svg></span>
-            </div>
+      if (db.lineup.length === 0) {
+        playersGrid.innerHTML = `
+          <div class="no-filter-match" style="grid-column:1/-1; text-align:center; padding:3rem 1rem;">
+            <span class="text-gold">Belum ada data roster pemain.</span>
           </div>
-          <div class="player-info">
-            <span class="player-role">${featuredPlayer.role}</span>
-            <div class="player-name">${featuredPlayer.name}</div>
-            <div class="player-realname">${featuredPlayer.realname || ''}</div>
-          </div>
-        </div>
-      `;
+        `;
+        const readMoreWrap = document.getElementById('lineupReadMoreWrap');
+        if (readMoreWrap) readMoreWrap.style.display = 'none';
+      } else {
+        const featuredPlayer = db.lineup.find((p) => p.featured) || db.lineup[0];
+        const sidePlayers = db.lineup.filter((p) => p.id !== featuredPlayer.id);
 
-      // Render Side Players Cards
-      let sideHtml = `<div class="players-grid-side">`;
-      sidePlayers.forEach((p, idx) => {
-        const dotClass = p.category === 'ba' ? 'dot--gold' : 'dot--green';
-        sideHtml += `
-          <div class="player-card reveal-fade visible revealed"
-               data-category="${p.category || 'pbnc'}"
-               data-delay="${(idx + 1) * 100}"
-               data-player="${p.id}"
-               data-name="${p.name}"
-               data-realname="${p.realname || ''}"
-               data-role="${p.role}"
-               data-num="${p.num || '00'}"
-               data-img="${p.img}"
-               data-weapon="${p.weapon || 'AUG A3 / Kriss S.V'}"
-               data-kd="${p.kd || '2.00'}"
-               data-hs="${p.hs || '60%'}"
-               data-experience="${p.experience || '3 Tahun'}"
-               data-bio="${(p.bio || '').replace(/"/g, '&quot;')}"
+        const getCategoryBadge = (catId) => {
+          const catObj = (db.categories || []).find((c) => c.id === catId);
+          return catObj ? catObj.badge || catObj.label : (catId || 'PBNC').toUpperCase();
+        };
+
+        // Render Featured Player Card
+        let featuredHtml = `
+          <div class="player-card player-card--featured reveal-fade visible revealed"
+               data-category="${featuredPlayer.category || 'pbnc'}"
+               data-delay="0"
+               data-player="${featuredPlayer.id}"
+               data-name="${featuredPlayer.name}"
+               data-realname="${featuredPlayer.realname || ''}"
+               data-role="${featuredPlayer.role}"
+               data-num="${featuredPlayer.num || '01'}"
+               data-img="${featuredPlayer.img}"
+               data-weapon="${featuredPlayer.weapon || 'AUG A3 / Kriss S.V'}"
+               data-kd="${featuredPlayer.kd || '2.00'}"
+               data-hs="${featuredPlayer.hs || '60%'}"
+               data-experience="${featuredPlayer.experience || '3+ Tahun'}"
+               data-bio="${(featuredPlayer.bio || '').replace(/"/g, '&quot;')}"
                tabindex="0"
                role="button"
-               aria-label="Lihat profil ${p.name}">
+               aria-label="Lihat profil ${featuredPlayer.name}">
             <div class="player-img-wrap">
-              <img src="${p.img}" alt="${p.name}" loading="lazy" width="300" height="400" onerror="this.src='assets/player2.jpg'" />
-              <div class="player-num">${p.num || '00'}</div>
-              <div class="player-status"><span class="dot ${dotClass}"></span> ${getCategoryBadge(p.category)}</div>
+              <img src="${featuredPlayer.img}" alt="${featuredPlayer.name}" loading="lazy" width="400" height="533" onerror="this.src='assets/player-captain.jpg'" />
+              <div class="player-num">${featuredPlayer.num || '01'}</div>
+              <div class="player-status"><span class="dot dot--green"></span> ${getCategoryBadge(featuredPlayer.category)}</div>
               <div class="player-hover-action">
                 <span>VIEW DOSSIER <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17l9.2-9.2M17 17V8H8"/></svg></span>
               </div>
             </div>
             <div class="player-info">
-              <span class="player-role ${p.category === 'ba' ? 'text-gold' : ''}">${p.role}</span>
-              <div class="player-name">${p.name}</div>
-              <div class="player-realname">${p.realname || ''}</div>
+              <span class="player-role">${featuredPlayer.role}</span>
+              <div class="player-name">${featuredPlayer.name}</div>
+              <div class="player-realname">${featuredPlayer.realname || ''}</div>
             </div>
           </div>
         `;
-      });
-      sideHtml += `</div>`;
 
-      playersGrid.innerHTML = featuredHtml + sideHtml;
-      bindPlayerCardClickEvents();
-      // Bind filter after cards are in DOM
-      bindRosterFilterEvents();
+        // Render Side Players Cards
+        let sideHtml = `<div class="players-grid-side">`;
+        sidePlayers.forEach((p, idx) => {
+          const dotClass = p.category === 'ba' ? 'dot--gold' : 'dot--green';
+          sideHtml += `
+            <div class="player-card reveal-fade visible revealed"
+                 data-category="${p.category || 'pbnc'}"
+                 data-delay="${(idx + 1) * 100}"
+                 data-player="${p.id}"
+                 data-name="${p.name}"
+                 data-realname="${p.realname || ''}"
+                 data-role="${p.role}"
+                 data-num="${p.num || '00'}"
+                 data-img="${p.img}"
+                 data-weapon="${p.weapon || 'AUG A3 / Kriss S.V'}"
+                 data-kd="${p.kd || '2.00'}"
+                 data-hs="${p.hs || '60%'}"
+                 data-experience="${p.experience || '3 Tahun'}"
+                 data-bio="${(p.bio || '').replace(/"/g, '&quot;')}"
+                 tabindex="0"
+                 role="button"
+                 aria-label="Lihat profil ${p.name}">
+              <div class="player-img-wrap">
+                <img src="${p.img}" alt="${p.name}" loading="lazy" width="300" height="400" onerror="this.src='assets/player2.jpg'" />
+                <div class="player-num">${p.num || '00'}</div>
+                <div class="player-status"><span class="dot ${dotClass}"></span> ${getCategoryBadge(p.category)}</div>
+                <div class="player-hover-action">
+                  <span>VIEW DOSSIER <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17l9.2-9.2M17 17V8H8"/></svg></span>
+                </div>
+              </div>
+              <div class="player-info">
+                <span class="player-role ${p.category === 'ba' ? 'text-gold' : ''}">${p.role}</span>
+                <div class="player-name">${p.name}</div>
+                <div class="player-realname">${p.realname || ''}</div>
+              </div>
+            </div>
+          `;
+        });
+        sideHtml += `</div>`;
+
+        playersGrid.innerHTML = featuredHtml + sideHtml;
+
+        ensureLineupReadMoreElement();
+        bindPlayerCardClickEvents();
+        bindRosterFilterEvents();
+        applyRosterFilter(currentRosterFilter);
+      }
     }
   }
 
@@ -238,76 +279,106 @@ function syncCmsData() {
 
     const matchesGrid = document.querySelector('.matches-grid');
     if (matchesGrid && Array.isArray(db.schedule.matches)) {
-      let matchesHtml = '';
-      db.schedule.matches.forEach((m, idx) => {
-        matchesHtml += `
-          <div class="match-card reveal-fade visible revealed" data-delay="${idx * 150}">
-            <div class="match-meta">
-              <span>${m.stage}</span>
-              <span class="match-status status-upcoming">${m.status}</span>
-            </div>
-            <div class="match-teams">
-              <div class="team-item">
-                <div class="team-logo-placeholder">MTH</div>
-                <span class="team-name text-gold">MOTHRA</span>
-              </div>
-              <div class="match-vs">VS</div>
-              <div class="team-item">
-                <div class="team-logo-placeholder" style="color:${m.opponentColor || '#EF4444'};">${m.opponentShort || 'VS'}</div>
-                <span class="team-name">${m.opponent}</span>
-              </div>
-            </div>
-            <div class="match-details">
-              <div class="match-detail-row"><span>Tournament:</span><span class="match-detail-val">${m.tournament}</span></div>
-              <div class="match-detail-row"><span>Map Pick:</span><span class="match-detail-val text-gold">${m.map}</span></div>
-              <div class="match-detail-row"><span>Waktu:</span><span class="match-detail-val">${m.time}</span></div>
-            </div>
-            <a href="${m.streamUrl || 'https://discord.gg/fxfMBWSzW'}" target="_blank" rel="noopener" class="btn btn--ghost btn--sm btn--full">WATCHPARTY ON DISCORD</a>
+      if (db.schedule.matches.length === 0) {
+        matchesGrid.innerHTML = `
+          <div class="no-filter-match" style="grid-column: 1 / -1; padding: 2.5rem 1rem; opacity: 0.75; text-align: center;">
+            <span class="text-gold" style="font-family: var(--font-mono); font-size: 0.85rem; letter-spacing: 0.15em;">BELUM ADA JADWAL PERTANDINGAN MENDATANG.</span>
           </div>
         `;
-      });
-      matchesGrid.innerHTML = matchesHtml;
+      } else {
+        let matchesHtml = '';
+        db.schedule.matches.forEach((m, idx) => {
+          matchesHtml += `
+            <div class="match-card reveal-fade visible revealed" data-delay="${idx * 150}">
+              <div class="match-meta">
+                <span>${m.stage}</span>
+                <span class="match-status status-upcoming">${m.status}</span>
+              </div>
+              <div class="match-teams">
+                <div class="team-item">
+                  <div class="team-logo-placeholder">MTH</div>
+                  <span class="team-name text-gold">MOTHRA</span>
+                </div>
+                <div class="match-vs">VS</div>
+                <div class="team-item">
+                  <div class="team-logo-placeholder" style="color:${m.opponentColor || '#EF4444'};">${m.opponentShort || 'VS'}</div>
+                  <span class="team-name">${m.opponent}</span>
+                </div>
+              </div>
+              <div class="match-details">
+                <div class="match-detail-row"><span>Tournament:</span><span class="match-detail-val">${m.tournament}</span></div>
+                <div class="match-detail-row"><span>Map Pick:</span><span class="match-detail-val text-gold">${m.map}</span></div>
+                <div class="match-detail-row"><span>Waktu:</span><span class="match-detail-val">${m.time}</span></div>
+              </div>
+              <a href="${m.streamUrl || 'https://discord.gg/fxfMBWSzW'}" target="_blank" rel="noopener" class="btn btn--ghost btn--sm btn--full">WATCHPARTY ON DISCORD</a>
+            </div>
+          `;
+        });
+        matchesGrid.innerHTML = matchesHtml;
+      }
     }
   }
 
   // 5. Sync The Record (Prestasi)
-  if (Array.isArray(db.records) && db.records.length > 0) {
+  if (Array.isArray(db.records)) {
     const timelineList = document.querySelector('.timeline-list, .achievements-list');
     if (timelineList) {
-      let recordsHtml = '';
-      db.records.forEach((r, idx) => {
-        recordsHtml += `
-          <div class="achievement-item reveal-fade visible revealed" data-delay="${idx * 100}">
-            <div class="achievement-year">${r.year}</div>
-            <div class="achievement-info">
-              <h3 class="achievement-title">${r.title}</h3>
-              <p class="achievement-desc">${r.subtitle}</p>
-            </div>
+      if (db.records.length === 0) {
+        timelineList.innerHTML = `
+          <div class="no-filter-match" style="padding: 2.5rem 1rem; opacity: 0.75; text-align: center;">
+            <span class="text-gold" style="font-family: var(--font-mono); font-size: 0.85rem; letter-spacing: 0.15em;">BELUM ADA CATATAN PRESTASI / REKOR TURNAMEN.</span>
           </div>
         `;
-      });
-      timelineList.innerHTML = recordsHtml;
+      } else {
+        let recordsHtml = '';
+        db.records.forEach((r, idx) => {
+          recordsHtml += `
+            <div class="achievement-item reveal-fade visible revealed" data-delay="${idx * 100}">
+              <div class="achievement-year">${r.year}</div>
+              <div class="achievement-info">
+                <div class="achievement-title">${r.title}</div>
+                <div class="achievement-sub">${r.subtitle}</div>
+              </div>
+              <div class="achievement-trophy" aria-hidden="true">
+                <svg width="32" height="32" viewBox="0 0 28 28" fill="none">
+                  <path d="M9 3h10v8a5 5 0 0 1-10 0V3z" stroke="#D4AF37" stroke-width="2"/>
+                  <path d="M9 7H5a3 3 0 0 0 3 3M19 7h4a3 3 0 0 1-3 3M14 16v4M10 24h8M11 20h6" stroke="#D4AF37" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </div>
+            </div>
+          `;
+        });
+        timelineList.innerHTML = recordsHtml;
+      }
     }
   }
 
   // 6. Sync Field Notes (Galeri)
-  if (Array.isArray(db.gallery) && db.gallery.length > 0) {
+  if (Array.isArray(db.gallery)) {
     const galleryGrid = document.querySelector('.gallery-grid');
     if (galleryGrid) {
-      let galleryHtml = '';
-      db.gallery.forEach((g, idx) => {
-        galleryHtml += `
-          <div class="gallery-item ${g.large ? 'gallery-item--large' : ''} reveal-fade visible revealed" data-delay="${idx * 100}">
-            <img src="${g.img}" alt="${g.title}" loading="lazy" width="600" height="400" onerror="this.src='assets/pb-bg-squad.jpg'" />
-            <div class="gallery-caption">
-              <span class="gallery-tag">INTEL / ARCHIVE</span>
-              <div class="gallery-title">${g.title}</div>
-            </div>
+      if (db.gallery.length === 0) {
+        galleryGrid.innerHTML = `
+          <div class="no-filter-match" style="grid-column: 1 / -1; padding: 2.5rem 1rem; opacity: 0.75; text-align: center;">
+            <span class="text-gold" style="font-family: var(--font-mono); font-size: 0.85rem; letter-spacing: 0.15em;">BELUM ADA DOKUMENTASI FOTO.</span>
           </div>
         `;
-      });
-      galleryGrid.innerHTML = galleryHtml;
-      bindLightboxEvents();
+      } else {
+        let galleryHtml = '';
+        db.gallery.forEach((g, idx) => {
+          galleryHtml += `
+            <div class="gallery-item ${g.large ? 'gallery-item--large' : ''} reveal-fade visible revealed" data-delay="${idx * 100}">
+              <img src="${g.img}" alt="${g.title}" loading="lazy" width="600" height="400" onerror="this.src='assets/pb-bg-squad.jpg'" />
+              <div class="gallery-caption">
+                <span class="gallery-tag">INTEL / ARCHIVE</span>
+                <div class="gallery-title">${g.title}</div>
+              </div>
+            </div>
+          `;
+        });
+        galleryGrid.innerHTML = galleryHtml;
+        bindLightboxEvents();
+      }
     }
   }
 }
@@ -652,93 +723,141 @@ function initCounters() {
 })();
 
 /* ============================================================
-   9. ROSTER FILTER TABS LOGIC
+   9. ROSTER FILTER TABS & READ MORE LOGIC
    ============================================================ */
+function applyRosterFilter(filter) {
+  currentRosterFilter = filter || 'all';
+
+  // 1. Update active tab styling
+  const filterBtns = document.querySelectorAll('.roster-filters .filter-btn');
+  filterBtns.forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.filter === currentRosterFilter);
+  });
+
+  const featuredCard = document.querySelector('.player-card--featured');
+  const sideCards    = document.querySelectorAll('.players-grid-side .player-card');
+  const sideWrapper  = document.querySelector('.players-grid-side');
+  const playersGrid  = document.querySelector('.players-grid');
+  const readMoreWrap = document.getElementById('lineupReadMoreWrap');
+  const readMoreBtn  = document.getElementById('lineupReadMoreBtn');
+
+  // 2. Determine which cards match category filter
+  const featuredMatch = !featuredCard ? false :
+    currentRosterFilter === 'all' || (featuredCard.dataset.category || '').trim().toLowerCase() === currentRosterFilter.toLowerCase();
+
+  const matchingSide = [];
+  sideCards.forEach((card) => {
+    const cat = (card.dataset.category || '').trim().toLowerCase();
+    const match = currentRosterFilter === 'all' || cat === currentRosterFilter.toLowerCase();
+    if (match) matchingSide.push(card);
+  });
+
+  // 3. Show / hide featured card
+  if (featuredCard) {
+    if (featuredMatch) {
+      featuredCard.style.display = '';
+      featuredCard.classList.remove('hidden');
+      featuredCard.classList.add('visible', 'revealed');
+    } else {
+      featuredCard.style.display = 'none';
+      featuredCard.classList.add('hidden');
+    }
+  }
+
+  // 4. If featured is hidden but side cards match, promote first side card to featured slot
+  const shouldPromote = !featuredMatch && matchingSide.length > 0;
+  let promotedCard = null;
+  if (shouldPromote) {
+    promotedCard = matchingSide[0];
+  }
+
+  // Remove any previously promoted cards
+  document.querySelectorAll('.player-card--promoted').forEach((c) => {
+    c.classList.remove('player-card--promoted');
+  });
+
+  if (promotedCard) {
+    promotedCard.classList.add('player-card--promoted');
+    promotedCard.style.display = '';
+    promotedCard.classList.remove('hidden');
+    promotedCard.classList.add('visible', 'revealed');
+  }
+
+  // 5. Manage side cards display + Read More limit
+  const sideCardsToConsider = shouldPromote ? matchingSide.slice(1) : matchingSide;
+  const totalMatchingSide = sideCardsToConsider.length;
+  const maxInitial = MAX_SIDE_ROSTER_COLLAPSED; // 4 cards
+
+  // First hide all side cards
+  sideCards.forEach((card) => {
+    if (card !== promotedCard) {
+      card.style.display = 'none';
+      card.classList.add('hidden');
+    }
+  });
+
+  // Show matching cards up to maxInitial or all if expanded
+  sideCardsToConsider.forEach((card, idx) => {
+    if (isRosterExpanded || idx < maxInitial) {
+      card.style.display = '';
+      card.classList.remove('hidden');
+      card.classList.add('visible', 'revealed');
+    }
+  });
+
+  // 6. Show/hide side wrapper
+  if (sideWrapper) {
+    sideWrapper.style.display = matchingSide.length > 0 ? '' : 'none';
+  }
+
+  // 7. Manage Read More Button state & text
+  if (readMoreWrap && readMoreBtn) {
+    if (totalMatchingSide > maxInitial) {
+      readMoreWrap.style.display = 'block';
+      if (isRosterExpanded) {
+        readMoreBtn.classList.add('is-expanded');
+        readMoreBtn.innerHTML = `
+          <span>CIUTKAN ROSTER / SHOW LESS</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 15l-6-6-6 6"/></svg>
+        `;
+      } else {
+        readMoreBtn.classList.remove('is-expanded');
+        const remaining = totalMatchingSide - maxInitial;
+        readMoreBtn.innerHTML = `
+          <span>READ MORE ROSTER (+${remaining} UNIT)</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        `;
+      }
+    } else {
+      readMoreWrap.style.display = 'none';
+    }
+  }
+
+  // 8. If NO cards match at all, show empty message
+  const noMatch = !featuredMatch && matchingSide.length === 0;
+  let emptyEl = playersGrid ? playersGrid.querySelector('.no-filter-match') : null;
+  if (noMatch && playersGrid && !emptyEl) {
+    emptyEl = document.createElement('div');
+    emptyEl.className = 'no-filter-match';
+    emptyEl.textContent = 'Tidak ada pemain di kategori ini.';
+    playersGrid.appendChild(emptyEl);
+  } else if (!noMatch && emptyEl) {
+    emptyEl.remove();
+  }
+}
+
 function bindRosterFilterEvents() {
   const filterBtns = document.querySelectorAll('.roster-filters .filter-btn');
 
   filterBtns.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      filterBtns.forEach((b) => b.classList.remove('active'));
-      btn.classList.add('active');
-
-      const filter = btn.dataset.filter;
-
-      // Get all rendered cards
-      const featuredCard = document.querySelector('.player-card--featured');
-      const sideCards    = document.querySelectorAll('.players-grid-side .player-card');
-      const sideWrapper  = document.querySelector('.players-grid-side');
-      const playersGrid  = document.querySelector('.players-grid');
-
-      // --- 1. Determine which cards are visible ---
-      const featuredMatch = !featuredCard ? false :
-        filter === 'all' || (featuredCard.dataset.category || '').trim() === filter;
-
-      const matchingSide = [];
-      sideCards.forEach((card) => {
-        const cat = (card.dataset.category || '').trim();
-        const match = filter === 'all' || cat === filter;
-        if (match) matchingSide.push(card);
-      });
-
-      // --- 2. Show / hide featured card ---
-      if (featuredCard) {
-        if (featuredMatch) {
-          featuredCard.style.display = '';
-          featuredCard.classList.remove('hidden');
-          featuredCard.classList.add('visible', 'revealed');
-        } else {
-          featuredCard.style.display = 'none';
-          featuredCard.classList.add('hidden');
-        }
-      }
-
-      // --- 3. Show / hide side cards ---
-      sideCards.forEach((card) => {
-        const cat = (card.dataset.category || '').trim();
-        const match = filter === 'all' || cat === filter;
-        if (match) {
-          card.style.display = '';
-          card.classList.remove('hidden');
-          card.classList.add('visible', 'revealed');
-        } else {
-          card.style.display = 'none';
-          card.classList.add('hidden');
-        }
-      });
-
-      // --- 4. If featured is hidden but side cards match, promote first side card ---
-      if (!featuredMatch && matchingSide.length > 0) {
-        const promoted = matchingSide[0];
-        promoted.style.display = '';
-        promoted.classList.remove('hidden');
-        promoted.classList.add('visible', 'revealed');
-        // Visually enlarge the first matched side card as a "promoted featured"
-        promoted.classList.add('player-card--promoted');
-      } else {
-        // Remove any previously promoted cards
-        document.querySelectorAll('.player-card--promoted').forEach((c) => {
-          c.classList.remove('player-card--promoted');
-        });
-      }
-
-      // --- 5. Show/hide side wrapper ---
-      if (sideWrapper) {
-        sideWrapper.style.display = matchingSide.length > 0 ? '' : 'none';
-      }
-
-      // --- 6. If NO cards match at all, show empty message ---
-      const noMatch = !featuredMatch && matchingSide.length === 0;
-      let emptyEl = playersGrid ? playersGrid.querySelector('.no-filter-match') : null;
-      if (noMatch && playersGrid && !emptyEl) {
-        emptyEl = document.createElement('div');
-        emptyEl.className = 'no-filter-match';
-        emptyEl.textContent = 'Tidak ada pemain di kategori ini.';
-        playersGrid.appendChild(emptyEl);
-      } else if (!noMatch && emptyEl) {
-        emptyEl.remove();
-      }
-    });
+    btn.onclick = (e) => {
+      e.preventDefault();
+      const filter = btn.dataset.filter || 'all';
+      currentRosterFilter = filter;
+      // Reset expanded state when switching category tabs
+      isRosterExpanded = false;
+      applyRosterFilter(currentRosterFilter);
+    };
   });
 }
 

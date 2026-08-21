@@ -1138,9 +1138,53 @@ button {
   grid-column: 1 / -1;
 }
 
+/* Read More Lineup Toggle Button */
+.lineup-readmore-wrap {
+  margin-top: 2.25rem;
+  text-align: center;
+  position: relative;
+  z-index: 3;
+}
+.lineup-readmore-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  padding: 0.85rem 2rem;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  background: var(--dark-2);
+  color: var(--gold-bright);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius);
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 12px rgba(212, 175, 55, 0.2);
+  transition: all var(--transition);
+}
+.lineup-readmore-btn:hover {
+  background: var(--gold);
+  color: var(--dark-1);
+  box-shadow: 0 6px 28px rgba(212, 175, 55, 0.45);
+  transform: translateY(-2px);
+}
+.lineup-readmore-btn svg {
+  transition: transform var(--transition);
+}
+.lineup-readmore-btn:hover svg {
+  transform: translateY(2px);
+}
+.lineup-readmore-btn.is-expanded svg {
+  transform: rotate(180deg);
+}
+.lineup-readmore-btn.is-expanded:hover svg {
+  transform: rotate(180deg) translateY(2px);
+}
+
 /* Extra Lineup Action Bar */
 .lineup-footer-action {
-  margin-top: 3rem;
+  margin-top: 2rem;
   text-align: center;
   position: relative;
   z-index: 2;

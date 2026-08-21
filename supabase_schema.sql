@@ -477,10 +477,7 @@ VALUES (
 }'::jsonb,
     1787240130085,
     now()
-)
-ON CONFLICT (id) DO UPDATE SET
-    data = EXCLUDED.data,
-    data_version = EXCLUDED.data_version,
-    updated_at = EXCLUDED.updated_at;
+ON CONFLICT (id) DO NOTHING;
 
 -- Selesai! Database siap digunakan oleh website Clan MOTHRA.
+
