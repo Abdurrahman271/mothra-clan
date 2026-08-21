@@ -297,6 +297,15 @@ function switchAdminPanel(panelId) {
   if (target) {
     target.classList.add('active');
     window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // Panel-specific re-renders
+    if (panelId === 'panelRoles' && typeof renderRolesTable === 'function') {
+      renderRolesTable();
+    } else if (panelId === 'panelLineup' && typeof renderLineupTable === 'function') {
+      renderLineupTable();
+    } else if (panelId === 'panelCategories' && typeof renderCategoriesTable === 'function') {
+      renderCategoriesTable();
+    }
   }
 
   // Close Mobile Drawer
@@ -682,14 +691,11 @@ categoryForm.addEventListener('submit', (e) => {
 /* ============================================================
    02B / MANAJEMEN ROLE TACTICAL CRUD (IGL, RUSHER, SNIPER, DLL)
    ============================================================ */
-const rolesTableBody = document.getElementById('rolesTableBody');
-const roleModal = document.getElementById('roleCrudModal');
-const roleForm = document.getElementById('roleCrudForm');
 let editingRoleId = null;
 
-function renderRolesTable() {
-  if (!rolesTableBody) return;
-  if (!Array.isArray(db.roles) || db.roles.length === 0) {
+function ensureDefaultRoles() {
+  if (!db) db = getMothraData();
+  if (!db.roles || !Array.isArray(db.roles) || db.roles.length === 0) {
     db.roles = [
       { id: "igl", label: "IGL / CAPTAIN", description: "In-Game Leader & Tactical Shotcaller" },
       { id: "rusher", label: "RUSHER / ATTACKER", description: "Frontline Entry Fragger & Assault" },
@@ -701,8 +707,15 @@ function renderRolesTable() {
       { id: "coach", label: "HEAD COACH", description: "Tactical Strategist & Analyst" }
     ];
   }
+}
 
-  rolesTableBody.innerHTML = '';
+function renderRolesTable() {
+  const tbody = document.getElementById('rolesTableBody');
+  if (!tbody) return;
+
+  ensureDefaultRoles();
+
+  tbody.innerHTML = '';
   db.roles.forEach((r) => {
     const playerCount = (db.lineup || []).filter((p) => p.role && (p.role.toLowerCase() === r.label.toLowerCase() || p.role.toLowerCase() === r.id.toLowerCase())).length;
     const tr = document.createElement('tr');
@@ -718,7 +731,7 @@ function renderRolesTable() {
         </div>
       </td>
     `;
-    rolesTableBody.appendChild(tr);
+    tbody.appendChild(tr);
   });
   populateRoleDropdown();
 }
@@ -727,21 +740,10 @@ function populateRoleDropdown() {
   const pRole = document.getElementById('pRole');
   if (!pRole) return;
   const currentVal = pRole.value;
+
+  ensureDefaultRoles();
+
   pRole.innerHTML = '';
-
-  if (!Array.isArray(db.roles) || db.roles.length === 0) {
-    db.roles = [
-      { id: "igl", label: "IGL / CAPTAIN", description: "In-Game Leader & Tactical Shotcaller" },
-      { id: "rusher", label: "RUSHER / ATTACKER", description: "Frontline Entry Fragger & Assault" },
-      { id: "sniper", label: "SNIPER / MARKSMAN", description: "Long-Range Precision Specialist" },
-      { id: "pointman", label: "POINTMAN / HITTER", description: "Fast SMG & CQC Specialist" },
-      { id: "support", label: "SUPPORT / BACKUP", description: "Utility, Cover & Secondary Fragger" },
-      { id: "flex", label: "FLEX / SIXTH MAN", description: "Multi-Role Tactical Sub & Rotation" },
-      { id: "ba", label: "BRAND AMBASSADOR", description: "Official Brand Ambassador & Streamer" },
-      { id: "coach", label: "HEAD COACH", description: "Tactical Strategist & Analyst" }
-    ];
-  }
-
   (db.roles || []).forEach((r) => {
     const opt = document.createElement('option');
     opt.value = r.label;
@@ -756,29 +758,43 @@ function populateRoleDropdown() {
 
 window.openAddRoleModal = function() {
   editingRoleId = null;
-  document.getElementById('roleModalTitle').textContent = 'TAMBAH ROLE TACTICAL BARU';
-  if (roleForm) roleForm.reset();
+  const titleEl = document.getElementById('roleModalTitle');
+  if (titleEl) titleEl.textContent = 'TAMBAH ROLE TACTICAL BARU';
+  const form = document.getElementById('roleCrudForm');
+  if (form) form.reset();
   const idEl = document.getElementById('rId');
   if (idEl) idEl.readOnly = false;
-  if (roleModal) roleModal.classList.add('open');
+  const modal = document.getElementById('roleCrudModal');
+  if (modal) modal.classList.add('open');
+};
+
+window.closeRoleModal = function() {
+  const modal = document.getElementById('roleCrudModal');
+  if (modal) modal.classList.remove('open');
 };
 
 window.editRole = function(id) {
+  ensureDefaultRoles();
   const r = (db.roles || []).find((x) => x.id === id);
   if (!r) return;
   editingRoleId = id;
-  document.getElementById('roleModalTitle').textContent = `EDIT ROLE: ${r.label}`;
+  const titleEl = document.getElementById('roleModalTitle');
+  if (titleEl) titleEl.textContent = `EDIT ROLE: ${r.label}`;
   const idEl = document.getElementById('rId');
   if (idEl) {
     idEl.value = r.id;
     idEl.readOnly = true;
   }
-  document.getElementById('rLabel').value = r.label;
-  document.getElementById('rDesc').value = r.description || '';
-  if (roleModal) roleModal.classList.add('open');
+  const labelEl = document.getElementById('rLabel');
+  if (labelEl) labelEl.value = r.label;
+  const descEl = document.getElementById('rDesc');
+  if (descEl) descEl.value = r.description || '';
+  const modal = document.getElementById('roleCrudModal');
+  if (modal) modal.classList.add('open');
 };
 
 window.deleteRole = function(id) {
+  ensureDefaultRoles();
   const r = (db.roles || []).find((x) => x.id === id);
   const roleName = r ? r.label : id;
   if (confirm(`Yakin ingin menghapus role "${roleName}"? Role pada pemain terkait akan tetap tersimpan.`)) {
@@ -790,35 +806,48 @@ window.deleteRole = function(id) {
   }
 };
 
-if (roleForm) {
-  roleForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const rId = document.getElementById('rId').value.trim().toLowerCase().replace(/\s+/g, '_');
-    const rLabel = document.getElementById('rLabel').value.trim();
-    const rDesc = document.getElementById('rDesc').value.trim();
+// Bind form submission
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('roleCrudForm');
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const idInput = document.getElementById('rId');
+      const labelInput = document.getElementById('rLabel');
+      const descInput = document.getElementById('rDesc');
 
-    if (!Array.isArray(db.roles)) db.roles = [];
+      const rId = ((idInput && idInput.value) || '').trim().toLowerCase().replace(/\s+/g, '_');
+      const rLabel = ((labelInput && labelInput.value) || '').trim();
+      const rDesc = ((descInput && descInput.value) || '').trim();
 
-    if (editingRoleId) {
-      const idx = db.roles.findIndex((x) => x.id === editingRoleId);
-      if (idx !== -1) {
-        db.roles[idx] = { id: editingRoleId, label: rLabel, description: rDesc };
-      }
-    } else {
-      if (db.roles.some((x) => x.id === rId)) {
-        alert('Kode Role sudah ada! Harap gunakan kode lain.');
+      if (!rId || !rLabel) {
+        alert('Harap isi Kode Role dan Nama Role.');
         return;
       }
-      db.roles.push({ id: rId, label: rLabel, description: rDesc });
-    }
 
-    saveMothraData(db);
-    renderRolesTable();
-    populateRoleDropdown();
-    if (roleModal) roleModal.classList.remove('open');
-    showToast(editingRoleId ? 'Role tactical berhasil diperbarui!' : 'Role tactical baru berhasil ditambahkan!');
-  });
-}
+      ensureDefaultRoles();
+
+      if (editingRoleId) {
+        const idx = db.roles.findIndex((x) => x.id === editingRoleId);
+        if (idx !== -1) {
+          db.roles[idx] = { id: editingRoleId, label: rLabel, description: rDesc };
+        }
+      } else {
+        if (db.roles.some((x) => x.id === rId)) {
+          alert('Kode Role sudah ada! Harap gunakan kode lain.');
+          return;
+        }
+        db.roles.push({ id: rId, label: rLabel, description: rDesc });
+      }
+
+      saveMothraData(db);
+      renderRolesTable();
+      populateRoleDropdown();
+      window.closeRoleModal();
+      showToast(editingRoleId ? 'Role tactical berhasil diperbarui!' : 'Role tactical baru berhasil ditambahkan!');
+    });
+  }
+});
 
 /* ============================================================
    03 / THE LINEUP (ROSTER CRUD)

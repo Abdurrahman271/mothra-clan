@@ -958,7 +958,10 @@
   <!-- ===================== MODAL: ROLE CRUD ===================== -->
   <div class="crud-modal" id="roleCrudModal">
     <div class="crud-modal-box" style="max-width:550px;">
-      <h3 class="crud-modal-title" id="roleModalTitle">TAMBAH ROLE TACTICAL BARU</h3>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;">
+        <h3 class="crud-modal-title" id="roleModalTitle" style="margin-bottom:0;">TAMBAH ROLE TACTICAL BARU</h3>
+        <button type="button" onclick="closeRoleModal()" style="background:none;border:none;color:var(--gray-light);font-size:1.5rem;cursor:pointer;padding:0 0.5rem;line-height:1;" aria-label="Tutup">&times;</button>
+      </div>
       <form id="roleCrudForm">
         <div class="form-group">
           <label class="form-label">KODE ROLE (ID, HURUF KECIL TANPA SPASI) *</label>
@@ -977,7 +980,7 @@
         </div>
 
         <div class="crud-modal-footer">
-          <button type="button" class="btn-cancel">BATAL</button>
+          <button type="button" class="btn-cancel" onclick="closeRoleModal()">BATAL</button>
           <button type="submit" class="btn-add">SIMPAN ROLE</button>
         </div>
       </form>
@@ -1275,7 +1278,7 @@
 
   <!-- Supabase Cloud Database & Realtime SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="data.js?v=3.0"></script>
-  <script src="admin.js?v=3.0"></script>
+  <script src="data.js?v=3.5"></script>
+  <script src="admin.js?v=3.5"></script>
 </body>
 </html>
