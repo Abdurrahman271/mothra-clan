@@ -96,7 +96,7 @@ CREATE TABLE IF NOT EXISTS public.mothra_gallery (
     created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- Tabel Identitas & Logo Clan (Branding & Loading Screen)
+-- Tabel Identitas & Logo Clan (Branding, Login Screen & Loading Screen)
 CREATE TABLE IF NOT EXISTS public.mothra_branding (
     id TEXT PRIMARY KEY DEFAULT 'main',
     clan_name TEXT NOT NULL DEFAULT 'MOTHRA',
@@ -105,6 +105,7 @@ CREATE TABLE IF NOT EXISTS public.mothra_branding (
     description TEXT,
     logo TEXT DEFAULT 'assets/mothra-logo.png',
     logo_icon TEXT DEFAULT 'assets/Logo_Clan_MOTHRA_-_Transparan_NO_TEXT.png',
+    login_logo TEXT DEFAULT 'assets/mothra-logo.png',
     loading_logo TEXT DEFAULT 'assets/mothra-logo.png',
     loading_name TEXT DEFAULT 'MOTHRA',
     loading_text TEXT DEFAULT 'ESTABLISHING TACTICAL UPLINK...',
@@ -218,8 +219,8 @@ VALUES (
     "city": "JAKARTA\nINDONESIA",
     "unit": "UNIT / MTH-08",
     "status": "ACTIVE ROSTER",
-    "winrate": 84,
-    "activeMembers": 7,
+    "winrate": 95,
+    "activeMembers": 250,
     "tournamentsWon": 3
   },
   "categories": [

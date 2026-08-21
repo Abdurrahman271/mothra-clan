@@ -14,6 +14,7 @@ const DEFAULT_MOTHRA_DATA = {
     "logo": "assets/mothra-logo.png",
     "logoIcon": "assets/Logo_Clan_MOTHRA_-_Transparan_NO_TEXT.png",
     "logoGold": "assets/mothra-gold-logo.png",
+    "loginLogo": "assets/mothra-logo.png",
     "loadingLogo": "assets/mothra-logo.png",
     "loadingName": "MOTHRA",
     "loadingText": "ESTABLISHING TACTICAL UPLINK..."
@@ -46,8 +47,8 @@ const DEFAULT_MOTHRA_DATA = {
     "city": "JAKARTA\nINDONESIA",
     "unit": "UNIT / MTH-08",
     "status": "ACTIVE ROSTER",
-    "winrate": 84,
-    "activeMembers": 7,
+    "winrate": 95,
+    "activeMembers": 250,
     "tournamentsWon": 3
   },
   "categories": [

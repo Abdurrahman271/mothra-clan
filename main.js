@@ -75,9 +75,9 @@ function syncCmsData() {
     const b = db.branding;
     const clanName = b.clanName || 'MOTHRA';
     const logoSrc = b.logo || 'assets/mothra-logo.png';
-    const logoIconSrc = b.logoIcon || b.logo || 'assets/mothra-logo.png';
+    const logoIconSrc = b.logoIcon || b.logo || 'assets/Logo_Clan_MOTHRA_-_Transparan_NO_TEXT.png';
 
-    // Navbar Brand
+    // Navbar Brand Logo & Text
     const navLogoImg = document.querySelector('.nav-logo-img');
     const logoText = document.querySelector('.nav-logo .logo-text');
     if (navLogoImg && logoSrc) navLogoImg.src = logoSrc;
@@ -89,7 +89,7 @@ function syncCmsData() {
     if (mobileHeaderBrandImg && logoSrc) mobileHeaderBrandImg.src = logoSrc;
     if (mobileHeaderBrandText && clanName) mobileHeaderBrandText.textContent = clanName;
 
-    // Hero Brand (Bottom bar)
+    // Hero Brand (Bottom bar in Hero Section)
     const heroBrandLogo = document.querySelector('.hero-brand-logo');
     const heroBrandText = document.querySelector('.hero-brand-text');
     const heroBrandSub = document.querySelector('.hero-brand-sub');
@@ -123,7 +123,7 @@ function syncCmsData() {
     }
   }
 
-  // 1. Sync Dossier & Hero stats
+  // 1. Sync Dossier & Hero stats (Winrate, Member Aktif up to 250, Tournaments)
   if (db.dossier) {
     const d = db.dossier;
     const aboutDesc = document.querySelector('.about-desc');
@@ -132,21 +132,28 @@ function syncCmsData() {
     if (d.description && aboutDesc) aboutDesc.textContent = d.description;
     if (d.city && originCity) originCity.innerHTML = d.city.replace(/\n/g, '<br/>');
 
-    // Stats
-    const winrateEls = document.querySelectorAll('[data-count="84"], .dossier-stat-winrate');
-    winrateEls.forEach((el) => {
-      el.dataset.count = d.winrate || 84;
-      el.textContent = d.winrate || 84;
-    });
-    const memberEl = document.querySelector('.hero-stat [data-count="5"], .hero-stat [data-count="7"], .dossier-stat-members');
-    if (memberEl) {
-      memberEl.dataset.count = d.activeMembers || (db.lineup ? db.lineup.length : 7);
-      memberEl.textContent = memberEl.dataset.count;
-    }
-    const tourneyEl = document.querySelector('.hero-stat [data-count="3"], .dossier-stat-tourney');
-    if (tourneyEl) {
-      tourneyEl.dataset.count = d.tournamentsWon || 3;
-      tourneyEl.textContent = tourneyEl.dataset.count;
+    // Stats Synchronizer (Hero & Dossier)
+    const statCards = document.querySelectorAll('.hero-stat');
+    if (statCards.length >= 3) {
+      // 1. Winrate
+      const winEl = statCards[0].querySelector('.hero-stat-num');
+      if (winEl) {
+        winEl.dataset.count = d.winrate || 95;
+        winEl.textContent = d.winrate || 95;
+      }
+      // 2. Member Aktif (up to 250)
+      const memEl = statCards[1].querySelector('.hero-stat-num');
+      if (memEl) {
+        const memCount = (d.activeMembers !== undefined && d.activeMembers !== null) ? d.activeMembers : 250;
+        memEl.dataset.count = memCount;
+        memEl.textContent = memCount;
+      }
+      // 3. Juara Turnamen
+      const tourEl = statCards[2].querySelector('.hero-stat-num');
+      if (tourEl) {
+        tourEl.dataset.count = d.tournamentsWon || 3;
+        tourEl.textContent = d.tournamentsWon || 3;
+      }
     }
   }
 

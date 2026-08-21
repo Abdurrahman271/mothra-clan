@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,800;0,900;1,700&family=Barlow:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="admin.css" />
+  <link rel="stylesheet" href="admin.css?v=3.0" />
 </head>
 <body>
 
@@ -20,7 +20,7 @@
   <div class="login-screen" id="loginScreen">
     <div class="login-card">
       <div class="login-header">
-        <img src="assets/mothra-logo.png" alt="MOTHRA Logo" class="login-logo" />
+        <img src="assets/mothra-logo.png" alt="MOTHRA Logo" class="login-logo" id="adminLoginLogo" />
         <h1 class="login-title">MOTHRA HQ</h1>
         <p class="login-sub">ADMINISTRATIVE ACCESS GATEWAY</p>
       </div>
@@ -49,26 +49,78 @@
 
   <!-- ===================== ADMIN DASHBOARD ===================== -->
   <div class="dashboard-wrap hidden" id="dashboardWrap">
-    <!-- Sidebar -->
-    <aside class="admin-sidebar">
-      <div class="sidebar-header">
-        <img src="assets/mothra-logo.png" alt="MOTHRA" class="sidebar-logo" id="adminSidebarLogo" />
-        <div>
-          <div class="sidebar-brand-text" id="adminSidebarBrandText">MOTHRA</div>
-          <span class="sidebar-brand-sub">TACTICAL CMS v2.5</span>
+    
+    <!-- Mobile Backdrop -->
+    <div class="admin-sidebar-backdrop" id="adminSidebarBackdrop"></div>
+
+    <!-- Mobile Top Header Bar -->
+    <header class="mobile-admin-header">
+      <div class="mobile-header-left">
+        <button class="mobile-nav-toggle" id="adminMobileToggle" aria-label="Buka Menu Admin">
+          <span></span><span></span><span></span>
+        </button>
+        <div class="mobile-brand">
+          <img src="assets/mothra-logo.png" alt="MOTHRA" class="mobile-brand-logo" />
+          <div>
+            <span class="mobile-brand-title">MOTHRA HQ</span>
+            <span class="mobile-brand-status">ONLINE CMS</span>
+          </div>
         </div>
+      </div>
+      <div class="mobile-header-right">
+        <a href="./" target="_blank" class="mobile-view-site-btn" title="Lihat Website">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </a>
+        <button class="mobile-logout-btn" id="mobileLogoutBtn" title="Logout">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Mobile Horizontal Quick-Nav Scroll Bar -->
+    <nav class="mobile-quick-nav" id="mobileQuickNav" aria-label="Quick Category Switcher">
+      <button class="mobile-quick-item active" data-panel="panelOverview">📊 Overview</button>
+      <button class="mobile-quick-item" data-panel="panelPartnership">🤝 The Alliance</button>
+      <button class="mobile-quick-item" data-panel="panelLineup">🎮 Roster</button>
+      <button class="mobile-quick-item" data-panel="panelSchedule">📅 Schedule</button>
+      <button class="mobile-quick-item" data-panel="panelBranding">🛡️ Branding</button>
+      <button class="mobile-quick-item" data-panel="panelCategories">🏆 Kategori</button>
+      <button class="mobile-quick-item" data-panel="panelDossier">📜 Dossier</button>
+      <button class="mobile-quick-item" data-panel="panelRecord">🏅 Record</button>
+      <button class="mobile-quick-item" data-panel="panelGallery">📸 Galeri</button>
+      <button class="mobile-quick-item" data-panel="panelDatabase">☁️ Database</button>
+      <button class="mobile-quick-item" data-panel="panelBackup">💾 Backup</button>
+      <button class="mobile-quick-item" data-panel="panelUsers">👥 Users</button>
+    </nav>
+
+    <!-- Sidebar / Drawer -->
+    <aside class="admin-sidebar" id="adminSidebar">
+      <div class="sidebar-header">
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+          <img src="assets/mothra-logo.png" alt="MOTHRA" class="sidebar-logo" id="adminSidebarLogo" />
+          <div>
+            <div class="sidebar-brand-text" id="adminSidebarBrandText">MOTHRA</div>
+            <span class="sidebar-brand-sub">TACTICAL CMS v2.5</span>
+          </div>
+        </div>
+        <button class="sidebar-close-btn" id="adminSidebarClose" aria-label="Tutup Drawer">&times;</button>
       </div>
 
       <nav class="sidebar-nav">
+        <div class="sidebar-nav-section">COMMAND CENTER</div>
         <button class="nav-item active" data-panel="panelOverview">📊 Overview</button>
-        <button class="nav-item" data-panel="panelBranding">🛡️ Identitas &amp; Logo Clan</button>
-        <button class="nav-item" data-panel="panelDossier">📜 The Dossier</button>
+        <button class="nav-item" data-panel="panelPartnership">🤝 The Alliance (Partnership)</button>
+        <button class="nav-item" data-panel="panelSchedule">📅 Match Schedule</button>
+
+        <div class="sidebar-nav-section" style="margin-top:0.75rem;">SQUAD &amp; CONTENT</div>
         <button class="nav-item" data-panel="panelCategories">🏆 Kategori Turnamen</button>
         <button class="nav-item" data-panel="panelLineup">🎮 The Lineup (Roster)</button>
-        <button class="nav-item" data-panel="panelSchedule">📅 Match Schedule</button>
-        <button class="nav-item" data-panel="panelPartnership">🤝 The Alliance (Partnership)</button>
+        <button class="nav-item" data-panel="panelDossier">📜 The Dossier</button>
         <button class="nav-item" data-panel="panelRecord">🏅 The Record (Prestasi)</button>
         <button class="nav-item" data-panel="panelGallery">📸 Field Notes (Galeri)</button>
+
+        <div class="sidebar-nav-section" style="margin-top:0.75rem;">SYSTEM &amp; CLOUD</div>
+        <button class="nav-item" data-panel="panelBranding">🛡️ Identitas &amp; Logo Clan</button>
         <button class="nav-item" data-panel="panelDatabase">☁️ Database Online (Supabase)</button>
         <button class="nav-item" data-panel="panelBackup">💾 Backup &amp; Restore</button>
         <button class="nav-item" data-panel="panelUsers">👥 Management User</button>
@@ -90,8 +142,9 @@
           <h2 class="top-title">COMMAND CENTER</h2>
           <span class="top-sub">PANEL KONTROL KONTEN WEBSITE CLAN MOTHRA POINT BLANK</span>
         </div>
-        <div style="font-family:var(--font-mono);font-size:0.8rem;color:var(--gold);background:var(--dark-2);padding:0.5rem 1rem;border:1px solid var(--border);border-radius:var(--radius);">
-          OPERATOR: abdurrrahman09@gmail.com
+        <div class="operator-badge">
+          <span class="dot dot--green"></span>
+          <span>OPERATOR: abdurrrahman09@gmail.com</span>
         </div>
       </div>
 
@@ -147,16 +200,33 @@
             <!-- Upload Logo Transparan / Favicon Icon -->
             <div class="upload-section" style="margin-top:1rem;">
               <div class="form-group">
-                <label class="form-label">📁 UPLOAD LOGO TRANSPARAN / ICON FAVICON</label>
+                <label class="form-label">📁 UPLOAD LOGO TRANSPARAN / ICON FAVICON WEBSITE</label>
                 <input type="file" id="bLogoIconFile" accept="image/*" class="file-upload-input" />
               </div>
               <div style="display:flex;gap:1rem;align-items:center;">
                 <div class="form-group" style="flex:1;margin-bottom:0;">
-                  <label class="form-label">ATAU URL / PATH ICON</label>
+                  <label class="form-label">ATAU URL / PATH ICON FAVICON</label>
                   <input type="text" id="bLogoIcon" class="form-input" placeholder="assets/Logo_Clan_MOTHRA_-_Transparan_NO_TEXT.png" />
                 </div>
                 <div class="upload-preview-box" style="width:75px;height:75px;background:rgba(0,0,0,0.5);">
                   <img id="bLogoIconPreviewTag" src="assets/Logo_Clan_MOTHRA_-_Transparan_NO_TEXT.png" alt="Preview Icon" style="width:100%;height:100%;object-fit:contain;border-radius:4px;" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Upload Logo Form Login Admin Panel -->
+            <div class="upload-section" style="margin-top:1rem;">
+              <div class="form-group">
+                <label class="form-label">📁 UPLOAD LOGO FORM LOGIN ADMIN PANEL (MOTHRA HQ)</label>
+                <input type="file" id="bLoginLogoFile" accept="image/*" class="file-upload-input" />
+              </div>
+              <div style="display:flex;gap:1rem;align-items:center;">
+                <div class="form-group" style="flex:1;margin-bottom:0;">
+                  <label class="form-label">ATAU URL / PATH LOGO LOGIN ADMIN</label>
+                  <input type="text" id="bLoginLogo" class="form-input" placeholder="assets/mothra-logo.png" />
+                </div>
+                <div class="upload-preview-box" style="width:75px;height:75px;background:rgba(0,0,0,0.5);">
+                  <img id="bLoginLogoPreviewTag" src="assets/mothra-logo.png" alt="Preview Login Logo" style="width:100%;height:100%;object-fit:contain;border-radius:4px;" />
                 </div>
               </div>
             </div>
@@ -285,15 +355,16 @@
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-top:0.5rem;">
               <div class="form-group">
                 <label class="form-label">WIN RATE (%)</label>
-                <input type="number" id="dosWinrate" class="form-input" min="1" max="100" required />
+                <input type="number" id="dosWinrate" class="form-input" min="1" max="100" placeholder="95" required />
               </div>
               <div class="form-group">
-                <label class="form-label">MEMBER AKTIF</label>
-                <input type="number" id="dosMembers" class="form-input" min="1" max="50" required />
+                <label class="form-label">MEMBER AKTIF (MAKS 250)</label>
+                <input type="number" id="dosMembers" class="form-input" min="1" max="250" placeholder="250" required />
+                <small style="color:var(--gray-light);font-size:0.75rem;">Maksimal 250 anggota (Kapasitas Clan Point Blank)</small>
               </div>
               <div class="form-group">
                 <label class="form-label">JUARA TURNAMEN (KALI)</label>
-                <input type="number" id="dosTournaments" class="form-input" min="0" max="50" required />
+                <input type="number" id="dosTournaments" class="form-input" min="0" max="99" placeholder="3" required />
               </div>
             </div>
             <button type="submit" class="btn-add" style="margin-top:1.5rem;font-size:1.05rem;padding:0.75rem 2rem;">SIMPAN PERUBAHAN DOSSIER &rarr;</button>
@@ -513,8 +584,8 @@
               <thead>
                 <tr>
                   <th>TAHUN</th>
-                  <th>NAMA GELAR / JUARA</th>
-                  <th>DETAIL MATCH / ARENA</th>
+                  <th>NAMA JUARA / PRESTASI</th>
+                  <th>SUBTITLE / ARENA</th>
                   <th>AKSI</th>
                 </tr>
               </thead>
@@ -706,6 +777,8 @@
             </div>
             <div id="userRoleBadge" style="font-family:var(--font-mono);font-size:0.75rem;color:var(--gold);background:rgba(212,175,55,0.1);border:1px solid var(--gold-dark);padding:0.35rem 0.85rem;border-radius:var(--radius);">SUPER ADMIN ACCESS</div>
           </div>
+
+          <!-- Stats Bar -->
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:1.75rem;">
             <div style="background:rgba(96,165,250,0.08);border:1px solid rgba(96,165,250,0.25);border-radius:var(--radius);padding:1rem;text-align:center;">
               <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--gray-light);margin-bottom:0.35rem;">TOTAL USER</div>
@@ -724,6 +797,8 @@
               <div style="font-family:var(--font-display);font-size:2.5rem;font-weight:900;color:#EF4444;" id="statUserInactive">0</div>
             </div>
           </div>
+
+          <!-- Users Table -->
           <div class="table-wrap">
             <table class="admin-table" id="usersTable">
               <thead>
@@ -753,6 +828,7 @@
       <h3 class="crud-modal-title" id="userModalTitle">TAMBAH ADMIN BARU</h3>
       <form id="userCrudForm" novalidate>
         <input type="hidden" id="userId" />
+
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
           <div class="form-group">
             <label class="form-label">NAMA LENGKAP OPERATOR *</label>
@@ -763,6 +839,7 @@
             <input type="email" id="userEmail" class="form-input" placeholder="email@mothra.com" required />
           </div>
         </div>
+
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
           <div class="form-group">
             <label class="form-label">PASSWORD *</label>
@@ -777,6 +854,7 @@
             <input type="password" id="userPasswordConfirm" class="form-input" placeholder="Ulangi password" />
           </div>
         </div>
+
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
           <div class="form-group">
             <label class="form-label">ROLE / HAK AKSES *</label>
@@ -795,11 +873,14 @@
             </select>
           </div>
         </div>
+
         <div class="form-group">
           <label class="form-label">CATATAN / KETERANGAN (OPSIONAL)</label>
           <input type="text" id="userNotes" class="form-input" placeholder="contoh: Operator PBNC Division, Roster Manager..." />
         </div>
+
         <div id="userFormAlert" style="display:none;background:rgba(239,68,68,0.12);border:1px solid #EF4444;color:#FCA5A5;padding:0.65rem 1rem;border-radius:var(--radius);font-size:0.85rem;margin-top:0.5rem;"></div>
+
         <div class="crud-modal-footer">
           <button type="button" class="btn-cancel" id="userModalCancelBtn">BATAL</button>
           <button type="submit" class="btn-add" id="userModalSubmitBtn">💾 SIMPAN USER</button>
@@ -1133,7 +1214,7 @@
 
   <!-- Supabase Cloud Database & Realtime SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="data.js"></script>
-  <script src="admin.js"></script>
+  <script src="data.js?v=3.0"></script>
+  <script src="admin.js?v=3.0"></script>
 </body>
 </html>

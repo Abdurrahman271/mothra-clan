@@ -19,7 +19,7 @@
   <div class="login-screen" id="loginScreen">
     <div class="login-card">
       <div class="login-header">
-        <img src="assets/mothra-logo.png" alt="MOTHRA Logo" class="login-logo" />
+        <img src="assets/mothra-logo.png" alt="MOTHRA Logo" class="login-logo" id="adminLoginLogo" />
         <h1 class="login-title">MOTHRA HQ</h1>
         <p class="login-sub">ADMINISTRATIVE ACCESS GATEWAY</p>
       </div>
@@ -199,16 +199,33 @@
             <!-- Upload Logo Transparan / Favicon Icon -->
             <div class="upload-section" style="margin-top:1rem;">
               <div class="form-group">
-                <label class="form-label">📁 UPLOAD LOGO TRANSPARAN / ICON FAVICON</label>
+                <label class="form-label">📁 UPLOAD LOGO TRANSPARAN / ICON FAVICON WEBSITE</label>
                 <input type="file" id="bLogoIconFile" accept="image/*" class="file-upload-input" />
               </div>
               <div style="display:flex;gap:1rem;align-items:center;">
                 <div class="form-group" style="flex:1;margin-bottom:0;">
-                  <label class="form-label">ATAU URL / PATH ICON</label>
+                  <label class="form-label">ATAU URL / PATH ICON FAVICON</label>
                   <input type="text" id="bLogoIcon" class="form-input" placeholder="assets/Logo_Clan_MOTHRA_-_Transparan_NO_TEXT.png" />
                 </div>
                 <div class="upload-preview-box" style="width:75px;height:75px;background:rgba(0,0,0,0.5);">
                   <img id="bLogoIconPreviewTag" src="assets/Logo_Clan_MOTHRA_-_Transparan_NO_TEXT.png" alt="Preview Icon" style="width:100%;height:100%;object-fit:contain;border-radius:4px;" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Upload Logo Form Login Admin Panel -->
+            <div class="upload-section" style="margin-top:1rem;">
+              <div class="form-group">
+                <label class="form-label">📁 UPLOAD LOGO FORM LOGIN ADMIN PANEL (MOTHRA HQ)</label>
+                <input type="file" id="bLoginLogoFile" accept="image/*" class="file-upload-input" />
+              </div>
+              <div style="display:flex;gap:1rem;align-items:center;">
+                <div class="form-group" style="flex:1;margin-bottom:0;">
+                  <label class="form-label">ATAU URL / PATH LOGO LOGIN ADMIN</label>
+                  <input type="text" id="bLoginLogo" class="form-input" placeholder="assets/mothra-logo.png" />
+                </div>
+                <div class="upload-preview-box" style="width:75px;height:75px;background:rgba(0,0,0,0.5);">
+                  <img id="bLoginLogoPreviewTag" src="assets/mothra-logo.png" alt="Preview Login Logo" style="width:100%;height:100%;object-fit:contain;border-radius:4px;" />
                 </div>
               </div>
             </div>
@@ -337,15 +354,16 @@
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-top:0.5rem;">
               <div class="form-group">
                 <label class="form-label">WIN RATE (%)</label>
-                <input type="number" id="dosWinrate" class="form-input" min="1" max="100" required />
+                <input type="number" id="dosWinrate" class="form-input" min="1" max="100" placeholder="95" required />
               </div>
               <div class="form-group">
-                <label class="form-label">MEMBER AKTIF</label>
-                <input type="number" id="dosMembers" class="form-input" min="1" max="50" required />
+                <label class="form-label">MEMBER AKTIF (MAKS 250)</label>
+                <input type="number" id="dosMembers" class="form-input" min="1" max="250" placeholder="250" required />
+                <small style="color:var(--gray-light);font-size:0.75rem;">Maksimal 250 anggota (Kapasitas Clan Point Blank)</small>
               </div>
               <div class="form-group">
                 <label class="form-label">JUARA TURNAMEN (KALI)</label>
-                <input type="number" id="dosTournaments" class="form-input" min="0" max="50" required />
+                <input type="number" id="dosTournaments" class="form-input" min="0" max="99" placeholder="3" required />
               </div>
             </div>
             <button type="submit" class="btn-add" style="margin-top:1.5rem;font-size:1.05rem;padding:0.75rem 2rem;">SIMPAN PERUBAHAN DOSSIER &rarr;</button>

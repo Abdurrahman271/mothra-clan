@@ -43,11 +43,18 @@ function checkAuth() {
   const dashboardWrap = document.getElementById('dashboardWrap');
   if (!loginScreen || !dashboardWrap) return;
 
+  if (!db) db = getMothraData();
+
+  // Sync login screen logo from DB
+  const loginLogoEl = document.getElementById('adminLoginLogo');
+  if (loginLogoEl && db && db.branding) {
+    loginLogoEl.src = db.branding.loginLogo || db.branding.logo || 'assets/mothra-logo.png';
+  }
+
   const isAuth = sessionStorage.getItem(AUTH_SESSION_KEY) === 'true';
   if (isAuth) {
     loginScreen.classList.add('hidden');
     dashboardWrap.classList.remove('hidden');
-    if (!db) db = getMothraData();
     updateOperatorBadge(getCurrentUser());
     initDashboard();
   } else {
@@ -309,6 +316,7 @@ function setupImageUploader(fileInputId, textInputId, previewImgId, maxW = 1000,
 // Initialize File Uploaders
 setupImageUploader('bLogoFile', 'bLogo', 'bLogoPreviewTag', 600, 600);
 setupImageUploader('bLogoIconFile', 'bLogoIcon', 'bLogoIconPreviewTag', 400, 400);
+setupImageUploader('bLoginLogoFile', 'bLoginLogo', 'bLoginLogoPreviewTag', 600, 600);
 setupImageUploader('bLoadingLogoFile', 'bLoadingLogo', 'bLoadingLogoPreviewTag', 600, 600);
 setupImageUploader('pImgFile', 'pImg', 'pImgPreviewTag', 800, 1000);
 setupImageUploader('gImgFile', 'gImg', 'gImgPreviewTag', 1200, 800);
@@ -329,14 +337,24 @@ function renderBrandingForm() {
   if (taglineEl) taglineEl.value = b.tagline || 'TACTICAL ESPORTS SQUAD • NO FEAR. NO EXCUSES.';
   const descEl = document.getElementById('bDesc');
   if (descEl) descEl.value = b.description || 'Clan Point Blank Indonesia kompetitif berbasis disiplin, loyalitas, dan insting tempur tingkat tinggi.';
+  
+  // Main Clan Logo
   const logoEl = document.getElementById('bLogo');
   if (logoEl) logoEl.value = b.logo || 'assets/mothra-logo.png';
   const logoPrev = document.getElementById('bLogoPreviewTag');
   if (logoPrev) logoPrev.src = b.logo || 'assets/mothra-logo.png';
+
+  // Favicon & Icon Transparan
   const logoIconEl = document.getElementById('bLogoIcon');
   if (logoIconEl) logoIconEl.value = b.logoIcon || 'assets/Logo_Clan_MOTHRA_-_Transparan_NO_TEXT.png';
   const logoIconPrev = document.getElementById('bLogoIconPreviewTag');
   if (logoIconPrev) logoIconPrev.src = b.logoIcon || 'assets/Logo_Clan_MOTHRA_-_Transparan_NO_TEXT.png';
+
+  // Admin Login Screen Logo
+  const loginLogoEl = document.getElementById('bLoginLogo');
+  if (loginLogoEl) loginLogoEl.value = b.loginLogo || b.logo || 'assets/mothra-logo.png';
+  const loginLogoPrev = document.getElementById('bLoginLogoPreviewTag');
+  if (loginLogoPrev) loginLogoPrev.src = b.loginLogo || b.logo || 'assets/mothra-logo.png';
 
   // Loading Screen Branding
   const loadNameEl = document.getElementById('bLoadingName');
@@ -353,6 +371,10 @@ function renderBrandingForm() {
   if (adminLogo && b.logo) adminLogo.src = b.logo;
   const adminText = document.getElementById('adminSidebarBrandText');
   if (adminText && b.clanName) adminText.textContent = b.clanName;
+
+  // Live update admin login logo
+  const loginScreenLogo = document.getElementById('adminLoginLogo');
+  if (loginScreenLogo) loginScreenLogo.src = b.loginLogo || b.logo || 'assets/mothra-logo.png';
 }
 
 if (brandingForm) {
@@ -365,13 +387,14 @@ if (brandingForm) {
       description: (document.getElementById('bDesc').value || '').trim(),
       logo: (document.getElementById('bLogo').value || 'assets/mothra-logo.png').trim(),
       logoIcon: (document.getElementById('bLogoIcon').value || 'assets/Logo_Clan_MOTHRA_-_Transparan_NO_TEXT.png').trim(),
+      loginLogo: (document.getElementById('bLoginLogo').value || document.getElementById('bLogo').value || 'assets/mothra-logo.png').trim(),
       loadingName: (document.getElementById('bLoadingName').value || document.getElementById('bClanName').value || 'MOTHRA').trim(),
       loadingText: (document.getElementById('bLoadingText').value || 'ESTABLISHING TACTICAL UPLINK...').trim(),
       loadingLogo: (document.getElementById('bLoadingLogo').value || document.getElementById('bLogo').value || 'assets/mothra-logo.png').trim()
     };
     saveMothraData(db);
     renderBrandingForm();
-    showToast('🛡️ Identitas, Logo & Loading Screen berhasil disimpan dan disinkronkan ke Supabase!');
+    showToast('🛡️ Identitas, Logo & Form Login berhasil disimpan dan disinkronkan ke Supabase!');
   });
 }
 
@@ -399,8 +422,8 @@ function renderDossierForm() {
   document.getElementById('dosCity').value = d.city || 'JAKARTA\nINDONESIA';
   document.getElementById('dosUnit').value = d.unit || 'UNIT / MTH-08';
   document.getElementById('dosStatus').value = d.status || 'ACTIVE ROSTER';
-  document.getElementById('dosWinrate').value = d.winrate || 84;
-  document.getElementById('dosMembers').value = d.activeMembers || 7;
+  document.getElementById('dosWinrate').value = d.winrate || 95;
+  document.getElementById('dosMembers').value = (d.activeMembers !== undefined && d.activeMembers !== null) ? d.activeMembers : 250;
   document.getElementById('dosTournaments').value = d.tournamentsWon || 3;
 }
 
@@ -412,8 +435,8 @@ dossierForm.addEventListener('submit', (e) => {
     city: document.getElementById('dosCity').value.trim(),
     unit: document.getElementById('dosUnit').value.trim(),
     status: document.getElementById('dosStatus').value.trim(),
-    winrate: parseInt(document.getElementById('dosWinrate').value, 10) || 84,
-    activeMembers: parseInt(document.getElementById('dosMembers').value, 10) || 7,
+    winrate: parseInt(document.getElementById('dosWinrate').value, 10) || 95,
+    activeMembers: Math.min(250, Math.max(1, parseInt(document.getElementById('dosMembers').value, 10) || 250)),
     tournamentsWon: parseInt(document.getElementById('dosTournaments').value, 10) || 3
   };
   saveMothraData(db);
