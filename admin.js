@@ -639,33 +639,46 @@ function renderSponsorsTable() {
   `).join('');
 }
 
-function openAddSponsorModal() {
+window.openAddSponsorModal = function() {
   _editingSponsorId = null;
   document.getElementById('sponsorModalTitle').textContent = 'TAMBAH SPONSOR BARU';
   document.getElementById('sponsorName').value = '';
   document.getElementById('sponsorLink').value = '';
   document.getElementById('sponsorLogo').value = '';
   document.getElementById('sponsorLogoPreview').src = 'assets/mothra-logo.png';
-  document.getElementById('sponsorSaveBtn').textContent = 'TAMBAH SPONSOR ➔';
-  document.getElementById('sponsorCrudModal').style.display = '';
-}
+  document.getElementById('sponsorSaveBtn').textContent = '💾 TAMBAH SPONSOR ➔';
+  const modal = document.getElementById('sponsorCrudModal');
+  if (modal) modal.classList.add('open');
+};
 
-function editSponsor(idx) {
+window.editSponsor = function(idx) {
   if (!db.ads || !db.ads.sponsorTicker) return;
   const sp = db.ads.sponsorTicker.sponsors[idx];
   if (!sp) return;
   _editingSponsorId = idx;
-  document.getElementById('sponsorModalTitle').textContent = 'EDIT SPONSOR';
+  document.getElementById('sponsorModalTitle').textContent = `EDIT SPONSOR: ${sp.name || ''}`;
   document.getElementById('sponsorName').value = sp.name || '';
   document.getElementById('sponsorLink').value = sp.link || '';
   document.getElementById('sponsorLogo').value = sp.logo || '';
   document.getElementById('sponsorLogoPreview').src = sp.logo || 'assets/mothra-logo.png';
-  document.getElementById('sponsorSaveBtn').textContent = 'SIMPAN PERUBAHAN ➔';
-  document.getElementById('sponsorCrudModal').style.display = '';
-}
+  document.getElementById('sponsorSaveBtn').textContent = '💾 SIMPAN PERUBAHAN ➔';
+  const modal = document.getElementById('sponsorCrudModal');
+  if (modal) modal.classList.add('open');
+};
 
-function closeSponsorModal() {
-  document.getElementById('sponsorCrudModal').style.display = 'none';
+window.closeSponsorModal = function() {
+  const modal = document.getElementById('sponsorCrudModal');
+  if (modal) modal.classList.remove('open');
+};
+
+// Auto close on backdrop click
+const sponsorModalEl = document.getElementById('sponsorCrudModal');
+if (sponsorModalEl) {
+  sponsorModalEl.addEventListener('click', (e) => {
+    if (e.target === sponsorModalEl) {
+      window.closeSponsorModal();
+    }
+  });
 }
 
 function deleteSponsor(idx) {
