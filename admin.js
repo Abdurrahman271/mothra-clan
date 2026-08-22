@@ -2862,6 +2862,21 @@ function deleteVideo(videoId) {
   const title = db.videos[idx].title;
   db.videos.splice(idx, 1);
   saveMothraData(db);
+
+  // Hapus dari tabel relational clan_videos jika Supabase terhubung
+  try {
+    if (typeof _supabaseClient !== 'undefined' && _supabaseClient) {
+      _supabaseClient
+        .from('clan_videos')
+        .delete()
+        .eq('id', videoId)
+        .then(({ error }) => {
+          if (error) console.warn('Hapus dari clan_videos relational database notice:', error.message);
+        })
+        .catch(() => {});
+    }
+  } catch (err) {}
+
   renderVideosTable();
   showToast(`🗑️ Video "${title}" berhasil dihapus.`);
 }

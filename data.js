@@ -758,7 +758,7 @@ function sanitizeMothraData(data) {
   if (!data.users || !Array.isArray(data.users) || data.users.length === 0) {
     data.users = JSON.parse(JSON.stringify(DEFAULT_MOTHRA_DATA.users));
   }
-  if (!data.videos || !Array.isArray(data.videos) || data.videos.length === 0) {
+  if (!data.videos || !Array.isArray(data.videos)) {
     data.videos = JSON.parse(JSON.stringify(DEFAULT_MOTHRA_DATA.videos));
   }
 
