@@ -591,16 +591,15 @@ function renderAdsPanel() {
   if (tickerEnabled && ads.sponsorTicker) {
     tickerEnabled.checked = !!ads.sponsorTicker.enabled;
     if (tickerLabel) tickerLabel.value = ads.sponsorTicker.label || 'OFFICIAL CLAN SPONSORS & TACTICAL PARTNERS';
-    // Dimension fields
+    // Init dimension sliders with proper gradient fills
     const st = ads.sponsorTicker;
-    const el = (id) => document.getElementById(id);
-    if (el('adsLogoWidth')) el('adsLogoWidth').value = st.logoWidth !== undefined ? st.logoWidth : 36;
-    if (el('adsLogoHeight')) el('adsLogoHeight').value = st.logoHeight !== undefined ? st.logoHeight : 36;
-    if (el('adsCardMinWidth')) el('adsCardMinWidth').value = st.cardMinWidth !== undefined ? st.cardMinWidth : 140;
-    if (el('adsItemPaddingX')) el('adsItemPaddingX').value = st.itemPaddingX !== undefined ? st.itemPaddingX : 14;
-    if (el('adsItemPaddingY')) el('adsItemPaddingY').value = st.itemPaddingY !== undefined ? st.itemPaddingY : 8;
-    if (el('adsFontSize')) el('adsFontSize').value = st.fontSize !== undefined ? st.fontSize : 14;
-    if (el('adsTickerSpeed')) el('adsTickerSpeed').value = st.speed !== undefined ? st.speed : 24;
+    initDimSlider('adsLogoWidth',    'adsLogoWidthVal',    'adsLogoWidthRange',    st.logoWidth    !== undefined ? st.logoWidth    : 36,  'px');
+    initDimSlider('adsLogoHeight',   'adsLogoHeightVal',   'adsLogoHeightRange',   st.logoHeight   !== undefined ? st.logoHeight   : 36,  'px');
+    initDimSlider('adsCardMinWidth', 'adsCardMinWidthVal', 'adsCardMinWidthRange', st.cardMinWidth !== undefined ? st.cardMinWidth : 140, 'px');
+    initDimSlider('adsItemPaddingX', 'adsItemPaddingXVal', 'adsItemPaddingXRange', st.itemPaddingX !== undefined ? st.itemPaddingX : 14,  'px');
+    initDimSlider('adsItemPaddingY', 'adsItemPaddingYVal', 'adsItemPaddingYRange', st.itemPaddingY !== undefined ? st.itemPaddingY : 8,   'px');
+    initDimSlider('adsFontSize',     'adsFontSizeVal',     'adsFontSizeRange',     st.fontSize     !== undefined ? st.fontSize     : 14,  'px');
+    initDimSlider('adsTickerSpeed',  'adsTickerSpeedVal',  'adsTickerSpeedRange',  st.speed        !== undefined ? st.speed        : 24,  's');
     // Init live preview
     updateSponsorPreviewBadge();
   }
@@ -804,9 +803,60 @@ window.updateSponsorPreviewBadge = function() {
   }
 };
 
+// Sync range slider → number input & value badge (called by oninput on range)
+window.syncDimField = function(numId, badgeId, rangeId, unit) {
+  const rangeEl = document.getElementById(rangeId);
+  const numEl   = document.getElementById(numId);
+  const badgeEl = document.getElementById(badgeId);
+  if (!rangeEl) return;
+  const v = rangeEl.value;
+  if (numEl) numEl.value = v;
+  if (badgeEl) badgeEl.textContent = v + (unit || '');
+  // Update gradient fill on range
+  const min = parseFloat(rangeEl.min) || 0;
+  const max = parseFloat(rangeEl.max) || 100;
+  const pct = ((parseFloat(v) - min) / (max - min)) * 100;
+  rangeEl.style.background = `linear-gradient(90deg, var(--gold) ${pct}%, rgba(212,175,55,0.18) ${pct}%)`;
+  updateSponsorPreviewBadge();
+};
+
+// Sync number input → range slider & value badge (called by oninput on number)
+window.syncDimRange = function(numId, badgeId, rangeId, unit) {
+  const numEl   = document.getElementById(numId);
+  const rangeEl = document.getElementById(rangeId);
+  const badgeEl = document.getElementById(badgeId);
+  if (!numEl) return;
+  const v = numEl.value;
+  if (rangeEl) {
+    rangeEl.value = v;
+    const min = parseFloat(rangeEl.min) || 0;
+    const max = parseFloat(rangeEl.max) || 100;
+    const pct = ((parseFloat(v) - min) / (max - min)) * 100;
+    rangeEl.style.background = `linear-gradient(90deg, var(--gold) ${pct}%, rgba(212,175,55,0.18) ${pct}%)`;
+  }
+  if (badgeEl) badgeEl.textContent = v + (unit || '');
+};
+
+// Helper: init a dim slider from a known value
+function initDimSlider(numId, badgeId, rangeId, val, unit) {
+  const numEl   = document.getElementById(numId);
+  const rangeEl = document.getElementById(rangeId);
+  const badgeEl = document.getElementById(badgeId);
+  if (numEl) numEl.value = val;
+  if (rangeEl) {
+    rangeEl.value = val;
+    const min = parseFloat(rangeEl.min) || 0;
+    const max = parseFloat(rangeEl.max) || 100;
+    const pct = ((parseFloat(val) - min) / (max - min)) * 100;
+    rangeEl.style.background = `linear-gradient(90deg, var(--gold) ${pct}%, rgba(212,175,55,0.18) ${pct}%)`;
+  }
+  if (badgeEl) badgeEl.textContent = val + (unit || '');
+}
+
 // Top Bar Form Submit
 const adsTopForm = document.getElementById('adsTopForm');
 if (adsTopForm) {
+
   adsTopForm.addEventListener('submit', (e) => {
     e.preventDefault();
     if (!db.ads) db.ads = { topBanner: {}, sponsorTicker: { sponsors: [] }, promoBanner: {} };
