@@ -256,6 +256,7 @@ function renderAllPanels() {
   renderGalleryTable();
   renderSupabasePanel();
   renderUsersTable();
+  renderAdsPanel();
 }
 
 // Dengarkan event update data realtime dari Supabase
@@ -559,6 +560,196 @@ function renderOverviewStats() {
   if (partnerEl) partnerEl.textContent = db.partnerships ? db.partnerships.length : 0;
   document.getElementById('statRecordCount').textContent = db.records ? db.records.length : 0;
   document.getElementById('statGalleryCount').textContent = db.gallery ? db.gallery.length : 0;
+}
+
+/* ============================================================
+   ADS & SPONSOR MANAGEMENT CMS
+   ============================================================ */
+// Set up image uploader for ads
+setupImageUploader('adsPromoImgFile', 'adsPromoImgUrl', 'adsPromoImgPreview', 1200, 500);
+setupImageUploader('sponsorLogoFile', 'sponsorLogo', 'sponsorLogoPreview', 300, 300);
+
+let _editingSponsorId = null;
+
+function renderAdsPanel() {
+  if (!db.ads) return;
+  const ads = db.ads;
+
+  // Top Bar form
+  const topEnabled = document.getElementById('adsTopEnabled');
+  const topText = document.getElementById('adsTopText');
+  const topLinkText = document.getElementById('adsTopLinkText');
+  const topLinkUrl = document.getElementById('adsTopLinkUrl');
+  if (topEnabled && ads.topBanner) {
+    topEnabled.checked = !!ads.topBanner.enabled;
+    if (topText) topText.value = ads.topBanner.text || '';
+    if (topLinkText) topLinkText.value = ads.topBanner.linkText || 'KLAIM PROMO ➔';
+    if (topLinkUrl) topLinkUrl.value = ads.topBanner.linkUrl || '';
+  }
+
+  // Sponsor Ticker form
+  const tickerEnabled = document.getElementById('adsTickerEnabled');
+  const tickerLabel = document.getElementById('adsTickerLabel');
+  if (tickerEnabled && ads.sponsorTicker) {
+    tickerEnabled.checked = !!ads.sponsorTicker.enabled;
+    if (tickerLabel) tickerLabel.value = ads.sponsorTicker.label || 'OFFICIAL CLAN SPONSORS & TACTICAL PARTNERS';
+  }
+  renderSponsorsTable();
+
+  // Promo Banner form
+  const promoEnabled = document.getElementById('adsPromoEnabled');
+  const promoTag = document.getElementById('adsPromoTag');
+  const promoTitle = document.getElementById('adsPromoTitle');
+  const promoDesc = document.getElementById('adsPromoDesc');
+  const promoBtnText = document.getElementById('adsPromoBtnText');
+  const promoBtnUrl = document.getElementById('adsPromoBtnUrl');
+  const promoImgUrl = document.getElementById('adsPromoImgUrl');
+  const promoImgPreview = document.getElementById('adsPromoImgPreview');
+  if (promoEnabled && ads.promoBanner) {
+    promoEnabled.checked = !!ads.promoBanner.enabled;
+    if (promoTag) promoTag.value = ads.promoBanner.tag || 'OFFICIAL SPONSORED PARTNER';
+    if (promoTitle) promoTitle.value = ads.promoBanner.title || '';
+    if (promoDesc) promoDesc.value = ads.promoBanner.description || '';
+    if (promoBtnText) promoBtnText.value = ads.promoBanner.btnText || 'KUNJUNGI STORE RESMI ➔';
+    if (promoBtnUrl) promoBtnUrl.value = ads.promoBanner.btnUrl || '';
+    if (promoImgUrl) promoImgUrl.value = ads.promoBanner.img || '';
+    if (promoImgPreview && ads.promoBanner.img) promoImgPreview.src = ads.promoBanner.img;
+  }
+}
+
+function renderSponsorsTable() {
+  const tbody = document.getElementById('adsSponsorsTableBody');
+  if (!tbody) return;
+  const sponsors = (db.ads && db.ads.sponsorTicker && Array.isArray(db.ads.sponsorTicker.sponsors))
+    ? db.ads.sponsorTicker.sponsors : [];
+  if (sponsors.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:1rem;">Belum ada sponsor. Klik "+ TAMBAH SPONSOR" untuk menambahkan.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = sponsors.map((sp, idx) => `
+    <tr>
+      <td><img src="${sp.logo || 'assets/mothra-logo.png'}" alt="${sp.name || ''}" style="width:36px;height:36px;object-fit:contain;filter:brightness(1.2);" /></td>
+      <td style="font-weight:700;">${sp.name || '-'}</td>
+      <td style="color:var(--gold);font-size:0.82rem;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${sp.link || '-'}</td>
+      <td>
+        <button onclick="editSponsor(${idx})" class="action-btn" title="Edit">✏️</button>
+        <button onclick="deleteSponsor(${idx})" class="action-btn action-btn--danger" title="Hapus">🗑️</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function openAddSponsorModal() {
+  _editingSponsorId = null;
+  document.getElementById('sponsorModalTitle').textContent = 'TAMBAH SPONSOR BARU';
+  document.getElementById('sponsorName').value = '';
+  document.getElementById('sponsorLink').value = '';
+  document.getElementById('sponsorLogo').value = '';
+  document.getElementById('sponsorLogoPreview').src = 'assets/mothra-logo.png';
+  document.getElementById('sponsorSaveBtn').textContent = 'TAMBAH SPONSOR ➔';
+  document.getElementById('sponsorCrudModal').style.display = '';
+}
+
+function editSponsor(idx) {
+  if (!db.ads || !db.ads.sponsorTicker) return;
+  const sp = db.ads.sponsorTicker.sponsors[idx];
+  if (!sp) return;
+  _editingSponsorId = idx;
+  document.getElementById('sponsorModalTitle').textContent = 'EDIT SPONSOR';
+  document.getElementById('sponsorName').value = sp.name || '';
+  document.getElementById('sponsorLink').value = sp.link || '';
+  document.getElementById('sponsorLogo').value = sp.logo || '';
+  document.getElementById('sponsorLogoPreview').src = sp.logo || 'assets/mothra-logo.png';
+  document.getElementById('sponsorSaveBtn').textContent = 'SIMPAN PERUBAHAN ➔';
+  document.getElementById('sponsorCrudModal').style.display = '';
+}
+
+function closeSponsorModal() {
+  document.getElementById('sponsorCrudModal').style.display = 'none';
+}
+
+function deleteSponsor(idx) {
+  if (!confirm('Hapus sponsor ini?')) return;
+  if (!db.ads || !db.ads.sponsorTicker || !Array.isArray(db.ads.sponsorTicker.sponsors)) return;
+  db.ads.sponsorTicker.sponsors.splice(idx, 1);
+  saveMothraData(db);
+  renderSponsorsTable();
+  showToast('Sponsor berhasil dihapus.');
+}
+
+// Sponsor Form Submit (Add/Edit)
+const sponsorCrudForm = document.getElementById('sponsorCrudForm');
+if (sponsorCrudForm) {
+  sponsorCrudForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (!db.ads) db.ads = { topBanner: {}, sponsorTicker: { sponsors: [] }, promoBanner: {} };
+    if (!db.ads.sponsorTicker) db.ads.sponsorTicker = { sponsors: [] };
+    if (!Array.isArray(db.ads.sponsorTicker.sponsors)) db.ads.sponsorTicker.sponsors = [];
+
+    const sp = {
+      id: _editingSponsorId !== null ? (db.ads.sponsorTicker.sponsors[_editingSponsorId].id || `sp_${Date.now()}`) : `sp_${Date.now()}`,
+      name: (document.getElementById('sponsorName').value || '').trim(),
+      link: (document.getElementById('sponsorLink').value || '').trim(),
+      logo: (document.getElementById('sponsorLogo').value || 'assets/mothra-logo.png').trim()
+    };
+
+    if (_editingSponsorId !== null) {
+      db.ads.sponsorTicker.sponsors[_editingSponsorId] = sp;
+    } else {
+      db.ads.sponsorTicker.sponsors.push(sp);
+    }
+    saveMothraData(db);
+    renderSponsorsTable();
+    closeSponsorModal();
+    showToast(_editingSponsorId !== null ? '✅ Sponsor berhasil diperbarui!' : '✅ Sponsor baru berhasil ditambahkan!');
+  });
+}
+
+// Save Ads Ticker config + toggle
+function saveAdsTicker() {
+  if (!db.ads) db.ads = { topBanner: {}, sponsorTicker: { sponsors: [] }, promoBanner: {} };
+  if (!db.ads.sponsorTicker) db.ads.sponsorTicker = { sponsors: [] };
+  db.ads.sponsorTicker.enabled = !!(document.getElementById('adsTickerEnabled') && document.getElementById('adsTickerEnabled').checked);
+  db.ads.sponsorTicker.label = (document.getElementById('adsTickerLabel') ? document.getElementById('adsTickerLabel').value : 'OFFICIAL CLAN SPONSORS & TACTICAL PARTNERS').trim();
+  saveMothraData(db);
+  showToast('🎽 Sponsor Ticker berhasil disimpan ke Supabase!');
+}
+
+// Top Bar Form Submit
+const adsTopForm = document.getElementById('adsTopForm');
+if (adsTopForm) {
+  adsTopForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (!db.ads) db.ads = { topBanner: {}, sponsorTicker: { sponsors: [] }, promoBanner: {} };
+    db.ads.topBanner = {
+      enabled: !!(document.getElementById('adsTopEnabled') && document.getElementById('adsTopEnabled').checked),
+      text: (document.getElementById('adsTopText').value || '').trim(),
+      linkText: (document.getElementById('adsTopLinkText').value || 'KLAIM PROMO ➔').trim(),
+      linkUrl: (document.getElementById('adsTopLinkUrl').value || '#').trim()
+    };
+    saveMothraData(db);
+    showToast('📣 Bar Pengumuman berhasil disimpan ke Supabase!');
+  });
+}
+
+// Promo Banner Form Submit
+const adsPromoForm = document.getElementById('adsPromoForm');
+if (adsPromoForm) {
+  adsPromoForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (!db.ads) db.ads = { topBanner: {}, sponsorTicker: { sponsors: [] }, promoBanner: {} };
+    db.ads.promoBanner = {
+      enabled: !!(document.getElementById('adsPromoEnabled') && document.getElementById('adsPromoEnabled').checked),
+      tag: (document.getElementById('adsPromoTag').value || 'OFFICIAL SPONSORED PARTNER').trim(),
+      title: (document.getElementById('adsPromoTitle').value || '').trim(),
+      description: (document.getElementById('adsPromoDesc').value || '').trim(),
+      btnText: (document.getElementById('adsPromoBtnText').value || 'KUNJUNGI STORE RESMI ➔').trim(),
+      btnUrl: (document.getElementById('adsPromoBtnUrl').value || '#').trim(),
+      img: (document.getElementById('adsPromoImgUrl').value || 'assets/hero-bg.jpg').trim()
+    };
+    saveMothraData(db);
+    showToast('🎯 Promo Banner berhasil disimpan ke Supabase!');
+  });
 }
 
 /* ============================================================

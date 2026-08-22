@@ -91,6 +91,16 @@
 
 <body>
 
+  <!-- ===================== TOP ANNOUNCEMENT / IKLAN BAR ===================== -->
+  <div class="ads-top-bar" id="adsTopBar" style="display:none;" role="alert" aria-live="polite">
+    <div class="ads-top-bar-inner">
+      <span class="ads-top-bar-label">📢 SPONSOR</span>
+      <span class="ads-top-bar-text" id="adsTopBarText">Loading...</span>
+      <a href="#" class="ads-top-bar-link" id="adsTopBarLink" target="_blank" rel="noopener sponsored">KLAIM PROMO ➔</a>
+    </div>
+    <button class="ads-top-bar-close" id="adsTopBarClose" aria-label="Tutup iklan">&times;</button>
+  </div>
+
   <!-- CUSTOM CURSOR -->
   <div class="cursor" id="cursor"></div>
   <div class="cursor-follower" id="cursorFollower"></div>
@@ -245,6 +255,16 @@
         <span>SCROLL</span>
       </div>
     </section>
+
+    <!-- ===================== SPONSOR TICKER (ADS ZONE 1) ===================== -->
+    <div class="ads-sponsor-ticker" id="adsSponsorTicker" style="display:none;" aria-label="Official Clan Sponsors">
+      <div class="ads-sponsor-ticker-label" id="adsSponsorLabel">OFFICIAL CLAN SPONSORS &amp; TACTICAL PARTNERS</div>
+      <div class="ads-sponsor-track-wrap">
+        <div class="ads-sponsor-track" id="adsSponsorTrack">
+          <!-- Populated by main.js -->
+        </div>
+      </div>
+    </div>
 
     <!-- ===================== 01 / THE DOSSIER ===================== -->
     <section class="section about" id="about" aria-labelledby="aboutHeading">
@@ -557,6 +577,24 @@
           </div>
         </div>
     </section>
+
+    <!-- ===================== PROMO BANNER (ADS ZONE 2) ===================== -->
+    <div class="ads-promo-banner" id="adsPromoBanner" style="display:none;" aria-label="Official Sponsored Partner">
+      <div class="ads-promo-inner">
+        <div class="ads-promo-content">
+          <div class="ads-promo-tag" id="adsPromoTag">OFFICIAL SPONSORED PARTNER</div>
+          <h3 class="ads-promo-title" id="adsPromoTitle">UPGRADE YOUR TACTICAL LOADOUT</h3>
+          <p class="ads-promo-desc" id="adsPromoDesc">Dapatkan Official Custom Jersey, Gaming Gear PB, dan Voucher PB Cash resmi dengan harga spesial untuk komunitas Clan MOTHRA.</p>
+          <a href="#" class="ads-promo-btn" id="adsPromoBtn" target="_blank" rel="noopener sponsored">KUNJUNGI STORE RESMI ➔</a>
+        </div>
+        <div class="ads-promo-visual">
+          <img id="adsPromoImg" src="assets/hero-bg.jpg" alt="Official Sponsor" loading="lazy" />
+          <div class="ads-promo-visual-overlay"></div>
+          <div class="ads-promo-glow"></div>
+        </div>
+      </div>
+      <div class="ads-promo-corner"></div>
+    </div>
 
     <!-- ===================== 03 / THE SCHEDULE (MATCH JADWAL) ===================== -->
     <section class="section schedule" id="schedule" aria-labelledby="scheduleHeading">

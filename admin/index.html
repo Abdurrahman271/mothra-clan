@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <base href="../">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
@@ -177,6 +176,7 @@
 
         <div class="sidebar-nav-section" style="margin-top:0.75rem;">SYSTEM &amp; CLOUD</div>
         <button class="nav-item" data-panel="panelBranding">🛡️ Identitas &amp; Logo Clan</button>
+        <button class="nav-item" data-panel="panelAds">📢 Iklan &amp; Sponsor</button>
         <button class="nav-item" data-panel="panelDatabase">☁️ Database Online (Supabase)</button>
         <button class="nav-item" data-panel="panelBackup">💾 Backup &amp; Restore</button>
         <button class="nav-item" data-panel="panelUsers">👥 Management User</button>
@@ -831,6 +831,173 @@
           </div>
         </div>
       </section>
+
+      <!-- ADS & SPONSOR MANAGEMENT PANEL -->
+      <section class="admin-panel" id="panelAds">
+        <div class="card-box">
+          <h3 class="card-box-title">📢 MANAJEMEN IKLAN &amp; SPONSOR WEBSITE</h3>
+          <p style="color:var(--text-muted);font-size:0.85rem;margin-top:0.25rem;">
+            Kelola 3 zona iklan/sponsor di website: (1) Bar Pengumuman Atas, (2) Sponsor Ticker/Ribbon, dan (3) Promo Banner besar antara Roster &amp; Jadwal. Semua tersinkron realtime ke Supabase.
+          </p>
+        </div>
+
+        <!-- ZONE 1: TOP ANNOUNCEMENT BAR -->
+        <div class="card-box" style="margin-top:1.5rem;">
+          <h4 style="font-family:var(--font-display);font-size:1.2rem;color:var(--gold);margin-bottom:0.5rem;letter-spacing:0.05em;">📣 ZONA 1: BAR PENGUMUMAN / PROMO (PALING ATAS LAYAR)</h4>
+          <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:1.25rem;">Muncul di paling atas halaman utama. Cocok untuk promo terbatas, voucher diskon, atau link event khusus.</p>
+          <form id="adsTopForm" style="margin-top:0.5rem;">
+            <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.25rem;">
+              <label style="font-family:var(--font-mono);font-size:0.82rem;color:var(--text-muted);display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
+                <input type="checkbox" id="adsTopEnabled" style="width:16px;height:16px;accent-color:var(--gold);" />
+                <span style="color:var(--gold);">AKTIFKAN BAR PENGUMUMAN</span>
+              </label>
+            </div>
+            <div class="form-group">
+              <label class="form-label">TEKS PENGUMUMAN / PROMO *</label>
+              <textarea id="adsTopText" class="form-input" rows="2" placeholder="🔥 OFFICIAL PARTNER: Dapatkan Diskon 15% Gaming Gear! Kode: MOTHRA2026"></textarea>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+              <div class="form-group">
+                <label class="form-label">TEKS TOMBOL *</label>
+                <input type="text" id="adsTopLinkText" class="form-input" placeholder="KLAIM PROMO ➔" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">LINK TUJUAN (URL) *</label>
+                <input type="url" id="adsTopLinkUrl" class="form-input" placeholder="https://..." />
+              </div>
+            </div>
+            <button type="submit" class="btn-add" style="margin-top:0.75rem;background:#3B82F6;border-color:#3B82F6;">💾 SIMPAN BAR PENGUMUMAN ➔</button>
+          </form>
+        </div>
+
+        <!-- ZONE 2: SPONSOR TICKER -->
+        <div class="card-box" style="margin-top:1.5rem;">
+          <h4 style="font-family:var(--font-display);font-size:1.2rem;color:var(--gold);margin-bottom:0.5rem;letter-spacing:0.05em;">🎽 ZONA 2: SPONSOR TICKER RIBBON (BAWAH HERO)</h4>
+          <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:1.25rem;">Teks/logo sponsor berjalan otomatis di bawah banner hero. Hover untuk pause. Tambah/edit/hapus sponsor di bawah ini.</p>
+          <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.25rem;">
+            <label style="font-family:var(--font-mono);font-size:0.82rem;color:var(--text-muted);display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
+              <input type="checkbox" id="adsTickerEnabled" style="width:16px;height:16px;accent-color:var(--gold);" />
+              <span style="color:var(--gold);">AKTIFKAN SPONSOR TICKER</span>
+            </label>
+          </div>
+          <div class="form-group">
+            <label class="form-label">LABEL JUDUL TICKER</label>
+            <input type="text" id="adsTickerLabel" class="form-input" placeholder="OFFICIAL CLAN SPONSORS &amp; TACTICAL PARTNERS" />
+          </div>
+          <div class="card-header-flex" style="margin-top:1rem;">
+            <span style="font-family:var(--font-mono);font-size:0.8rem;color:var(--text-muted);">DAFTAR SPONSOR</span>
+            <button class="btn-add" onclick="openAddSponsorModal()" style="font-size:0.85rem;padding:0.45rem 1rem;">+ TAMBAH SPONSOR</button>
+          </div>
+          <div class="table-responsive" style="margin-top:0.75rem;">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>LOGO</th>
+                  <th>NAMA SPONSOR</th>
+                  <th>LINK URL</th>
+                  <th>AKSI</th>
+                </tr>
+              </thead>
+              <tbody id="adsSponsorsTableBody"></tbody>
+            </table>
+          </div>
+          <button onclick="saveAdsTicker()" class="btn-add" style="margin-top:1rem;background:#10B981;border-color:#10B981;">💾 SIMPAN SPONSOR TICKER ➔</button>
+        </div>
+
+        <!-- ZONE 3: PROMO BANNER -->
+        <div class="card-box" style="margin-top:1.5rem;">
+          <h4 style="font-family:var(--font-display);font-size:1.2rem;color:var(--gold);margin-bottom:0.5rem;letter-spacing:0.05em;">🎯 ZONA 3: PROMO BANNER BESAR (ANTARA ROSTER &amp; JADWAL)</h4>
+          <p style="color:var(--text-muted);font-size:0.82rem;margin-bottom:1.25rem;">Banner horizontal besar dengan gambar, judul, deskripsi, dan tombol aksi. Cocok untuk iklan gaming gear, jersey resmi, atau voucher game.</p>
+          <form id="adsPromoForm">
+            <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.25rem;">
+              <label style="font-family:var(--font-mono);font-size:0.82rem;color:var(--text-muted);display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
+                <input type="checkbox" id="adsPromoEnabled" style="width:16px;height:16px;accent-color:var(--gold);" />
+                <span style="color:var(--gold);">AKTIFKAN PROMO BANNER</span>
+              </label>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+              <div class="form-group">
+                <label class="form-label">LABEL / TAG KECIL (ATAS JUDUL)</label>
+                <input type="text" id="adsPromoTag" class="form-input" placeholder="OFFICIAL SPONSORED PARTNER" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">JUDUL BANNER *</label>
+                <input type="text" id="adsPromoTitle" class="form-input" placeholder="UPGRADE YOUR TACTICAL LOADOUT" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">DESKRIPSI BANNER</label>
+              <textarea id="adsPromoDesc" class="form-input" rows="2" placeholder="Dapatkan Official Jersey, Gaming Gear, dan Voucher PB Cash..."></textarea>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+              <div class="form-group">
+                <label class="form-label">TEKS TOMBOL *</label>
+                <input type="text" id="adsPromoBtnText" class="form-input" placeholder="KUNJUNGI STORE RESMI ➔" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">LINK TUJUAN TOMBOL (URL)</label>
+                <input type="url" id="adsPromoBtnUrl" class="form-input" placeholder="https://..." />
+              </div>
+            </div>
+            <!-- Upload Gambar Banner -->
+            <div class="upload-section">
+              <div class="form-group">
+                <label class="form-label">📁 UPLOAD GAMBAR BANNER DARI KOMPUTER (LOCAL PC)</label>
+                <input type="file" id="adsPromoImgFile" accept="image/*" class="file-upload-input" />
+              </div>
+              <div style="display:flex;gap:1rem;align-items:center;">
+                <div class="form-group" style="flex:1;margin-bottom:0;">
+                  <label class="form-label">ATAU URL / PATH GAMBAR BANNER</label>
+                  <input type="text" id="adsPromoImgUrl" class="form-input" placeholder="assets/hero-bg.jpg" />
+                </div>
+                <div class="upload-preview-box" style="width:120px;height:70px;background:rgba(0,0,0,0.5);">
+                  <img id="adsPromoImgPreview" src="assets/hero-bg.jpg" alt="Preview" style="width:100%;height:100%;object-fit:cover;border-radius:4px;" />
+                </div>
+              </div>
+            </div>
+            <button type="submit" class="btn-add" style="margin-top:1rem;background:#F59E0B;border-color:#F59E0B;color:#000;">💾 SIMPAN PROMO BANNER ➔</button>
+          </form>
+        </div>
+      </section>
+
+      <!-- Sponsor CRUD Modal -->
+      <div class="modal-overlay" id="sponsorCrudModal" style="display:none;" role="dialog" aria-modal="true">
+        <div class="modal-box" style="max-width:480px;">
+          <div class="modal-header">
+            <h3 class="modal-title" id="sponsorModalTitle">TAMBAH SPONSOR</h3>
+            <button class="modal-close" onclick="closeSponsorModal()" aria-label="Tutup">&times;</button>
+          </div>
+          <form id="sponsorCrudForm">
+            <div class="form-group">
+              <label class="form-label">NAMA SPONSOR *</label>
+              <input type="text" id="sponsorName" class="form-input" placeholder="Logitech G" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">LINK URL SPONSOR</label>
+              <input type="url" id="sponsorLink" class="form-input" placeholder="https://www.logitechg.com" />
+            </div>
+            <div class="upload-section">
+              <div class="form-group">
+                <label class="form-label">📁 UPLOAD LOGO SPONSOR DARI PC</label>
+                <input type="file" id="sponsorLogoFile" accept="image/*" class="file-upload-input" />
+              </div>
+              <div style="display:flex;gap:1rem;align-items:center;">
+                <div class="form-group" style="flex:1;margin-bottom:0;">
+                  <label class="form-label">ATAU URL LOGO</label>
+                  <input type="text" id="sponsorLogo" class="form-input" placeholder="assets/mothra-logo.png" />
+                </div>
+                <div class="upload-preview-box" style="width:60px;height:60px;background:rgba(0,0,0,0.5);">
+                  <img id="sponsorLogoPreview" src="assets/mothra-logo.png" alt="Preview" style="width:100%;height:100%;object-fit:contain;border-radius:4px;" />
+                </div>
+              </div>
+            </div>
+            <div class="modal-actions">
+              <button type="button" class="btn-cancel" onclick="closeSponsorModal()">BATAL</button>
+              <button type="submit" class="btn-save" id="sponsorSaveBtn">SIMPAN SPONSOR ➔</button>
+            </div>
+          </form>
+        </div>
+      </div>
 
       <!-- 9. BACKUP & RESTORE PANEL -->
       <section class="admin-panel" id="panelBackup">

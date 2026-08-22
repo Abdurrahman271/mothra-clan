@@ -70,6 +70,90 @@ function syncCmsData() {
   const db = getMothraData();
   if (!db) return;
 
+  // ADS ZONE: Sync Iklan / Sponsor dari Supabase
+  if (db.ads) {
+    const ads = db.ads;
+
+    // --- Top Announcement Bar ---
+    const topBar = document.getElementById('adsTopBar');
+    if (topBar && ads.topBanner) {
+      if (ads.topBanner.enabled) {
+        const txtEl = document.getElementById('adsTopBarText');
+        const lnkEl = document.getElementById('adsTopBarLink');
+        if (txtEl) txtEl.textContent = ads.topBanner.text || '';
+        if (lnkEl) {
+          lnkEl.textContent = ads.topBanner.linkText || 'INFO';
+          lnkEl.href = ads.topBanner.linkUrl || '#';
+        }
+        topBar.style.display = '';
+        // Close button
+        const closeBtn = document.getElementById('adsTopBarClose');
+        if (closeBtn && !closeBtn._hasAdListener) {
+          closeBtn.addEventListener('click', () => {
+            topBar.style.display = 'none';
+          });
+          closeBtn._hasAdListener = true;
+        }
+      } else {
+        topBar.style.display = 'none';
+      }
+    }
+
+    // --- Sponsor Ticker Ribbon ---
+    const ticker = document.getElementById('adsSponsorTicker');
+    const track = document.getElementById('adsSponsorTrack');
+    const tickerLabel = document.getElementById('adsSponsorLabel');
+    if (ticker && ads.sponsorTicker) {
+      if (ads.sponsorTicker.enabled && Array.isArray(ads.sponsorTicker.sponsors) && ads.sponsorTicker.sponsors.length > 0) {
+        if (tickerLabel && ads.sponsorTicker.label) tickerLabel.textContent = ads.sponsorTicker.label;
+        if (track) {
+          // Render sponsors, doubled for seamless loop
+          const items = ads.sponsorTicker.sponsors;
+          const renderItem = (sp) => {
+            const a = document.createElement('a');
+            a.className = 'ads-sponsor-item';
+            a.href = sp.link || '#';
+            a.target = '_blank';
+            a.rel = 'noopener sponsored';
+            a.title = sp.name || '';
+            a.innerHTML = `<img src="${sp.logo || 'assets/mothra-logo.png'}" alt="${sp.name || 'Sponsor'}" width="36" height="36" /><span>${sp.name || ''}</span>`;
+            return a;
+          };
+          track.innerHTML = '';
+          const divider = () => { const d = document.createElement('div'); d.className = 'ads-sponsor-divider'; return d; };
+          // First pass
+          items.forEach((sp, i) => { track.appendChild(renderItem(sp)); if (i < items.length - 1) track.appendChild(divider()); });
+          track.appendChild(divider());
+          // Duplicate for seamless loop
+          items.forEach((sp, i) => { track.appendChild(renderItem(sp)); if (i < items.length - 1) track.appendChild(divider()); });
+        }
+        ticker.style.display = '';
+      } else {
+        ticker.style.display = 'none';
+      }
+    }
+
+    // --- Promo Banner ---
+    const promoBanner = document.getElementById('adsPromoBanner');
+    if (promoBanner && ads.promoBanner) {
+      if (ads.promoBanner.enabled) {
+        const tagEl = document.getElementById('adsPromoTag');
+        const titleEl = document.getElementById('adsPromoTitle');
+        const descEl = document.getElementById('adsPromoDesc');
+        const btnEl = document.getElementById('adsPromoBtn');
+        const imgEl = document.getElementById('adsPromoImg');
+        if (tagEl) tagEl.textContent = ads.promoBanner.tag || 'OFFICIAL SPONSORED PARTNER';
+        if (titleEl) titleEl.textContent = ads.promoBanner.title || '';
+        if (descEl) descEl.textContent = ads.promoBanner.description || '';
+        if (btnEl) { btnEl.textContent = ads.promoBanner.btnText || 'SELENGKAPNYA ➔'; btnEl.href = ads.promoBanner.btnUrl || '#'; }
+        if (imgEl && ads.promoBanner.img) { imgEl.src = ads.promoBanner.img; imgEl.alt = ads.promoBanner.title || 'Sponsor'; }
+        promoBanner.style.display = '';
+      } else {
+        promoBanner.style.display = 'none';
+      }
+    }
+  }
+
   // 0. Sync Clan Identity & Branding (Logo, Nama, Tagline, Favicon)
   if (db.branding) {
     const b = db.branding;

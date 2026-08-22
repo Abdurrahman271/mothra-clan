@@ -2675,3 +2675,347 @@ button {
   html { scroll-behavior: auto; }
   .reveal-fade, .reveal-left, .reveal-right { opacity: 1; transform: none; }
 }
+
+/* =================================================================
+   ADS / IKLAN ZONE — TOP ANNOUNCEMENT BAR
+   ================================================================= */
+.ads-top-bar {
+  position: sticky;
+  top: 0;
+  z-index: 10000;
+  background: linear-gradient(90deg, #0a0a0d 0%, #1a1108 40%, #0f0d04 60%, #0a0a0d 100%);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.35);
+  box-shadow: 0 2px 20px rgba(212, 175, 55, 0.12);
+  padding: 0.55rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  animation: adTopSlideIn 0.5s ease both;
+}
+@keyframes adTopSlideIn {
+  from { transform: translateY(-100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+.ads-top-bar-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex: 1;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+.ads-top-bar-label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--gold);
+  background: rgba(212, 175, 55, 0.12);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  padding: 0.2rem 0.6rem;
+  border-radius: 3px;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.ads-top-bar-text {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.4;
+  flex: 1;
+  min-width: 0;
+}
+.ads-top-bar-link {
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #0a0a0d;
+  background: var(--gold);
+  padding: 0.3rem 0.9rem;
+  border-radius: 3px;
+  text-decoration: none;
+  white-space: nowrap;
+  letter-spacing: 0.05em;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  flex-shrink: 0;
+}
+.ads-top-bar-link:hover {
+  background: var(--gold-bright);
+  box-shadow: 0 0 14px rgba(212, 175, 55, 0.5);
+}
+.ads-top-bar-close {
+  background: none;
+  border: 1px solid rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.4);
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+  flex-shrink: 0;
+}
+.ads-top-bar-close:hover {
+  color: #ef4444;
+  border-color: rgba(239,68,68,0.5);
+  background: rgba(239,68,68,0.08);
+}
+
+/* =================================================================
+   ADS ZONE 1 — SPONSOR TICKER / RUNNING RIBBON
+   ================================================================= */
+.ads-sponsor-ticker {
+  width: 100%;
+  background: linear-gradient(135deg, #0e0e12 0%, #13110a 50%, #0e0e12 100%);
+  border-top: 1px solid rgba(212, 175, 55, 0.18);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.18);
+  padding: 1.1rem 0;
+  overflow: hidden;
+  position: relative;
+}
+.ads-sponsor-ticker::before,
+.ads-sponsor-ticker::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 80px;
+  z-index: 2;
+  pointer-events: none;
+}
+.ads-sponsor-ticker::before {
+  left: 0;
+  background: linear-gradient(to right, #0e0e12, transparent);
+}
+.ads-sponsor-ticker::after {
+  right: 0;
+  background: linear-gradient(to left, #0e0e12, transparent);
+}
+.ads-sponsor-ticker-label {
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: rgba(212, 175, 55, 0.55);
+  letter-spacing: 0.18em;
+  margin-bottom: 1rem;
+}
+.ads-sponsor-track-wrap {
+  overflow: hidden;
+  width: 100%;
+}
+.ads-sponsor-track {
+  display: flex;
+  align-items: center;
+  gap: 3.5rem;
+  width: max-content;
+  animation: sponsorScroll 28s linear infinite;
+}
+.ads-sponsor-track:hover {
+  animation-play-state: paused;
+}
+@keyframes sponsorScroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.ads-sponsor-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+  text-decoration: none;
+  opacity: 0.55;
+  transition: opacity 0.3s, filter 0.3s;
+  padding: 0.4rem 0.85rem;
+  border-radius: 4px;
+  border: 1px solid transparent;
+}
+.ads-sponsor-item:hover {
+  opacity: 1;
+  filter: drop-shadow(0 0 8px rgba(212,175,55,0.4));
+  border-color: rgba(212,175,55,0.2);
+  background: rgba(212,175,55,0.05);
+}
+.ads-sponsor-item img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  filter: grayscale(100%) brightness(1.5);
+  transition: filter 0.3s;
+}
+.ads-sponsor-item:hover img {
+  filter: grayscale(0%) brightness(1.1);
+}
+.ads-sponsor-item span {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.6);
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  transition: color 0.3s;
+}
+.ads-sponsor-item:hover span {
+  color: var(--gold-bright);
+}
+.ads-sponsor-divider {
+  width: 1px;
+  height: 28px;
+  background: rgba(212,175,55,0.2);
+  flex-shrink: 0;
+}
+
+/* =================================================================
+   ADS ZONE 2 — PROMO BANNER (between Lineup & Schedule)
+   ================================================================= */
+.ads-promo-banner {
+  max-width: 1200px;
+  margin: 0 auto 0 auto;
+  padding: 0 1.5rem;
+  position: relative;
+}
+.ads-promo-inner {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  min-height: 220px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(212, 175, 55, 0.22);
+  background: linear-gradient(135deg, #0f0d07 0%, #111119 60%);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5), inset 0 0 80px rgba(212,175,55,0.04);
+  position: relative;
+  transition: box-shadow 0.4s;
+}
+.ads-promo-inner:hover {
+  box-shadow: 0 12px 50px rgba(0,0,0,0.6), 0 0 30px rgba(212,175,55,0.1);
+}
+.ads-promo-content {
+  padding: 2.5rem 2.5rem 2.5rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.85rem;
+  position: relative;
+  z-index: 2;
+}
+.ads-promo-tag {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--gold);
+  letter-spacing: 0.18em;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.ads-promo-tag::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: var(--gold);
+  border-radius: 50%;
+  animation: pulse 1.8s ease-in-out infinite;
+}
+.ads-promo-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  font-weight: 900;
+  color: var(--white);
+  letter-spacing: 0.04em;
+  line-height: 1.05;
+  margin: 0;
+}
+.ads-promo-desc {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  max-width: 480px;
+  margin: 0;
+}
+.ads-promo-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--gold);
+  color: #000;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 0.7rem 1.8rem;
+  border-radius: 4px;
+  text-decoration: none;
+  align-self: flex-start;
+  margin-top: 0.25rem;
+  transition: background 0.25s, box-shadow 0.25s, transform 0.2s;
+}
+.ads-promo-btn:hover {
+  background: var(--gold-bright);
+  box-shadow: 0 0 24px rgba(212,175,55,0.5);
+  transform: translateY(-2px);
+}
+.ads-promo-visual {
+  position: relative;
+  overflow: hidden;
+}
+.ads-promo-visual img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.5s ease;
+}
+.ads-promo-inner:hover .ads-promo-visual img {
+  transform: scale(1.04);
+}
+.ads-promo-visual-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right, #0f0d07 0%, rgba(0,0,0,0.3) 100%);
+  pointer-events: none;
+}
+.ads-promo-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 100%, rgba(212,175,55,0.12) 0%, transparent 65%);
+  pointer-events: none;
+}
+.ads-promo-corner {
+  position: absolute;
+  top: 0; left: 0;
+  width: 40px; height: 40px;
+  border-top: 2px solid var(--gold);
+  border-left: 2px solid var(--gold);
+  border-radius: 8px 0 0 0;
+  pointer-events: none;
+}
+.ads-promo-banner-wrap {
+  padding: 3.5rem 0;
+  background: var(--bg-darker);
+}
+
+/* Responsive Ads */
+@media (max-width: 900px) {
+  .ads-promo-inner {
+    grid-template-columns: 1fr;
+  }
+  .ads-promo-visual {
+    height: 180px;
+    order: -1;
+  }
+  .ads-promo-visual-overlay {
+    background: linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, #0f0d07 100%);
+  }
+  .ads-promo-content {
+    padding: 1.75rem 1.5rem;
+  }
+}
+@media (max-width: 640px) {
+  .ads-top-bar-text { font-size: 0.78rem; }
+  .ads-promo-title { font-size: 1.5rem; }
+  .ads-sponsor-item span { display: none; }
+}

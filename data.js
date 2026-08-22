@@ -27,6 +27,33 @@ const DEFAULT_MOTHRA_DATA = {
     "subtitle": "Jakarta, Indonesia — Est. 2020 — Unit MTH-08",
     "bgImage": "assets/hero-bg.jpg"
   },
+  "ads": {
+    "topBanner": {
+      "enabled": false,
+      "text": "🔥 OFFICIAL PARTNER: Dapatkan Diskon Khusus 15% Gaming Gear & PB Cash di Store Partner MOTHRA! Kode: MOTHRA2026",
+      "linkText": "KLAIM PROMO ➔",
+      "linkUrl": "https://discord.gg/fxfMBWSzW"
+    },
+    "sponsorTicker": {
+      "enabled": true,
+      "label": "OFFICIAL CLAN SPONSORS & TACTICAL PARTNERS",
+      "sponsors": [
+        { "id": "sp_1", "name": "Logitech G", "logo": "assets/mothra-logo.png", "link": "https://www.logitechg.com" },
+        { "id": "sp_2", "name": "ZOWIE eSports", "logo": "assets/mothra-logo.png", "link": "https://zowie.benq.com" },
+        { "id": "sp_3", "name": "SteelSeries", "logo": "assets/mothra-logo.png", "link": "https://steelseries.com" },
+        { "id": "sp_4", "name": "MOTHRA Tactical Store", "logo": "assets/mothra-gold-logo.png", "link": "https://discord.gg/fxfMBWSzW" }
+      ]
+    },
+    "promoBanner": {
+      "enabled": true,
+      "tag": "OFFICIAL SPONSORED PARTNER",
+      "title": "UPGRADE YOUR TACTICAL LOADOUT",
+      "description": "Dapatkan Official Custom Jersey, Gaming Gear PB, dan Voucher PB Cash resmi dengan harga spesial untuk komunitas Clan MOTHRA.",
+      "img": "assets/pb-bg-squad.jpg",
+      "btnText": "KUNJUNGI STORE RESMI ➔",
+      "btnUrl": "https://discord.gg/fxfMBWSzW"
+    }
+  },
   "users": [
     {
       "id": "u_1",
@@ -638,6 +665,14 @@ function sanitizeMothraData(data) {
     if (!data.dossier.values || !Array.isArray(data.dossier.values) || data.dossier.values.length === 0) {
       data.dossier.values = JSON.parse(JSON.stringify(DEFAULT_MOTHRA_DATA.dossier.values));
     }
+  }
+  if (!data.ads) {
+    data.ads = JSON.parse(JSON.stringify(DEFAULT_MOTHRA_DATA.ads));
+  }
+  if (data.ads) {
+    if (!data.ads.topBanner) data.ads.topBanner = JSON.parse(JSON.stringify(DEFAULT_MOTHRA_DATA.ads.topBanner));
+    if (!data.ads.sponsorTicker) data.ads.sponsorTicker = JSON.parse(JSON.stringify(DEFAULT_MOTHRA_DATA.ads.sponsorTicker));
+    if (!data.ads.promoBanner) data.ads.promoBanner = JSON.parse(JSON.stringify(DEFAULT_MOTHRA_DATA.ads.promoBanner));
   }
   if (!data.branding) {
     data.branding = JSON.parse(JSON.stringify(DEFAULT_MOTHRA_DATA.branding));
