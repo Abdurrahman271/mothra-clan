@@ -86,14 +86,16 @@ function syncCmsData() {
           lnkEl.href = ads.topBanner.linkUrl || '#';
         }
         topBar.style.display = '';
-        // Close button
-        const closeBtn = document.getElementById('adsTopBarClose');
-        if (closeBtn && !closeBtn._hasAdListener) {
-          closeBtn.addEventListener('click', () => {
-            topBar.style.display = 'none';
-          });
-          closeBtn._hasAdListener = true;
-        }
+        // Close buttons (desktop + mobile)
+        const closeBtns = topBar.querySelectorAll('.ads-top-bar-close');
+        closeBtns.forEach((btn) => {
+          if (!btn._hasAdListener) {
+            btn.addEventListener('click', () => {
+              topBar.style.display = 'none';
+            });
+            btn._hasAdListener = true;
+          }
+        });
       } else {
         topBar.style.display = 'none';
       }

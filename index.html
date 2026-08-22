@@ -86,19 +86,26 @@
     href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,300;0,400;0,600;0,700;0,800;0,900;1,700&family=Barlow:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap"
     rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css?v=3.0" />
+  <link rel="stylesheet" href="style.css?v=3.8" />
 </head>
 
 <body>
 
   <!-- ===================== TOP ANNOUNCEMENT / IKLAN BAR ===================== -->
   <div class="ads-top-bar" id="adsTopBar" style="display:none;" role="alert" aria-live="polite">
-    <div class="ads-top-bar-inner">
-      <span class="ads-top-bar-label">📢 SPONSOR</span>
-      <span class="ads-top-bar-text" id="adsTopBarText">Loading...</span>
-      <a href="#" class="ads-top-bar-link" id="adsTopBarLink" target="_blank" rel="noopener sponsored">KLAIM PROMO ➔</a>
+    <div class="ads-top-bar-container">
+      <div class="ads-top-bar-header">
+        <span class="ads-top-bar-label">📢 OFFICIAL SPONSOR</span>
+        <button class="ads-top-bar-close ads-top-bar-close--mobile" aria-label="Tutup iklan">&times;</button>
+      </div>
+      <div class="ads-top-bar-content">
+        <span class="ads-top-bar-text" id="adsTopBarText">Loading...</span>
+      </div>
+      <div class="ads-top-bar-action">
+        <a href="#" class="ads-top-bar-link" id="adsTopBarLink" target="_blank" rel="noopener sponsored">KLAIM PROMO ➔</a>
+        <button class="ads-top-bar-close ads-top-bar-close--desktop" id="adsTopBarClose" aria-label="Tutup iklan">&times;</button>
+      </div>
     </div>
-    <button class="ads-top-bar-close" id="adsTopBarClose" aria-label="Tutup iklan">&times;</button>
   </div>
 
   <!-- CUSTOM CURSOR -->
@@ -1446,8 +1453,8 @@
 
   <!-- Supabase Cloud Database & Realtime SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="data.js?v=3.5"></script>
-  <script src="main.js?v=3.5"></script>
+  <script src="data.js?v=3.8"></script>
+  <script src="main.js?v=3.8"></script>
 </body>
 
 </html>
