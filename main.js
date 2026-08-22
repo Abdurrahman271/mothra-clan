@@ -366,57 +366,26 @@ function syncCmsData() {
         const readMoreWrap = document.getElementById('lineupReadMoreWrap');
         if (readMoreWrap) readMoreWrap.style.display = 'none';
       } else {
-        const featuredPlayer = db.lineup.find((p) => p.featured) || db.lineup[0];
-        const sidePlayers = db.lineup.filter((p) => p.id !== featuredPlayer.id);
-
         const getCategoryBadge = (catId) => {
           const catObj = (db.categories || []).find((c) => c.id === catId);
           return catObj ? catObj.badge || catObj.label : (catId || 'PBNC').toUpperCase();
         };
 
-        // Render Featured Player Card
-        let featuredHtml = `
-          <div class="player-card player-card--featured reveal-fade visible revealed"
-               data-category="${featuredPlayer.category || 'pbnc'}"
-               data-delay="0"
-               data-player="${featuredPlayer.id}"
-               data-name="${featuredPlayer.name}"
-               data-realname="${featuredPlayer.realname || ''}"
-               data-role="${featuredPlayer.role}"
-               data-num="${featuredPlayer.num || '01'}"
-               data-img="${featuredPlayer.img}"
-               data-weapon="${featuredPlayer.weapon || 'AUG A3 / Kriss S.V'}"
-               data-kd="${featuredPlayer.kd || '2.00'}"
-               data-hs="${featuredPlayer.hs || '60%'}"
-               data-experience="${featuredPlayer.experience || '3+ Tahun'}"
-               data-bio="${(featuredPlayer.bio || '').replace(/"/g, '&quot;')}"
-               tabindex="0"
-               role="button"
-               aria-label="Lihat profil ${featuredPlayer.name}">
-            <div class="player-img-wrap">
-              <img src="${featuredPlayer.img}" alt="${featuredPlayer.name}" loading="lazy" width="400" height="533" onerror="this.src='assets/player-captain.jpg'" />
-              <div class="player-num">${featuredPlayer.num || '01'}</div>
-              <div class="player-status"><span class="dot dot--green"></span> ${getCategoryBadge(featuredPlayer.category)}</div>
-              <div class="player-hover-action">
-                <span>VIEW DOSSIER <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17l9.2-9.2M17 17V8H8"/></svg></span>
-              </div>
-            </div>
-            <div class="player-info">
-              <span class="player-role">${featuredPlayer.role}</span>
-              <div class="player-name">${featuredPlayer.name}</div>
-              <div class="player-realname">${featuredPlayer.realname || ''}</div>
-            </div>
-          </div>
-        `;
+        // Sort: featured players first, then keep list order
+        const sortedLineup = [...db.lineup].sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
 
-        // Render Side Players Cards
-        let sideHtml = `<div class="players-grid-side">`;
-        sidePlayers.forEach((p, idx) => {
-          const dotClass = p.category === 'ba' ? 'dot--gold' : 'dot--green';
-          sideHtml += `
-            <div class="player-card reveal-fade visible revealed"
+        let playersHtml = '';
+        sortedLineup.forEach((p, idx) => {
+          const isFeatured = !!p.featured;
+          const dotClass = isFeatured ? 'dot--gold' : (p.category === 'ba' ? 'dot--gold' : 'dot--green');
+          const badgeText = isFeatured ? `⭐ ${getCategoryBadge(p.category)}` : getCategoryBadge(p.category);
+          const featuredClass = isFeatured ? 'player-card--featured' : '';
+
+          playersHtml += `
+            <div class="player-card ${featuredClass} reveal-fade visible revealed"
                  data-category="${p.category || 'pbnc'}"
-                 data-delay="${(idx + 1) * 100}"
+                 data-featured="${isFeatured ? 'true' : 'false'}"
+                 data-delay="${idx * 60}"
                  data-player="${p.id}"
                  data-name="${p.name}"
                  data-realname="${p.realname || ''}"
@@ -432,24 +401,23 @@ function syncCmsData() {
                  role="button"
                  aria-label="Lihat profil ${p.name}">
               <div class="player-img-wrap">
-                <img src="${p.img}" alt="${p.name}" loading="lazy" width="300" height="400" onerror="this.src='assets/player2.jpg'" />
+                <img src="${p.img}" alt="${p.name}" loading="lazy" width="300" height="400" onerror="this.src='assets/player-captain.jpg'" />
                 <div class="player-num">${p.num || '00'}</div>
-                <div class="player-status"><span class="dot ${dotClass}"></span> ${getCategoryBadge(p.category)}</div>
+                <div class="player-status"><span class="dot ${dotClass}"></span> ${badgeText}</div>
                 <div class="player-hover-action">
                   <span>VIEW DOSSIER <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17l9.2-9.2M17 17V8H8"/></svg></span>
                 </div>
               </div>
               <div class="player-info">
-                <span class="player-role ${p.category === 'ba' ? 'text-gold' : ''}">${p.role}</span>
+                <span class="player-role ${isFeatured || p.category === 'ba' ? 'text-gold' : ''}">${p.role}</span>
                 <div class="player-name">${p.name}</div>
                 <div class="player-realname">${p.realname || ''}</div>
               </div>
             </div>
           `;
         });
-        sideHtml += `</div>`;
 
-        playersGrid.innerHTML = featuredHtml + sideHtml;
+        playersGrid.innerHTML = playersHtml;
 
         ensureLineupReadMoreElement();
         bindPlayerCardClickEvents();
@@ -1290,86 +1258,45 @@ function applyRosterFilter(filter) {
     btn.classList.toggle('active', btn.dataset.filter === currentRosterFilter);
   });
 
-  const featuredCard = document.querySelector('.player-card--featured');
-  const sideCards    = document.querySelectorAll('.players-grid-side .player-card');
-  const sideWrapper  = document.querySelector('.players-grid-side');
-  const playersGrid  = document.querySelector('.players-grid');
+  const allCards = document.querySelectorAll('.players-grid .player-card');
+  const playersGrid = document.querySelector('.players-grid');
   const readMoreWrap = document.getElementById('lineupReadMoreWrap');
   const readMoreBtn  = document.getElementById('lineupReadMoreBtn');
 
   // 2. Determine which cards match category filter
-  const featuredMatch = !featuredCard ? false :
-    currentRosterFilter === 'all' || (featuredCard.dataset.category || '').trim().toLowerCase() === currentRosterFilter.toLowerCase();
-
-  const matchingSide = [];
-  sideCards.forEach((card) => {
+  const matchingCards = [];
+  allCards.forEach((card) => {
     const cat = (card.dataset.category || '').trim().toLowerCase();
     const match = currentRosterFilter === 'all' || cat === currentRosterFilter.toLowerCase();
-    if (match) matchingSide.push(card);
-  });
-
-  // 3. Show / hide featured card
-  if (featuredCard) {
-    if (featuredMatch) {
-      featuredCard.style.display = '';
-      featuredCard.classList.remove('hidden');
-      featuredCard.classList.add('visible', 'revealed');
+    if (match) {
+      matchingCards.push(card);
     } else {
-      featuredCard.style.display = 'none';
-      featuredCard.classList.add('hidden');
-    }
-  }
-
-  // 4. If featured is hidden but side cards match, promote first side card to featured slot
-  const shouldPromote = !featuredMatch && matchingSide.length > 0;
-  let promotedCard = null;
-  if (shouldPromote) {
-    promotedCard = matchingSide[0];
-  }
-
-  // Remove any previously promoted cards
-  document.querySelectorAll('.player-card--promoted').forEach((c) => {
-    c.classList.remove('player-card--promoted');
-  });
-
-  if (promotedCard) {
-    promotedCard.classList.add('player-card--promoted');
-    promotedCard.style.display = '';
-    promotedCard.classList.remove('hidden');
-    promotedCard.classList.add('visible', 'revealed');
-  }
-
-  // 5. Manage side cards display + Read More limit
-  const sideCardsToConsider = shouldPromote ? matchingSide.slice(1) : matchingSide;
-  const totalMatchingSide = sideCardsToConsider.length;
-  const maxInitial = MAX_SIDE_ROSTER_COLLAPSED; // 4 cards
-
-  // First hide all side cards
-  sideCards.forEach((card) => {
-    if (card !== promotedCard) {
       card.style.display = 'none';
       card.classList.add('hidden');
+      card.classList.remove('visible', 'revealed');
     }
   });
 
-  // Show matching cards up to maxInitial or all if expanded
-  sideCardsToConsider.forEach((card, idx) => {
+  // 3. Limit cards if not expanded
+  const maxInitial = MAX_SIDE_ROSTER_COLLAPSED; // 4 cards
+  const totalMatching = matchingCards.length;
+
+  matchingCards.forEach((card, idx) => {
     if (isRosterExpanded || idx < maxInitial) {
       card.style.display = '';
       card.classList.remove('hidden');
       card.classList.add('visible', 'revealed');
+    } else {
+      card.style.display = 'none';
+      card.classList.add('hidden');
+      card.classList.remove('visible', 'revealed');
     }
   });
 
-  // 6. Show/hide side wrapper
-  if (sideWrapper) {
-    sideWrapper.style.display = matchingSide.length > 0 ? '' : 'none';
-  }
-
-  // 7. Manage Read More Button state & text
+  // 4. Manage Read More Button state & text
   if (readMoreWrap && readMoreBtn) {
-    if (totalMatchingSide > maxInitial) {
-      readMoreWrap.style.display = 'block';
+    if (totalMatching > maxInitial) {
+      readMoreWrap.style.display = 'flex';
       if (isRosterExpanded) {
         readMoreBtn.classList.add('is-expanded');
         readMoreBtn.innerHTML = `
@@ -1378,7 +1305,7 @@ function applyRosterFilter(filter) {
         `;
       } else {
         readMoreBtn.classList.remove('is-expanded');
-        const remaining = totalMatchingSide - maxInitial;
+        const remaining = totalMatching - maxInitial;
         readMoreBtn.innerHTML = `
           <span>READ MORE ROSTER (+${remaining} UNIT)</span>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
@@ -1389,15 +1316,16 @@ function applyRosterFilter(filter) {
     }
   }
 
-  // 8. If NO cards match at all, show empty message
-  const noMatch = !featuredMatch && matchingSide.length === 0;
+  // 5. If NO cards match at all, show empty message
   let emptyEl = playersGrid ? playersGrid.querySelector('.no-filter-match') : null;
-  if (noMatch && playersGrid && !emptyEl) {
-    emptyEl = document.createElement('div');
-    emptyEl.className = 'no-filter-match';
-    emptyEl.textContent = 'Tidak ada pemain di kategori ini.';
-    playersGrid.appendChild(emptyEl);
-  } else if (!noMatch && emptyEl) {
+  if (totalMatching === 0 && playersGrid) {
+    if (!emptyEl) {
+      emptyEl = document.createElement('div');
+      emptyEl.className = 'no-filter-match';
+      emptyEl.textContent = 'Tidak ada pemain di kategori ini.';
+      playersGrid.appendChild(emptyEl);
+    }
+  } else if (emptyEl) {
     emptyEl.remove();
   }
 }
