@@ -240,6 +240,129 @@ function initDashboard() {
   }
 }
 
+// ============================================================
+// PAGINATION CONTROLLER & ENGINE (9 PANELS)
+// ============================================================
+const adminPagination = {
+  categories:  { page: 1, perPage: 5 },
+  roles:       { page: 1, perPage: 5 },
+  lineup:      { page: 1, perPage: 6 },
+  schedule:    { page: 1, perPage: 5 },
+  partnership: { page: 1, perPage: 5 },
+  records:     { page: 1, perPage: 5 },
+  gallery:     { page: 1, perPage: 6 },
+  videos:      { page: 1, perPage: 5 },
+  users:       { page: 1, perPage: 5 }
+};
+
+function renderTablePagination(containerId, totalItems, panelKey, onRenderCallback) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  const state = adminPagination[panelKey];
+  if (!state) return;
+
+  if (totalItems <= 0) {
+    container.innerHTML = '';
+    return;
+  }
+
+  const totalPages = Math.max(1, Math.ceil(totalItems / state.perPage));
+  if (state.page > totalPages) state.page = totalPages;
+  if (state.page < 1) state.page = 1;
+
+  const startIdx = (state.page - 1) * state.perPage + 1;
+  const endIdx = Math.min(state.page * state.perPage, totalItems);
+
+  // Dynamic pagination numbers with ellipsis
+  let pageNumbersHtml = '';
+  const maxVisible = 5;
+  let startP = Math.max(1, state.page - Math.floor(maxVisible / 2));
+  let endP = Math.min(totalPages, startP + maxVisible - 1);
+  if (endP - startP + 1 < maxVisible) {
+    startP = Math.max(1, endP - maxVisible + 1);
+  }
+
+  if (startP > 1) {
+    pageNumbersHtml += `<button type="button" class="admin-page-btn" data-page="1">1</button>`;
+    if (startP > 2) {
+      pageNumbersHtml += `<span class="admin-page-ellipsis">…</span>`;
+    }
+  }
+
+  for (let p = startP; p <= endP; p++) {
+    const isActive = p === state.page;
+    pageNumbersHtml += `
+      <button type="button" class="admin-page-btn ${isActive ? 'active' : ''}" data-page="${p}" ${isActive ? 'aria-current="page"' : ''}>
+        ${p}
+      </button>
+    `;
+  }
+
+  if (endP < totalPages) {
+    if (endP < totalPages - 1) {
+      pageNumbersHtml += `<span class="admin-page-ellipsis">…</span>`;
+    }
+    pageNumbersHtml += `<button type="button" class="admin-page-btn" data-page="${totalPages}">${totalPages}</button>`;
+  }
+
+  const perPageOptions = [5, 10, 20, 50];
+  const perPageSelectHtml = perPageOptions.map(opt => 
+    `<option value="${opt}" ${state.perPage === opt ? 'selected' : ''}>${opt}</option>`
+  ).join('');
+
+  container.innerHTML = `
+    <div class="admin-pagination-wrap">
+      <div class="admin-pagination-left">
+        <div class="admin-pagination-info">
+          Menampilkan <strong>${startIdx}–${endIdx}</strong> dari <strong>${totalItems}</strong> data
+        </div>
+        <div class="admin-pagination-perpage-wrap">
+          <span>Baris:</span>
+          <select class="admin-pagination-perpage-select" aria-label="Jumlah baris per halaman">
+            ${perPageSelectHtml}
+          </select>
+        </div>
+      </div>
+      <div class="admin-pagination-controls">
+        <button type="button" class="admin-page-btn admin-page-nav-btn" data-page="${state.page - 1}" ${state.page <= 1 ? 'disabled' : ''} aria-label="Halaman Sebelumnya">
+          ◀ Prev
+        </button>
+        ${pageNumbersHtml}
+        <button type="button" class="admin-page-btn admin-page-nav-btn" data-page="${state.page + 1}" ${state.page >= totalPages ? 'disabled' : ''} aria-label="Halaman Selanjutnya">
+          Next ▶
+        </button>
+      </div>
+    </div>
+  `;
+
+  // Bind click on page buttons
+  const btns = container.querySelectorAll('.admin-page-btn[data-page]');
+  btns.forEach(btn => {
+    btn.onclick = (e) => {
+      e.preventDefault();
+      const target = Number(btn.dataset.page);
+      if (!isNaN(target) && target >= 1 && target <= totalPages && target !== state.page) {
+        state.page = target;
+        onRenderCallback();
+      }
+    };
+  });
+
+  // Bind change on perPage select
+  const select = container.querySelector('.admin-pagination-perpage-select');
+  if (select) {
+    select.onchange = (e) => {
+      const val = Number(e.target.value);
+      if (!isNaN(val) && val > 0) {
+        state.perPage = val;
+        state.page = 1;
+        onRenderCallback();
+      }
+    };
+  }
+}
+
 function renderAllPanels() {
   if (!db) db = getMothraData();
   renderBrandingForm();
@@ -993,8 +1116,18 @@ function renderCategoriesTable() {
     ];
   }
 
+  const rawList = db.categories || [];
+  const total = rawList.length;
+  const state = adminPagination.categories;
+  const totalPages = Math.max(1, Math.ceil(total / state.perPage));
+  if (state.page > totalPages) state.page = totalPages;
+  if (state.page < 1) state.page = 1;
+
+  const startIdx = (state.page - 1) * state.perPage;
+  const paginatedList = rawList.slice(startIdx, startIdx + state.perPage);
+
   categoriesTableBody.innerHTML = '';
-  db.categories.forEach((cat) => {
+  paginatedList.forEach((cat) => {
     const playerCount = (db.lineup || []).filter((p) => p.category === cat.id).length;
     const tr = document.createElement('tr');
     tr.innerHTML = `
@@ -1012,6 +1145,7 @@ function renderCategoriesTable() {
     `;
     categoriesTableBody.appendChild(tr);
   });
+  renderTablePagination('categoriesPagination', total, 'categories', renderCategoriesTable);
   renderOverviewStats();
   populateCategoryDropdown();
 }
@@ -1121,8 +1255,18 @@ function renderRolesTable() {
 
   ensureDefaultRoles();
 
+  const rawList = db.roles || [];
+  const total = rawList.length;
+  const state = adminPagination.roles;
+  const totalPages = Math.max(1, Math.ceil(total / state.perPage));
+  if (state.page > totalPages) state.page = totalPages;
+  if (state.page < 1) state.page = 1;
+
+  const startIdx = (state.page - 1) * state.perPage;
+  const paginatedList = rawList.slice(startIdx, startIdx + state.perPage);
+
   tbody.innerHTML = '';
-  db.roles.forEach((r) => {
+  paginatedList.forEach((r) => {
     const playerCount = (db.lineup || []).filter((p) => p.role && (p.role.toLowerCase() === r.label.toLowerCase() || p.role.toLowerCase() === r.id.toLowerCase())).length;
     const tr = document.createElement('tr');
     tr.innerHTML = `
@@ -1139,6 +1283,7 @@ function renderRolesTable() {
     `;
     tbody.appendChild(tr);
   });
+  renderTablePagination('rolesPagination', total, 'roles', renderRolesTable);
   populateRoleDropdown();
 }
 
@@ -1265,8 +1410,19 @@ let editingPlayerId = null;
 
 function renderLineupTable() {
   if (!lineupTableBody) return;
+
+  const rawList = db.lineup || [];
+  const total = rawList.length;
+  const state = adminPagination.lineup;
+  const totalPages = Math.max(1, Math.ceil(total / state.perPage));
+  if (state.page > totalPages) state.page = totalPages;
+  if (state.page < 1) state.page = 1;
+
+  const startIdx = (state.page - 1) * state.perPage;
+  const paginatedList = rawList.slice(startIdx, startIdx + state.perPage);
+
   lineupTableBody.innerHTML = '';
-  (db.lineup || []).forEach((p) => {
+  paginatedList.forEach((p) => {
     const catObj = (db.categories || []).find((c) => c.id === p.category);
     const catLabel = catObj ? catObj.badge || catObj.label : (p.category || 'PBNC').toUpperCase();
 
@@ -1288,6 +1444,7 @@ function renderLineupTable() {
     `;
     lineupTableBody.appendChild(tr);
   });
+  renderTablePagination('lineupPagination', total, 'lineup', renderLineupTable);
   renderOverviewStats();
 }
 
@@ -1402,7 +1559,16 @@ function renderScheduleTable() {
   scheduleTableBody.innerHTML = '';
 
   const matches = (db.schedule && db.schedule.matches) ? db.schedule.matches : [];
-  matches.forEach((m) => {
+  const total = matches.length;
+  const state = adminPagination.schedule;
+  const totalPages = Math.max(1, Math.ceil(total / state.perPage));
+  if (state.page > totalPages) state.page = totalPages;
+  if (state.page < 1) state.page = 1;
+
+  const startIdx = (state.page - 1) * state.perPage;
+  const paginatedList = matches.slice(startIdx, startIdx + state.perPage);
+
+  paginatedList.forEach((m) => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><strong>${m.stage}</strong></td>
@@ -1420,6 +1586,7 @@ function renderScheduleTable() {
     `;
     scheduleTableBody.appendChild(tr);
   });
+  renderTablePagination('schedulePagination', total, 'schedule', renderScheduleTable);
   renderOverviewStats();
 }
 
@@ -1499,7 +1666,7 @@ scheduleForm.addEventListener('submit', (e) => {
 });
 
 /* ============================================================
-   05 / THE ALLIANCE (PARTNERSHIP CRUD)
+   05 / THE ALLIANCE (PARTNERSHIP SYSTEM)
    ============================================================ */
 const partnershipTableBody = document.getElementById('partnershipTableBody');
 const partnershipModal = document.getElementById('partnershipCrudModal');
@@ -1507,32 +1674,29 @@ const partnershipForm = document.getElementById('partnershipCrudForm');
 let editingPartnershipId = null;
 let currentPartnerFilter = 'all';
 
-function getPartnerTypeBadge(type) {
-  switch (type) {
+function getPartnerTypeBadge(t) {
+  switch (t) {
     case 'scrim':
-      return '<span class="badge-type badge-type-scrim">⚔️ Scrim</span>';
+      return '<span class="badge-partner badge-partner-scrim">⚔️ SPARRING / SCRIM</span>';
     case 'sponsor':
-      return '<span class="badge-type badge-type-sponsor">🤝 Sponsorship</span>';
+      return '<span class="badge-partner badge-partner-sponsor">🤝 SPONSORSHIP</span>';
     case 'design':
-      return '<span class="badge-type badge-type-design">🎨 Design</span>';
+      return '<span class="badge-partner badge-partner-design">🎨 DESIGN PARTNER</span>';
     case 'ba':
-      return '<span class="badge-type badge-type-ba">👑 Brand Ambassador</span>';
+      return '<span class="badge-partner badge-partner-ba">👑 BRAND AMBASSADOR</span>';
     default:
-      return `<span class="badge-type badge-type-scrim">${type}</span>`;
+      return `<span class="badge-partner badge-partner-scrim">${(t || 'PARTNER').toUpperCase()}</span>`;
   }
 }
 
-function getPartnerStatusBadge(status) {
-  const s = (status || 'ACTIVE').toUpperCase();
+function getPartnerStatusBadge(s) {
   switch (s) {
     case 'ACTIVE':
-      return '<span class="badge-status-active">✅ ACTIVE</span>';
+      return '<span class="badge-status-active">● AKTIF</span>';
     case 'PENDING':
-      return '<span class="badge-status-pending">⏳ PENDING</span>';
-    case 'NEGOTIATION':
-      return '<span class="badge-status-negotiation">🔄 NEGOTIATION</span>';
-    case 'CLOSED':
-      return '<span class="badge-status-closed">❌ CLOSED</span>';
+      return '<span class="badge-status-pending">◐ REVIEW</span>';
+    case 'COMPLETED':
+      return '<span class="badge-status-completed">✓ SELESAI</span>';
     default:
       return `<span class="badge-status-active">${s}</span>`;
   }
@@ -1568,6 +1732,15 @@ function renderPartnershipsTable(filterType = currentPartnerFilter) {
     ? db.partnerships
     : db.partnerships.filter((p) => p.type === filterType);
 
+  const total = items.length;
+  const state = adminPagination.partnership;
+  const totalPages = Math.max(1, Math.ceil(total / state.perPage));
+  if (state.page > totalPages) state.page = totalPages;
+  if (state.page < 1) state.page = 1;
+
+  const startIdx = (state.page - 1) * state.perPage;
+  const paginatedList = items.slice(startIdx, startIdx + state.perPage);
+
   partnershipTableBody.innerHTML = '';
 
   if (items.length === 0) {
@@ -1578,10 +1751,11 @@ function renderPartnershipsTable(filterType = currentPartnerFilter) {
         </td>
       </tr>
     `;
+    renderTablePagination('partnershipPagination', 0, 'partnership', () => renderPartnershipsTable(currentPartnerFilter));
     return;
   }
 
-  items.forEach((p) => {
+  paginatedList.forEach((p) => {
     const logoSrc = p.logo || 'assets/mothra-logo.png';
     const cleanPhone = (p.contact || '').replace(/[^0-9]/g, '');
     const isPhone = cleanPhone.length >= 9;
@@ -1614,6 +1788,7 @@ function renderPartnershipsTable(filterType = currentPartnerFilter) {
     `;
     partnershipTableBody.appendChild(tr);
   });
+  renderTablePagination('partnershipPagination', total, 'partnership', () => renderPartnershipsTable(currentPartnerFilter));
 }
 
 // Partnership Filter Tabs
@@ -1622,6 +1797,7 @@ document.querySelectorAll('.pa-tab').forEach((tab) => {
     document.querySelectorAll('.pa-tab').forEach((t) => t.classList.remove('active'));
     tab.classList.add('active');
     currentPartnerFilter = tab.dataset.type || 'all';
+    adminPagination.partnership.page = 1;
     renderPartnershipsTable(currentPartnerFilter);
   });
 });
@@ -1717,8 +1893,17 @@ const recordForm = document.getElementById('recordCrudForm');
 let editingRecordId = null;
 
 function renderRecordsTable() {
+  const rawList = db.records || [];
+  const total = rawList.length;
+  const state = adminPagination.records;
+  const totalPages = Math.max(1, Math.ceil(total / state.perPage));
+  if (state.page > totalPages) state.page = totalPages;
+  if (state.page < 1) state.page = 1;
+  const startIdx = (state.page - 1) * state.perPage;
+  const paginatedList = rawList.slice(startIdx, startIdx + state.perPage);
+
   recordsTableBody.innerHTML = '';
-  (db.records || []).forEach((r) => {
+  paginatedList.forEach((r) => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><strong style="color:var(--red-bright);font-size:1.1rem;">${r.year}</strong></td>
@@ -1733,6 +1918,7 @@ function renderRecordsTable() {
     `;
     recordsTableBody.appendChild(tr);
   });
+  renderTablePagination('recordsPagination', total, 'records', renderRecordsTable);
   renderOverviewStats();
 }
 
@@ -1796,8 +1982,17 @@ const galleryForm = document.getElementById('galleryCrudForm');
 let editingGalleryId = null;
 
 function renderGalleryTable() {
+  const rawList = db.gallery || [];
+  const total = rawList.length;
+  const state = adminPagination.gallery;
+  const totalPages = Math.max(1, Math.ceil(total / state.perPage));
+  if (state.page > totalPages) state.page = totalPages;
+  if (state.page < 1) state.page = 1;
+  const startIdx = (state.page - 1) * state.perPage;
+  const paginatedList = rawList.slice(startIdx, startIdx + state.perPage);
+
   galleryTableBody.innerHTML = '';
-  (db.gallery || []).forEach((g) => {
+  paginatedList.forEach((g) => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><img src="${g.img}" alt="${g.title}" class="table-thumb" style="width:70px;height:45px;" onerror="this.src='assets/pb-bg-squad.jpg'" /></td>
@@ -1812,6 +2007,7 @@ function renderGalleryTable() {
     `;
     galleryTableBody.appendChild(tr);
   });
+  renderTablePagination('galleryPagination', total, 'gallery', renderGalleryTable);
   renderOverviewStats();
 }
 
@@ -2447,16 +2643,25 @@ function renderUsersTable() {
 
   if (users.length === 0) {
     tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--gray-light);padding:2rem;">Belum ada data pengguna. Klik <strong>+ TAMBAH ADMIN BARU</strong> untuk memulai.</td></tr>`;
+    renderTablePagination('usersPagination', 0, 'users', renderUsersTable);
     return;
   }
 
-  tbody.innerHTML = users.map((u, i) => {
+  const usersState = adminPagination.users;
+  const usersTotalPages = Math.max(1, Math.ceil(users.length / usersState.perPage));
+  if (usersState.page > usersTotalPages) usersState.page = usersTotalPages;
+  if (usersState.page < 1) usersState.page = 1;
+  const usersStartIdx = (usersState.page - 1) * usersState.perPage;
+  const paginatedUsers = users.slice(usersStartIdx, usersStartIdx + usersState.perPage);
+
+  tbody.innerHTML = paginatedUsers.map((u, i) => {
+    const globalIdx = usersStartIdx + i;
     const roleColor = ROLE_COLORS[u.role] || '#94A3B8';
     const statusColor = u.status === 'ACTIVE' ? '#10B981' : '#EF4444';
     const statusBg = u.status === 'ACTIVE' ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)';
     return `
       <tr>
-        <td style="color:var(--gray-light);font-size:0.8rem;">${i + 1}</td>
+        <td style="color:var(--gray-light);font-size:0.8rem;">${globalIdx + 1}</td>
         <td>
           <div style="display:flex;align-items:center;gap:0.6rem;">
             <div style="width:32px;height:32px;border-radius:50%;background:rgba(212,175,55,0.15);border:1px solid var(--gold-dark);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:900;font-size:0.85rem;color:var(--gold);flex-shrink:0;">${(u.name || '?').charAt(0).toUpperCase()}</div>
@@ -2483,6 +2688,7 @@ function renderUsersTable() {
       </tr>
     `;
   }).join('');
+  renderTablePagination('usersPagination', users.length, 'users', renderUsersTable);
 }
 
 function openUserModal(mode, userId) {
@@ -2711,10 +2917,19 @@ function renderVideosTable() {
 
   if (filtered.length === 0) {
     tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--gray-light);padding:2rem;">Tidak ada data video yang cocok. Klik <strong>＋ TAMBAH VIDEO BARU</strong> untuk menambah.</td></tr>`;
+    renderTablePagination('videosPagination', 0, 'videos', renderVideosTable);
     return;
   }
 
-  tbody.innerHTML = filtered.map((v, i) => {
+  const totalFiltered = filtered.length;
+  const vidState = adminPagination.videos;
+  const vidTotalPages = Math.max(1, Math.ceil(totalFiltered / vidState.perPage));
+  if (vidState.page > vidTotalPages) vidState.page = vidTotalPages;
+  if (vidState.page < 1) vidState.page = 1;
+  const vidStartIdx = (vidState.page - 1) * vidState.perPage;
+  const paginatedVideos = filtered.slice(vidStartIdx, vidStartIdx + vidState.perPage);
+
+  tbody.innerHTML = paginatedVideos.map((v, i) => {
     const isLive = v.category === 'live';
     const catBadge = isLive 
       ? '<span style="background:rgba(239,68,68,0.15);color:#FCA5A5;border:1px solid #EF4444;padding:0.2rem 0.55rem;border-radius:3px;font-family:var(--font-mono);font-size:0.7rem;font-weight:700;">🔴 LIVE</span>' 
@@ -2757,6 +2972,7 @@ function renderVideosTable() {
       </tr>
     `;
   }).join('');
+  renderTablePagination('videosPagination', totalFiltered, 'videos', renderVideosTable);
 }
 
 function closeVideoModal() {
@@ -2959,6 +3175,7 @@ const videoCatFilter = document.getElementById('videoCategoryFilter');
 if (videoCatFilter) {
   videoCatFilter.addEventListener('change', (e) => {
     videoCategoryFilterVal = e.target.value;
+    adminPagination.videos.page = 1;
     renderVideosTable();
   });
 }
@@ -2966,6 +3183,7 @@ const videoSearchEl = document.getElementById('videoSearchInput');
 if (videoSearchEl) {
   videoSearchEl.addEventListener('input', (e) => {
     videoSearchQuery = e.target.value.trim();
+    adminPagination.videos.page = 1;
     renderVideosTable();
   });
 }
