@@ -435,6 +435,8 @@ setupImageUploader('pImgFile', 'pImg', 'pImgPreviewTag', 800, 1000);
 setupImageUploader('gImgFile', 'gImg', 'gImgPreviewTag', 1200, 800);
 setupImageUploader('paLogoFile', 'paLogo', 'paLogoPreviewTag', 600, 600);
 setupImageUploader('bannerImgFile', 'bannerImgUrl', 'bannerPreviewImg', 1200, 700);
+setupImageUploader('adsPromoImgFile', 'adsPromoImgUrl', 'adsPromoImgPreview', 1200, 500);
+setupImageUploader('sponsorLogoFile', 'sponsorLogo', 'sponsorLogoPreview', 400, 400);
 
 /* ============================================================
    00 / BRANDING, HERO & CLAN IDENTITY CMS
@@ -565,14 +567,10 @@ function renderOverviewStats() {
 /* ============================================================
    ADS & SPONSOR MANAGEMENT CMS
    ============================================================ */
-// Set up image uploader for ads
-setupImageUploader('adsPromoImgFile', 'adsPromoImgUrl', 'adsPromoImgPreview', 1200, 500);
-setupImageUploader('sponsorLogoFile', 'sponsorLogo', 'sponsorLogoPreview', 300, 300);
-
 let _editingSponsorId = null;
 
 function renderAdsPanel() {
-  if (!db.ads) return;
+  if (!db || !db.ads) return;
   const ads = db.ads;
 
   // Top Bar form
@@ -620,7 +618,7 @@ function renderAdsPanel() {
 function renderSponsorsTable() {
   const tbody = document.getElementById('adsSponsorsTableBody');
   if (!tbody) return;
-  const sponsors = (db.ads && db.ads.sponsorTicker && Array.isArray(db.ads.sponsorTicker.sponsors))
+  const sponsors = (db && db.ads && db.ads.sponsorTicker && Array.isArray(db.ads.sponsorTicker.sponsors))
     ? db.ads.sponsorTicker.sponsors : [];
   if (sponsors.length === 0) {
     tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:1rem;">Belum ada sponsor. Klik "+ TAMBAH SPONSOR" untuk menambahkan.</td></tr>`;
@@ -632,8 +630,8 @@ function renderSponsorsTable() {
       <td style="font-weight:700;">${sp.name || '-'}</td>
       <td style="color:var(--gold);font-size:0.82rem;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${sp.link || '-'}</td>
       <td>
-        <button onclick="editSponsor(${idx})" class="action-btn" title="Edit">✏️</button>
-        <button onclick="deleteSponsor(${idx})" class="action-btn action-btn--danger" title="Hapus">🗑️</button>
+        <button type="button" onclick="window.editSponsor(${idx})" class="action-btn" title="Edit Sponsor">✏️</button>
+        <button type="button" onclick="window.deleteSponsor(${idx})" class="action-btn action-btn--danger" title="Hapus Sponsor">🗑️</button>
       </td>
     </tr>
   `).join('');
@@ -641,35 +639,75 @@ function renderSponsorsTable() {
 
 window.openAddSponsorModal = function() {
   _editingSponsorId = null;
-  document.getElementById('sponsorModalTitle').textContent = 'TAMBAH SPONSOR BARU';
-  document.getElementById('sponsorName').value = '';
-  document.getElementById('sponsorLink').value = '';
-  document.getElementById('sponsorLogo').value = '';
-  document.getElementById('sponsorLogoPreview').src = 'assets/mothra-logo.png';
-  document.getElementById('sponsorSaveBtn').textContent = '💾 TAMBAH SPONSOR ➔';
+  const title = document.getElementById('sponsorModalTitle');
+  if (title) title.textContent = 'TAMBAH SPONSOR BARU';
+  const nameInp = document.getElementById('sponsorName');
+  if (nameInp) nameInp.value = '';
+  const linkInp = document.getElementById('sponsorLink');
+  if (linkInp) linkInp.value = '';
+  const logoInp = document.getElementById('sponsorLogo');
+  if (logoInp) logoInp.value = '';
+  const logoPrev = document.getElementById('sponsorLogoPreview');
+  if (logoPrev) logoPrev.src = 'assets/mothra-logo.png';
+  const saveBtn = document.getElementById('sponsorSaveBtn');
+  if (saveBtn) saveBtn.textContent = '💾 TAMBAH SPONSOR ➔';
+
   const modal = document.getElementById('sponsorCrudModal');
-  if (modal) modal.classList.add('open');
+  if (modal) {
+    modal.style.removeProperty('display');
+    modal.classList.add('open');
+  }
 };
 
 window.editSponsor = function(idx) {
-  if (!db.ads || !db.ads.sponsorTicker) return;
+  if (!db || !db.ads || !db.ads.sponsorTicker || !Array.isArray(db.ads.sponsorTicker.sponsors)) return;
   const sp = db.ads.sponsorTicker.sponsors[idx];
   if (!sp) return;
   _editingSponsorId = idx;
-  document.getElementById('sponsorModalTitle').textContent = `EDIT SPONSOR: ${sp.name || ''}`;
-  document.getElementById('sponsorName').value = sp.name || '';
-  document.getElementById('sponsorLink').value = sp.link || '';
-  document.getElementById('sponsorLogo').value = sp.logo || '';
-  document.getElementById('sponsorLogoPreview').src = sp.logo || 'assets/mothra-logo.png';
-  document.getElementById('sponsorSaveBtn').textContent = '💾 SIMPAN PERUBAHAN ➔';
+  const title = document.getElementById('sponsorModalTitle');
+  if (title) title.textContent = `EDIT SPONSOR: ${sp.name || ''}`;
+  const nameInp = document.getElementById('sponsorName');
+  if (nameInp) nameInp.value = sp.name || '';
+  const linkInp = document.getElementById('sponsorLink');
+  if (linkInp) linkInp.value = sp.link || '';
+  const logoInp = document.getElementById('sponsorLogo');
+  if (logoInp) logoInp.value = sp.logo || '';
+  const logoPrev = document.getElementById('sponsorLogoPreview');
+  if (logoPrev) logoPrev.src = sp.logo || 'assets/mothra-logo.png';
+  const saveBtn = document.getElementById('sponsorSaveBtn');
+  if (saveBtn) saveBtn.textContent = '💾 SIMPAN PERUBAHAN ➔';
+
   const modal = document.getElementById('sponsorCrudModal');
-  if (modal) modal.classList.add('open');
+  if (modal) {
+    modal.style.removeProperty('display');
+    modal.classList.add('open');
+  }
 };
 
 window.closeSponsorModal = function() {
   const modal = document.getElementById('sponsorCrudModal');
-  if (modal) modal.classList.remove('open');
+  if (modal) {
+    modal.classList.remove('open');
+  }
 };
+
+window.deleteSponsor = function(idx) {
+  if (!confirm('Hapus sponsor ini dari Sponsor Ticker?')) return;
+  if (!db || !db.ads || !db.ads.sponsorTicker || !Array.isArray(db.ads.sponsorTicker.sponsors)) return;
+  db.ads.sponsorTicker.sponsors.splice(idx, 1);
+  saveMothraData(db);
+  renderSponsorsTable();
+  showToast('Sponsor berhasil dihapus.');
+};
+
+// Direct button listener for + TAMBAH SPONSOR
+const addSponsorBtn = document.getElementById('openAddSponsorBtn');
+if (addSponsorBtn) {
+  addSponsorBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    window.openAddSponsorModal();
+  });
+}
 
 // Auto close on backdrop click
 const sponsorModalEl = document.getElementById('sponsorCrudModal');
@@ -679,15 +717,6 @@ if (sponsorModalEl) {
       window.closeSponsorModal();
     }
   });
-}
-
-function deleteSponsor(idx) {
-  if (!confirm('Hapus sponsor ini?')) return;
-  if (!db.ads || !db.ads.sponsorTicker || !Array.isArray(db.ads.sponsorTicker.sponsors)) return;
-  db.ads.sponsorTicker.sponsors.splice(idx, 1);
-  saveMothraData(db);
-  renderSponsorsTable();
-  showToast('Sponsor berhasil dihapus.');
 }
 
 // Sponsor Form Submit (Add/Edit)
@@ -700,33 +729,33 @@ if (sponsorCrudForm) {
     if (!Array.isArray(db.ads.sponsorTicker.sponsors)) db.ads.sponsorTicker.sponsors = [];
 
     const sp = {
-      id: _editingSponsorId !== null ? (db.ads.sponsorTicker.sponsors[_editingSponsorId].id || `sp_${Date.now()}`) : `sp_${Date.now()}`,
+      id: _editingSponsorId !== null && db.ads.sponsorTicker.sponsors[_editingSponsorId] ? (db.ads.sponsorTicker.sponsors[_editingSponsorId].id || `sp_${Date.now()}`) : `sp_${Date.now()}`,
       name: (document.getElementById('sponsorName').value || '').trim(),
       link: (document.getElementById('sponsorLink').value || '').trim(),
       logo: (document.getElementById('sponsorLogo').value || 'assets/mothra-logo.png').trim()
     };
 
-    if (_editingSponsorId !== null) {
+    if (_editingSponsorId !== null && db.ads.sponsorTicker.sponsors[_editingSponsorId]) {
       db.ads.sponsorTicker.sponsors[_editingSponsorId] = sp;
     } else {
       db.ads.sponsorTicker.sponsors.push(sp);
     }
     saveMothraData(db);
     renderSponsorsTable();
-    closeSponsorModal();
+    window.closeSponsorModal();
     showToast(_editingSponsorId !== null ? '✅ Sponsor berhasil diperbarui!' : '✅ Sponsor baru berhasil ditambahkan!');
   });
 }
 
 // Save Ads Ticker config + toggle
-function saveAdsTicker() {
+window.saveAdsTicker = function() {
   if (!db.ads) db.ads = { topBanner: {}, sponsorTicker: { sponsors: [] }, promoBanner: {} };
   if (!db.ads.sponsorTicker) db.ads.sponsorTicker = { sponsors: [] };
   db.ads.sponsorTicker.enabled = !!(document.getElementById('adsTickerEnabled') && document.getElementById('adsTickerEnabled').checked);
   db.ads.sponsorTicker.label = (document.getElementById('adsTickerLabel') ? document.getElementById('adsTickerLabel').value : 'OFFICIAL CLAN SPONSORS & TACTICAL PARTNERS').trim();
   saveMothraData(db);
   showToast('🎽 Sponsor Ticker berhasil disimpan ke Supabase!');
-}
+};
 
 // Top Bar Form Submit
 const adsTopForm = document.getElementById('adsTopForm');
