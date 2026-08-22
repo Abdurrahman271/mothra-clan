@@ -429,17 +429,20 @@ setupImageUploader('bLogoFile', 'bLogo', 'bLogoPreviewTag', 600, 600);
 setupImageUploader('bLogoIconFile', 'bLogoIcon', 'bLogoIconPreviewTag', 400, 400);
 setupImageUploader('bLoginLogoFile', 'bLoginLogo', 'bLoginLogoPreviewTag', 600, 600);
 setupImageUploader('bLoadingLogoFile', 'bLoadingLogo', 'bLoadingLogoPreviewTag', 600, 600);
+setupImageUploader('bHeroBgFile', 'bHeroBg', 'bHeroBgPreviewTag', 1920, 1080);
 setupImageUploader('pImgFile', 'pImg', 'pImgPreviewTag', 800, 1000);
 setupImageUploader('gImgFile', 'gImg', 'gImgPreviewTag', 1200, 800);
 setupImageUploader('paLogoFile', 'paLogo', 'paLogoPreviewTag', 600, 600);
 setupImageUploader('bannerImgFile', 'bannerImgUrl', 'bannerPreviewImg', 1200, 700);
 
 /* ============================================================
-   00 / BRANDING & CLAN IDENTITY CMS
+   00 / BRANDING, HERO & CLAN IDENTITY CMS
    ============================================================ */
 const brandingForm = document.getElementById('brandingForm');
 function renderBrandingForm() {
   const b = db.branding || {};
+  const h = db.hero || {};
+
   const nameEl = document.getElementById('bClanName');
   if (nameEl) nameEl.value = b.clanName || 'MOTHRA';
   const fullNameEl = document.getElementById('bClanFullName');
@@ -466,6 +469,22 @@ function renderBrandingForm() {
   if (loginLogoEl) loginLogoEl.value = b.loginLogo || b.logo || 'assets/mothra-logo.png';
   const loginLogoPrev = document.getElementById('bLoginLogoPreviewTag');
   if (loginLogoPrev) loginLogoPrev.src = b.loginLogo || b.logo || 'assets/mothra-logo.png';
+
+  // Hero Section Header Customization
+  const heroBadgeEl = document.getElementById('bHeroBadge');
+  if (heroBadgeEl) heroBadgeEl.value = h.badge || 'POINT BLANK INDONESIA • OFFICIAL SQUAD';
+  const heroTitle1El = document.getElementById('bHeroTitle1');
+  if (heroTitle1El) heroTitle1El.value = h.titleLine1 !== undefined ? h.titleLine1 : 'THE';
+  const heroTitleHlEl = document.getElementById('bHeroTitleHighlight');
+  if (heroTitleHlEl) heroTitleHlEl.value = h.titleHighlight !== undefined ? h.titleHighlight : 'HUNT';
+  const heroTitle2El = document.getElementById('bHeroTitle2');
+  if (heroTitle2El) heroTitle2El.value = h.titleLine2 !== undefined ? h.titleLine2 : 'NEVER STOPS.';
+  const heroSubEl = document.getElementById('bHeroSubtitle');
+  if (heroSubEl) heroSubEl.value = h.subtitle || 'Jakarta, Indonesia — Est. 2020 — Unit MTH-08';
+  const heroBgEl = document.getElementById('bHeroBg');
+  if (heroBgEl) heroBgEl.value = h.bgImage || 'assets/hero-bg.jpg';
+  const heroBgPrev = document.getElementById('bHeroBgPreviewTag');
+  if (heroBgPrev) heroBgPrev.src = h.bgImage || 'assets/hero-bg.jpg';
 
   // Loading Screen Branding
   const loadNameEl = document.getElementById('bLoadingName');
@@ -513,9 +532,19 @@ if (brandingForm) {
       loadingText: (document.getElementById('bLoadingText').value || 'ESTABLISHING TACTICAL UPLINK...').trim(),
       loadingLogo: (document.getElementById('bLoadingLogo').value || document.getElementById('bLogo').value || 'assets/mothra-logo.png').trim()
     };
+
+    db.hero = {
+      badge: (document.getElementById('bHeroBadge').value || 'POINT BLANK INDONESIA • OFFICIAL SQUAD').trim(),
+      titleLine1: (document.getElementById('bHeroTitle1').value || 'THE').trim(),
+      titleHighlight: (document.getElementById('bHeroTitleHighlight').value || 'HUNT').trim(),
+      titleLine2: (document.getElementById('bHeroTitle2').value || 'NEVER STOPS.').trim(),
+      subtitle: (document.getElementById('bHeroSubtitle').value || 'Jakarta, Indonesia — Est. 2020 — Unit MTH-08').trim(),
+      bgImage: (document.getElementById('bHeroBg').value || 'assets/hero-bg.jpg').trim()
+    };
+
     saveMothraData(db);
     renderBrandingForm();
-    showToast('🛡️ Identitas, Logo & Form Login berhasil disimpan dan disinkronkan ke Supabase!');
+    showToast('🛡️ Identitas, Hero Section & Preloader berhasil disimpan ke Supabase!');
   });
 }
 
@@ -533,39 +562,86 @@ function renderOverviewStats() {
 }
 
 /* ============================================================
-   01 / THE DOSSIER (ABOUT) CMS
+   01 / THE DOSSIER (ABOUT & 3 CORE VALUES) CMS
    ============================================================ */
 const dossierForm = document.getElementById('dossierForm');
 function renderDossierForm() {
   const d = db.dossier || {};
-  document.getElementById('dosTagline').value = d.tagline || '';
+  const vals = Array.isArray(d.values) && d.values.length >= 3 ? d.values : [
+    { title: "PLAY SMART", description: "Eksekusi strategi sebelum ego pribadi." },
+    { title: "PLAY AS ONE", description: "Kekuatan kami adalah kesatuan dan komunikasi." },
+    { title: "STAY SHARP", description: "Refleks tajam, mental tenang dalam clutch moment." }
+  ];
+
+  // Narasi Utama
+  document.getElementById('dosTagline').value = d.tagline || 'DISIPLIN. LOYALITAS. INSTING.';
   document.getElementById('dosDesc').value = d.description || '';
-  document.getElementById('dosCity').value = d.city || 'JAKARTA\nINDONESIA';
+
+  // Kartu Markas Tactical Division (Tengah)
+  const divLabelEl = document.getElementById('dosDivisionLabel');
+  if (divLabelEl) divLabelEl.value = d.divisionLabel || 'TACTICAL DIVISION';
+  document.getElementById('dosCity').value = d.city || 'JAKARTA - INDONESIA';
   document.getElementById('dosUnit').value = d.unit || 'UNIT / MTH-08';
   document.getElementById('dosStatus').value = d.status || 'ACTIVE ROSTER';
+
+  // 3 Nilai Taktis Core Values (Kanan)
+  const v1Title = document.getElementById('dosVal1Title');
+  const v1Desc = document.getElementById('dosVal1Desc');
+  const v2Title = document.getElementById('dosVal2Title');
+  const v2Desc = document.getElementById('dosVal2Desc');
+  const v3Title = document.getElementById('dosVal3Title');
+  const v3Desc = document.getElementById('dosVal3Desc');
+
+  if (v1Title) v1Title.value = vals[0].title || 'PLAY SMART';
+  if (v1Desc) v1Desc.value = vals[0].description || 'Eksekusi strategi sebelum ego pribadi.';
+  if (v2Title) v2Title.value = vals[1].title || 'PLAY AS ONE';
+  if (v2Desc) v2Desc.value = vals[1].description || 'Kekuatan kami adalah kesatuan dan komunikasi.';
+  if (v3Title) v3Title.value = vals[2].title || 'STAY SHARP';
+  if (v3Desc) v3Desc.value = vals[2].description || 'Refleks tajam, mental tenang dalam clutch moment.';
+
+  // Statistik Performa
   document.getElementById('dosWinrate').value = d.winrate || 95;
   document.getElementById('dosMembers').value = (d.activeMembers !== undefined && d.activeMembers !== null) ? d.activeMembers : 250;
   document.getElementById('dosTournaments').value = (d.tournamentsWon !== undefined && d.tournamentsWon !== null) ? d.tournamentsWon : 3;
 }
 
-dossierForm.addEventListener('submit', (e) => {
-  e.preventDefault();
-  db.dossier = {
-    tagline: document.getElementById('dosTagline').value.trim(),
-    description: document.getElementById('dosDesc').value.trim(),
-    city: document.getElementById('dosCity').value.trim(),
-    unit: document.getElementById('dosUnit').value.trim(),
-    status: document.getElementById('dosStatus').value.trim(),
-    winrate: parseInt(document.getElementById('dosWinrate').value, 10) || 95,
-    activeMembers: Math.min(250, Math.max(1, parseInt(document.getElementById('dosMembers').value, 10) || 250)),
-    tournamentsWon: (function(){ const v = parseInt(document.getElementById('dosTournaments').value, 10); return isNaN(v) ? 0 : Math.max(0, v); })()
-  };
-  // Set flag agar Supabase fetch tidak overwrite nilai baru (termasuk 0) sebelum upsert selesai
-  _justSaved = true;
-  setTimeout(() => { _justSaved = false; }, 5000); // Reset setelah 5 detik
-  saveMothraData(db);
-  showToast('The Dossier & Statistik Clan berhasil diperbarui!');
-});
+if (dossierForm) {
+  dossierForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    db.dossier = {
+      tagline: document.getElementById('dosTagline').value.trim(),
+      description: document.getElementById('dosDesc').value.trim(),
+      divisionLabel: (document.getElementById('dosDivisionLabel') ? document.getElementById('dosDivisionLabel').value : 'TACTICAL DIVISION').trim(),
+      city: document.getElementById('dosCity').value.trim(),
+      unit: document.getElementById('dosUnit').value.trim(),
+      status: document.getElementById('dosStatus').value.trim(),
+      values: [
+        {
+          title: (document.getElementById('dosVal1Title') ? document.getElementById('dosVal1Title').value : 'PLAY SMART').trim(),
+          description: (document.getElementById('dosVal1Desc') ? document.getElementById('dosVal1Desc').value : 'Eksekusi strategi sebelum ego pribadi.').trim()
+        },
+        {
+          title: (document.getElementById('dosVal2Title') ? document.getElementById('dosVal2Title').value : 'PLAY AS ONE').trim(),
+          description: (document.getElementById('dosVal2Desc') ? document.getElementById('dosVal2Desc').value : 'Kekuatan kami adalah kesatuan dan komunikasi.').trim()
+        },
+        {
+          title: (document.getElementById('dosVal3Title') ? document.getElementById('dosVal3Title').value : 'STAY SHARP').trim(),
+          description: (document.getElementById('dosVal3Desc') ? document.getElementById('dosVal3Desc').value : 'Refleks tajam, mental tenang dalam clutch moment.').trim()
+        }
+      ],
+      winrate: parseInt(document.getElementById('dosWinrate').value, 10) || 95,
+      activeMembers: Math.min(250, Math.max(1, parseInt(document.getElementById('dosMembers').value, 10) || 250)),
+      tournamentsWon: (function(){ const v = parseInt(document.getElementById('dosTournaments').value, 10); return isNaN(v) ? 0 : Math.max(0, v); })()
+    };
+
+    // Set flag agar Supabase fetch tidak overwrite nilai baru (termasuk 0) sebelum upsert selesai
+    _justSaved = true;
+    setTimeout(() => { _justSaved = false; }, 5000); // Reset setelah 5 detik
+    saveMothraData(db);
+    renderDossierForm();
+    showToast('📖 The Dossier, Kartu Markas & 3 Nilai Taktis berhasil disimpan ke Supabase!');
+  });
+}
 
 /* ============================================================
    02 / KATEGORI TURNAMEN CRUD (PBNC, PBSC, PBIC, PBLC, dll)

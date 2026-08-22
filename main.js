@@ -123,14 +123,88 @@ function syncCmsData() {
     }
   }
 
-  // 1. Sync Dossier & Hero stats (Winrate, Member Aktif up to 250, Tournaments)
+  // 0B. Sync Hero Section (Badge, Title with Gold Highlight, Subtitle, and Banner Image)
+  if (db.hero) {
+    const h = db.hero;
+
+    // Hero Badge
+    const heroBadgeSpan = document.querySelector('.hero-badge span:not(.badge-dot)');
+    if (heroBadgeSpan && h.badge) {
+      heroBadgeSpan.textContent = h.badge;
+    }
+
+    // Hero Title (Line 1, Highlighted Word, Line 2)
+    const heroTitle = document.querySelector('.hero-title');
+    if (heroTitle) {
+      const l1 = h.titleLine1 !== undefined ? h.titleLine1 : 'THE';
+      const lh = h.titleHighlight !== undefined ? h.titleHighlight : 'HUNT';
+      const l2 = h.titleLine2 !== undefined ? h.titleLine2 : 'NEVER STOPS.';
+      heroTitle.innerHTML = `
+        <span class="hero-title-line">${l1}</span>
+        <span class="hero-title-line hero-title-line--gold">${lh}</span>
+        <span class="hero-title-line">${l2}</span>
+      `;
+    }
+
+    // Hero Subtitle
+    const heroSubtitle = document.querySelector('.hero-subtitle');
+    if (heroSubtitle && h.subtitle) {
+      heroSubtitle.textContent = h.subtitle;
+    }
+
+    // Hero Background Image
+    const heroBgImg = document.getElementById('heroBgImg');
+    if (heroBgImg && h.bgImage) {
+      heroBgImg.style.backgroundImage = `url('${h.bgImage}')`;
+    }
+  }
+
+  // 1. Sync Dossier (Slogan, Deskripsi, Origin Card, 3 Core Values & Hero Stats)
   if (db.dossier) {
     const d = db.dossier;
-    const aboutDesc = document.querySelector('.about-desc');
-    const originCity = document.querySelector('.origin-city');
 
+    // Slogan / Tagline Dossier
+    const aboutHeading = document.getElementById('aboutHeading');
+    if (aboutHeading && d.tagline) {
+      const parts = d.tagline.split(/[.\n]/).map(s => s.trim()).filter(Boolean);
+      if (parts.length === 3) {
+        aboutHeading.innerHTML = `${parts[0]}.<br /><span class="text-gold">${parts[1]}.</span><br />${parts[2]}.`;
+      } else {
+        aboutHeading.innerHTML = d.tagline.replace(/\n/g, '<br />');
+      }
+    }
+
+    // Deskripsi Filosofi Tim
+    const aboutDesc = document.querySelector('.about-desc');
     if (d.description && aboutDesc) aboutDesc.textContent = d.description;
-    if (d.city && originCity) originCity.innerHTML = d.city.replace(/\n/g, '<br/>');
+
+    // Kartu Markas Tactical Division (Tengah)
+    const originLabel = document.querySelector('.origin-label');
+    if (originLabel && d.divisionLabel) originLabel.textContent = d.divisionLabel;
+
+    const originCity = document.querySelector('.origin-city');
+    if (d.city && originCity) originCity.innerHTML = d.city.replace(/[\n-]/g, '<br />');
+
+    const originMeta = document.querySelector('.origin-meta');
+    if (originMeta) {
+      const unitText = d.unit || 'UNIT / MTH-08';
+      const statusText = d.status || 'ACTIVE ROSTER';
+      originMeta.innerHTML = `<span>${unitText}</span><span>STATUS / <span class="status-active">${statusText}</span></span>`;
+    }
+
+    // 3 Kartu Nilai Taktis (Core Values / Kanan)
+    const valueItems = document.querySelectorAll('.about-values .value-item');
+    if (valueItems.length >= 3 && Array.isArray(d.values) && d.values.length >= 3) {
+      d.values.slice(0, 3).forEach((val, idx) => {
+        const item = valueItems[idx];
+        if (item) {
+          const titleEl = item.querySelector('.value-title');
+          const descEl = item.querySelector('.value-desc');
+          if (titleEl && val.title) titleEl.textContent = val.title;
+          if (descEl && val.description) descEl.textContent = val.description;
+        }
+      });
+    }
 
     // Stats Synchronizer (Hero & Dossier) — keyed by label to avoid index dependency
     const allStatNums = document.querySelectorAll('.hero-stat-num');

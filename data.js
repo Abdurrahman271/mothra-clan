@@ -19,6 +19,14 @@ const DEFAULT_MOTHRA_DATA = {
     "loadingName": "MOTHRA",
     "loadingText": "ESTABLISHING TACTICAL UPLINK..."
   },
+  "hero": {
+    "badge": "POINT BLANK INDONESIA • OFFICIAL SQUAD",
+    "titleLine1": "THE",
+    "titleHighlight": "HUNT",
+    "titleLine2": "NEVER STOPS.",
+    "subtitle": "Jakarta, Indonesia — Est. 2020 — Unit MTH-08",
+    "bgImage": "assets/hero-bg.jpg"
+  },
   "users": [
     {
       "id": "u_1",
@@ -44,12 +52,27 @@ const DEFAULT_MOTHRA_DATA = {
   "dossier": {
     "tagline": "DISIPLIN. LOYALITAS. INSTING.",
     "description": "MOTHRA lahir dari satu keyakinan: tim yang hebat dibangun dari pejuang yang mau tumbuh bersama. Sejak 2020, kami menjadikan setiap match sebagai ruang belajar dan setiap panggung turnamen sebagai arena pembuktian mental juara.",
-    "city": "JAKARTA\nINDONESIA",
+    "divisionLabel": "TACTICAL DIVISION",
+    "city": "JAKARTA - INDONESIA",
     "unit": "UNIT / MTH-08",
     "status": "ACTIVE ROSTER",
     "winrate": 95,
     "activeMembers": 250,
-    "tournamentsWon": 3
+    "tournamentsWon": 3,
+    "values": [
+      {
+        "title": "PLAY SMART",
+        "description": "Eksekusi strategi sebelum ego pribadi."
+      },
+      {
+        "title": "PLAY AS ONE",
+        "description": "Kekuatan kami adalah kesatuan dan komunikasi."
+      },
+      {
+        "title": "STAY SHARP",
+        "description": "Refleks tajam, mental tenang dalam clutch moment."
+      }
+    ]
   },
   "categories": [
     {
@@ -601,8 +624,20 @@ function sanitizeMothraData(data) {
   if (!data.gallery || !Array.isArray(data.gallery)) {
     data.gallery = JSON.parse(JSON.stringify(DEFAULT_MOTHRA_DATA.gallery));
   }
+  if (!data.hero) {
+    data.hero = JSON.parse(JSON.stringify(DEFAULT_MOTHRA_DATA.hero));
+  }
   if (!data.dossier) {
     data.dossier = JSON.parse(JSON.stringify(DEFAULT_MOTHRA_DATA.dossier));
+  }
+  if (data.dossier) {
+    if (!data.dossier.divisionLabel) data.dossier.divisionLabel = DEFAULT_MOTHRA_DATA.dossier.divisionLabel;
+    if (!data.dossier.city) data.dossier.city = DEFAULT_MOTHRA_DATA.dossier.city;
+    if (!data.dossier.unit) data.dossier.unit = DEFAULT_MOTHRA_DATA.dossier.unit;
+    if (!data.dossier.status) data.dossier.status = DEFAULT_MOTHRA_DATA.dossier.status;
+    if (!data.dossier.values || !Array.isArray(data.dossier.values) || data.dossier.values.length === 0) {
+      data.dossier.values = JSON.parse(JSON.stringify(DEFAULT_MOTHRA_DATA.dossier.values));
+    }
   }
   if (!data.branding) {
     data.branding = JSON.parse(JSON.stringify(DEFAULT_MOTHRA_DATA.branding));

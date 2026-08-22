@@ -7,13 +7,12 @@
 
   <!-- Security: Block Direct .html Extension Access -->
   <script>
-    (function blockDirectAdminIndexHtmlAccess() {
+    (function blockDirectAdminHtmlAccess() {
       var p = window.location.pathname.toLowerCase();
-      if (p.endsWith('.html') || p.endsWith('.htm') || p.indexOf('index.html') !== -1) {
+      if (p.endsWith('.html') || p.endsWith('.htm') || p.indexOf('admin.html') !== -1) {
         document.title = "404 Not Found — MOTHRA CLAN";
         var rawUrl = window.location.href;
-        var rootUrl = rawUrl.substring(0, rawUrl.toLowerCase().indexOf('admin/index.html'));
-        if (!rootUrl) rootUrl = rawUrl.substring(0, rawUrl.toLowerCase().indexOf('index.html'));
+        var rootUrl = rawUrl.substring(0, rawUrl.toLowerCase().indexOf('admin.html'));
         if (!rootUrl.endsWith('/')) rootUrl += '/';
         var adminUrl = rootUrl + 'admin';
 
@@ -288,6 +287,59 @@
               </div>
             </div>
 
+            <!-- Kustomisasi Hero Section (Header Utama Website) -->
+            <div style="margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--border-dim);">
+              <h4 style="font-family:var(--font-display);font-size:1.25rem;color:var(--gold);margin-bottom:0.35rem;letter-spacing:0.05em;">
+                🎯 KUSTOMISASI HERO SECTION (HEADER UTAMA WEBSITE)
+              </h4>
+              <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:1.25rem;">
+                Atur badge atas, judul utama (dengan efek highlight emas), keterangan subtitle, dan upload foto background banner hero.
+              </p>
+
+              <div class="form-group">
+                <label class="form-label">BADGE HERO (ATAS) *</label>
+                <input type="text" id="bHeroBadge" class="form-input" placeholder="POINT BLANK INDONESIA • OFFICIAL SQUAD" required />
+                <small style="color:var(--gray-light);font-size:0.75rem;">Label kotak emas di atas judul hero.</small>
+              </div>
+
+              <div style="display:grid;grid-template-columns:1fr 1fr 1.5fr;gap:1rem;">
+                <div class="form-group">
+                  <label class="form-label">JUDUL BARIS 1 *</label>
+                  <input type="text" id="bHeroTitle1" class="form-input" placeholder="THE" required />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">KATA HIGHLIGHT (EMAS) *</label>
+                  <input type="text" id="bHeroTitleHighlight" class="form-input" placeholder="HUNT" required />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">JUDUL BARIS 2 *</label>
+                  <input type="text" id="bHeroTitle2" class="form-input" placeholder="NEVER STOPS." required />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">SUBTITLE / KETERANGAN HERO *</label>
+                <input type="text" id="bHeroSubtitle" class="form-input" placeholder="Jakarta, Indonesia — Est. 2020 — Unit MTH-08" required />
+              </div>
+
+              <!-- Upload Background Hero Banner -->
+              <div class="upload-section" style="margin-top:0.75rem;">
+                <div class="form-group">
+                  <label class="form-label">📁 UPLOAD GAMBAR BACKGROUND HERO BANNER DARI KOMPUTER (LOCAL PC)</label>
+                  <input type="file" id="bHeroBgFile" accept="image/*" class="file-upload-input" />
+                </div>
+                <div style="display:flex;gap:1rem;align-items:center;">
+                  <div class="form-group" style="flex:1;margin-bottom:0;">
+                    <label class="form-label">ATAU URL / PATH GAMBAR BACKGROUND HERO</label>
+                    <input type="text" id="bHeroBg" class="form-input" placeholder="assets/hero-bg.jpg" />
+                  </div>
+                  <div class="upload-preview-box" style="width:110px;height:65px;background:rgba(0,0,0,0.5);">
+                    <img id="bHeroBgPreviewTag" src="assets/hero-bg.jpg" alt="Preview Hero Background" style="width:100%;height:100%;object-fit:cover;border-radius:4px;" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <!-- Kustomisasi Loading Screen (Preloader) -->
             <div style="margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--border-dim);">
               <h4 style="font-family:var(--font-display);font-size:1.25rem;color:var(--gold);margin-bottom:0.35rem;letter-spacing:0.05em;">
@@ -329,7 +381,7 @@
             </div>
 
             <button type="submit" class="btn-add" style="margin-top:1.75rem;font-size:1.05rem;padding:0.8rem 2rem;background:#10B981;border-color:#10B981;">
-              💾 SIMPAN PERUBAHAN NAMA, LOGO &amp; LOADING SCREEN &rarr;
+              💾 SIMPAN PERUBAHAN IDENTITAS, HERO &amp; LOADING SCREEN &rarr;
             </button>
           </form>
         </div>
@@ -370,14 +422,14 @@
             Selamat datang di Command Center Clan MOTHRA. Seluruh foto yang di-upload dari PC lokal dan perubahan data di panel ini <strong style="color:var(--gold);">langsung otomatis terupdate secara realtime di website utama</strong>:
           </p>
           <ul style="color:var(--text-muted);font-size:0.9rem;margin:1rem 0 0 1.5rem;line-height:1.8;">
+            <li><strong>Identitas &amp; Hero</strong>: Mengubah nama clan, logo, loading screen, dan seluruh teks serta foto banner Hero Section.</li>
+            <li><strong>The Dossier</strong>: Mengubah slogan, visi misi, kartu markas Tactical Division, 3 Nilai Taktis (Core Values), dan statistik winrate clan.</li>
             <li><strong>Kategori Turnamen</strong>: Tambah / Edit / Hapus Kategori Turnamen (PBNC, PBSC, PBIC, PBLC Ladies, dll) yang langsung tersinkronisasi di filter website dan form Lineup.</li>
-            <li><strong>The Lineup</strong>: Kelola pemain berdasarkan Kategori Turnamen dan upload foto pemain langsung dari PC lokal.</li>
-            <li><strong>The Dossier</strong>: Mengubah slogan, visi misi, kota markas, dan statistik winrate clan.</li>
+            <li><strong>The Lineup &amp; Roles</strong>: Kelola pemain berdasarkan Kategori &amp; Role Tactical serta upload foto pemain langsung dari PC lokal.</li>
             <li><strong>Match Schedule</strong>: Upload poster jadwal turnamen dari PC lokal dan kelola jadwal match.</li>
             <li><strong>The Alliance</strong>: Manajemen data sparring, sponsorship brand, design partner, dan Brand Ambassador lengkap dengan foto/logo.</li>
             <li><strong>The Record</strong>: Tambah atau perbarui riwayat juara turnamen Point Blank.</li>
             <li><strong>Field Notes</strong>: Update galeri foto dokumentasi arena pertandingan dan bootcamp langsung dari PC lokal.</li>
-            <li><strong>Backup</strong>: Download file cadangan JSON untuk disimpan atau dipindahkan ke perangkat lain.</li>
           </ul>
         </div>
       </section>
@@ -385,46 +437,118 @@
       <!-- 2. THE DOSSIER PANEL -->
       <section class="admin-panel" id="panelDossier">
         <div class="card-box">
-          <h3 class="card-box-title">EDIT THE DOSSIER (ABOUT &amp; STATS)</h3>
+          <h3 class="card-box-title">📖 EDIT THE DOSSIER (ABOUT, MARKAS &amp; 3 NILAI TAKTIS)</h3>
+          <p style="color:var(--text-muted);font-size:0.85rem;margin-top:0.25rem;">
+            Kelola narasi filosofi tim, detail kartu markas Tactical Division, 3 kartu nilai taktis (Core Values), dan statistik performa turnamen clan.
+          </p>
+
           <form id="dossierForm" style="margin-top:1.5rem;">
             <div class="form-group">
-              <label class="form-label">TAGLINE / SLOGAN UTAMA</label>
-              <input type="text" id="dosTagline" class="form-input" required />
+              <label class="form-label">TAGLINE / SLOGAN UTAMA (3 KATA DENGAN TITIK) *</label>
+              <input type="text" id="dosTagline" class="form-input" placeholder="DISIPLIN. LOYALITAS. INSTING." required />
+              <small style="color:var(--gray-light);font-size:0.75rem;">Kata kedua otomatis diwarnai highlight emas di website.</small>
             </div>
             <div class="form-group">
-              <label class="form-label">DESKRIPSI &amp; FILOSOFI CLAN</label>
-              <textarea id="dosDesc" class="form-input" rows="4" required></textarea>
+              <label class="form-label">DESKRIPSI &amp; FILOSOFI CLAN *</label>
+              <textarea id="dosDesc" class="form-input" rows="4" placeholder="Ceritakan filosofi dan sejarah perjuangan tim..." required></textarea>
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;">
-              <div class="form-group">
-                <label class="form-label">KOTA ASAL</label>
-                <input type="text" id="dosCity" class="form-input" required />
+
+            <!-- KARTU MARKAS TACTICAL DIVISION (TENGAH) -->
+            <div style="margin-top:1.75rem;padding:1.25rem;background:rgba(212,175,55,0.05);border:1px solid rgba(212,175,55,0.25);border-radius:6px;">
+              <h4 style="font-family:var(--font-display);font-size:1.15rem;color:var(--gold);margin-bottom:0.75rem;letter-spacing:0.05em;">
+                📍 KARTU MARKAS (TACTICAL DIVISION CARD)
+              </h4>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                <div class="form-group">
+                  <label class="form-label">LABEL DIVISI MARKAS *</label>
+                  <input type="text" id="dosDivisionLabel" class="form-input" placeholder="TACTICAL DIVISION" required />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">KOTA ASAL / DOMISILI *</label>
+                  <input type="text" id="dosCity" class="form-input" placeholder="JAKARTA - INDONESIA" required />
+                </div>
               </div>
-              <div class="form-group">
-                <label class="form-label">KODE UNIT TACTICAL</label>
-                <input type="text" id="dosUnit" class="form-input" required />
-              </div>
-              <div class="form-group">
-                <label class="form-label">STATUS ROSTER</label>
-                <input type="text" id="dosStatus" class="form-input" required />
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label">KODE UNIT TACTICAL *</label>
+                  <input type="text" id="dosUnit" class="form-input" placeholder="UNIT / MTH-08" required />
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label">STATUS ROSTER *</label>
+                  <input type="text" id="dosStatus" class="form-input" placeholder="ACTIVE ROSTER" required />
+                </div>
               </div>
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-top:0.5rem;">
+
+            <!-- 3 NILAI TAKTIS CLAN (CORE VALUES) -->
+            <div style="margin-top:1.75rem;padding:1.25rem;background:rgba(255,255,255,0.02);border:1px solid var(--border-dim);border-radius:6px;">
+              <h4 style="font-family:var(--font-display);font-size:1.15rem;color:var(--gold);margin-bottom:0.75rem;letter-spacing:0.05em;">
+                🛡️ 3 NILAI TAKTIS UTAMA (CORE VALUES)
+              </h4>
+              
+              <!-- Nilai 1 -->
+              <div style="margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px dashed var(--border-dim);">
+                <div style="display:grid;grid-template-columns:1fr 2fr;gap:1rem;">
+                  <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label">NILAI 1: JUDUL *</label>
+                    <input type="text" id="dosVal1Title" class="form-input" placeholder="PLAY SMART" required />
+                  </div>
+                  <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label">NILAI 1: DESKRIPSI *</label>
+                    <input type="text" id="dosVal1Desc" class="form-input" placeholder="Eksekusi strategi sebelum ego pribadi." required />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Nilai 2 -->
+              <div style="margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px dashed var(--border-dim);">
+                <div style="display:grid;grid-template-columns:1fr 2fr;gap:1rem;">
+                  <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label">NILAI 2: JUDUL *</label>
+                    <input type="text" id="dosVal2Title" class="form-input" placeholder="PLAY AS ONE" required />
+                  </div>
+                  <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label">NILAI 2: DESKRIPSI *</label>
+                    <input type="text" id="dosVal2Desc" class="form-input" placeholder="Kekuatan kami adalah kesatuan dan komunikasi." required />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Nilai 3 -->
+              <div>
+                <div style="display:grid;grid-template-columns:1fr 2fr;gap:1rem;">
+                  <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label">NILAI 3: JUDUL *</label>
+                    <input type="text" id="dosVal3Title" class="form-input" placeholder="STAY SHARP" required />
+                  </div>
+                  <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label">NILAI 3: DESKRIPSI *</label>
+                    <input type="text" id="dosVal3Desc" class="form-input" placeholder="Refleks tajam, mental tenang dalam clutch moment." required />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- STATISTIK PERFORMA -->
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-top:1.75rem;">
               <div class="form-group">
-                <label class="form-label">WIN RATE (%)</label>
+                <label class="form-label">WIN RATE (%) *</label>
                 <input type="number" id="dosWinrate" class="form-input" min="1" max="100" placeholder="95" required />
               </div>
               <div class="form-group">
-                <label class="form-label">MEMBER AKTIF (MAKS 250)</label>
+                <label class="form-label">MEMBER AKTIF (MAKS 250) *</label>
                 <input type="number" id="dosMembers" class="form-input" min="1" max="250" placeholder="250" required />
-                <small style="color:var(--gray-light);font-size:0.75rem;">Maksimal 250 anggota (Kapasitas Clan Point Blank)</small>
+                <small style="color:var(--gray-light);font-size:0.75rem;">Maksimal 250 anggota</small>
               </div>
               <div class="form-group">
-                <label class="form-label">JUARA TURNAMEN (KALI)</label>
+                <label class="form-label">JUARA TURNAMEN (KALI) *</label>
                 <input type="number" id="dosTournaments" class="form-input" min="0" max="99" placeholder="3" required />
+                <small style="color:var(--gray-light);font-size:0.75rem;">Dapat diisi 0</small>
               </div>
             </div>
-            <button type="submit" class="btn-add" style="margin-top:1.5rem;font-size:1.05rem;padding:0.75rem 2rem;">SIMPAN PERUBAHAN DOSSIER &rarr;</button>
+            <button type="submit" class="btn-add" style="margin-top:1.5rem;font-size:1.05rem;padding:0.8rem 2rem;">
+              💾 SIMPAN PERUBAHAN THE DOSSIER &amp; NILAI TAKTIS &rarr;
+            </button>
           </form>
         </div>
       </section>
