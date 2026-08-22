@@ -37,6 +37,13 @@ const DEFAULT_MOTHRA_DATA = {
     "sponsorTicker": {
       "enabled": true,
       "label": "OFFICIAL CLAN SPONSORS & TACTICAL PARTNERS",
+      "logoWidth": 36,
+      "logoHeight": 36,
+      "cardMinWidth": 140,
+      "itemPaddingX": 14,
+      "itemPaddingY": 8,
+      "fontSize": 14,
+      "speed": 24,
       "sponsors": [
         { "id": "sp_1", "name": "Logitech G", "logo": "assets/mothra-logo.png", "link": "https://www.logitechg.com" },
         { "id": "sp_2", "name": "ZOWIE eSports", "logo": "assets/mothra-logo.png", "link": "https://zowie.benq.com" },
@@ -672,6 +679,15 @@ function sanitizeMothraData(data) {
   if (data.ads) {
     if (!data.ads.topBanner) data.ads.topBanner = JSON.parse(JSON.stringify(DEFAULT_MOTHRA_DATA.ads.topBanner));
     if (!data.ads.sponsorTicker) data.ads.sponsorTicker = JSON.parse(JSON.stringify(DEFAULT_MOTHRA_DATA.ads.sponsorTicker));
+    if (data.ads.sponsorTicker) {
+      if (data.ads.sponsorTicker.logoWidth === undefined) data.ads.sponsorTicker.logoWidth = 36;
+      if (data.ads.sponsorTicker.logoHeight === undefined) data.ads.sponsorTicker.logoHeight = 36;
+      if (data.ads.sponsorTicker.cardMinWidth === undefined) data.ads.sponsorTicker.cardMinWidth = 140;
+      if (data.ads.sponsorTicker.itemPaddingX === undefined) data.ads.sponsorTicker.itemPaddingX = 14;
+      if (data.ads.sponsorTicker.itemPaddingY === undefined) data.ads.sponsorTicker.itemPaddingY = 8;
+      if (data.ads.sponsorTicker.fontSize === undefined) data.ads.sponsorTicker.fontSize = 14;
+      if (data.ads.sponsorTicker.speed === undefined) data.ads.sponsorTicker.speed = 24;
+    }
     if (!data.ads.promoBanner) data.ads.promoBanner = JSON.parse(JSON.stringify(DEFAULT_MOTHRA_DATA.ads.promoBanner));
   }
   if (!data.branding) {

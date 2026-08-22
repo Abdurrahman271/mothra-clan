@@ -109,6 +109,16 @@ function syncCmsData() {
       if (ads.sponsorTicker.enabled && Array.isArray(ads.sponsorTicker.sponsors) && ads.sponsorTicker.sponsors.length > 0) {
         if (tickerLabel && ads.sponsorTicker.label) tickerLabel.textContent = ads.sponsorTicker.label;
         if (track) {
+          const logoW = parseInt(ads.sponsorTicker.logoWidth) || 36;
+          const logoH = parseInt(ads.sponsorTicker.logoHeight) || 36;
+          const minW = parseInt(ads.sponsorTicker.cardMinWidth) || 0;
+          const padX = ads.sponsorTicker.itemPaddingX !== undefined ? parseInt(ads.sponsorTicker.itemPaddingX) : 14;
+          const padY = ads.sponsorTicker.itemPaddingY !== undefined ? parseInt(ads.sponsorTicker.itemPaddingY) : 8;
+          const fontSz = parseInt(ads.sponsorTicker.fontSize) || 14;
+          const speed = parseInt(ads.sponsorTicker.speed) || 24;
+
+          track.style.animationDuration = `${speed}s`;
+
           // Render sponsors, doubled for seamless loop
           const items = ads.sponsorTicker.sponsors;
           const renderItem = (sp) => {
@@ -118,7 +128,9 @@ function syncCmsData() {
             a.target = '_blank';
             a.rel = 'noopener sponsored';
             a.title = sp.name || '';
-            a.innerHTML = `<img src="${sp.logo || 'assets/mothra-logo.png'}" alt="${sp.name || 'Sponsor'}" width="36" height="36" /><span>${sp.name || ''}</span>`;
+            a.style.padding = `${padY}px ${padX}px`;
+            if (minW > 0) a.style.minWidth = `${minW}px`;
+            a.innerHTML = `<img src="${sp.logo || 'assets/mothra-logo.png'}" alt="${sp.name || 'Sponsor'}" style="width:${logoW}px;height:${logoH}px;max-width:${logoW}px;max-height:${logoH}px;object-fit:contain;" /><span style="font-size:${fontSz}px;">${sp.name || ''}</span>`;
             return a;
           };
           track.innerHTML = '';

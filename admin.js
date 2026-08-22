@@ -591,6 +591,18 @@ function renderAdsPanel() {
   if (tickerEnabled && ads.sponsorTicker) {
     tickerEnabled.checked = !!ads.sponsorTicker.enabled;
     if (tickerLabel) tickerLabel.value = ads.sponsorTicker.label || 'OFFICIAL CLAN SPONSORS & TACTICAL PARTNERS';
+    // Dimension fields
+    const st = ads.sponsorTicker;
+    const el = (id) => document.getElementById(id);
+    if (el('adsLogoWidth')) el('adsLogoWidth').value = st.logoWidth !== undefined ? st.logoWidth : 36;
+    if (el('adsLogoHeight')) el('adsLogoHeight').value = st.logoHeight !== undefined ? st.logoHeight : 36;
+    if (el('adsCardMinWidth')) el('adsCardMinWidth').value = st.cardMinWidth !== undefined ? st.cardMinWidth : 140;
+    if (el('adsItemPaddingX')) el('adsItemPaddingX').value = st.itemPaddingX !== undefined ? st.itemPaddingX : 14;
+    if (el('adsItemPaddingY')) el('adsItemPaddingY').value = st.itemPaddingY !== undefined ? st.itemPaddingY : 8;
+    if (el('adsFontSize')) el('adsFontSize').value = st.fontSize !== undefined ? st.fontSize : 14;
+    if (el('adsTickerSpeed')) el('adsTickerSpeed').value = st.speed !== undefined ? st.speed : 24;
+    // Init live preview
+    updateSponsorPreviewBadge();
   }
   renderSponsorsTable();
 
@@ -747,14 +759,49 @@ if (sponsorCrudForm) {
   });
 }
 
-// Save Ads Ticker config + toggle
+// Save Ads Ticker config + toggle + dimensions
 window.saveAdsTicker = function() {
   if (!db.ads) db.ads = { topBanner: {}, sponsorTicker: { sponsors: [] }, promoBanner: {} };
   if (!db.ads.sponsorTicker) db.ads.sponsorTicker = { sponsors: [] };
-  db.ads.sponsorTicker.enabled = !!(document.getElementById('adsTickerEnabled') && document.getElementById('adsTickerEnabled').checked);
-  db.ads.sponsorTicker.label = (document.getElementById('adsTickerLabel') ? document.getElementById('adsTickerLabel').value : 'OFFICIAL CLAN SPONSORS & TACTICAL PARTNERS').trim();
+  const el = (id) => document.getElementById(id);
+  db.ads.sponsorTicker.enabled = !!(el('adsTickerEnabled') && el('adsTickerEnabled').checked);
+  db.ads.sponsorTicker.label = (el('adsTickerLabel') ? el('adsTickerLabel').value : 'OFFICIAL CLAN SPONSORS & TACTICAL PARTNERS').trim();
+  // Save dimension / sizing settings
+  const parseVal = (id, def) => { const v = el(id); return v && v.value !== '' ? parseInt(v.value) : def; };
+  db.ads.sponsorTicker.logoWidth     = parseVal('adsLogoWidth',    36);
+  db.ads.sponsorTicker.logoHeight    = parseVal('adsLogoHeight',   36);
+  db.ads.sponsorTicker.cardMinWidth  = parseVal('adsCardMinWidth', 140);
+  db.ads.sponsorTicker.itemPaddingX  = parseVal('adsItemPaddingX', 14);
+  db.ads.sponsorTicker.itemPaddingY  = parseVal('adsItemPaddingY', 8);
+  db.ads.sponsorTicker.fontSize      = parseVal('adsFontSize',     14);
+  db.ads.sponsorTicker.speed         = parseVal('adsTickerSpeed',  24);
   saveMothraData(db);
-  showToast('🎽 Sponsor Ticker berhasil disimpan ke Supabase!');
+  showToast('🎽 Sponsor Ticker & Ukuran Kotak berhasil disimpan ke Supabase!');
+};
+
+// Live Preview Kotak Sponsor
+window.updateSponsorPreviewBadge = function() {
+  const el = (id) => document.getElementById(id);
+  const logoW   = parseInt(el('adsLogoWidth')   ? el('adsLogoWidth').value   : 36) || 36;
+  const logoH   = parseInt(el('adsLogoHeight')  ? el('adsLogoHeight').value  : 36) || 36;
+  const padX    = parseInt(el('adsItemPaddingX') ? el('adsItemPaddingX').value : 14) || 14;
+  const padY    = parseInt(el('adsItemPaddingY') ? el('adsItemPaddingY').value : 8) || 8;
+  const fontSz  = parseInt(el('adsFontSize')    ? el('adsFontSize').value    : 14) || 14;
+  const minW    = parseInt(el('adsCardMinWidth') ? el('adsCardMinWidth').value : 0) || 0;
+  const badge   = el('adsSponsorPreviewBadge');
+  const imgEl   = el('adsSponsorPreviewImg');
+  const textEl  = el('adsSponsorPreviewText');
+  if (!badge) return;
+  badge.style.padding = `${padY}px ${padX}px`;
+  if (minW > 0) badge.style.minWidth = `${minW}px`; else badge.style.minWidth = '';
+  if (imgEl) { imgEl.style.width = `${logoW}px`; imgEl.style.height = `${logoH}px`; imgEl.style.maxWidth = `${logoW}px`; imgEl.style.maxHeight = `${logoH}px`; }
+  if (textEl) textEl.style.fontSize = `${fontSz}px`;
+  // Use first real sponsor logo if available
+  if (db && db.ads && db.ads.sponsorTicker && Array.isArray(db.ads.sponsorTicker.sponsors) && db.ads.sponsorTicker.sponsors.length > 0) {
+    const first = db.ads.sponsorTicker.sponsors[0];
+    if (imgEl && first.logo) imgEl.src = first.logo;
+    if (textEl && first.name) textEl.textContent = first.name;
+  }
 };
 
 // Top Bar Form Submit

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <base href="../">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <base href="../" />
 
   <!-- Security: Block Direct .html Extension Access -->
   <script>
@@ -902,7 +902,68 @@
               <tbody id="adsSponsorsTableBody"></tbody>
             </table>
           </div>
-          <button onclick="saveAdsTicker()" class="btn-add" style="margin-top:1rem;background:#10B981;border-color:#10B981;">💾 SIMPAN SPONSOR TICKER ➔</button>
+          <!-- PENGATURAN UKURAN & DIMENSI KOTAK SPONSOR -->
+          <div style="background:rgba(212,175,55,0.04);border:1px solid rgba(212,175,55,0.22);border-radius:6px;padding:1.25rem;margin-top:1.5rem;">
+            <div style="font-family:var(--font-display);font-size:1.1rem;font-weight:800;color:var(--gold);margin-bottom:0.35rem;display:flex;align-items:center;gap:0.5rem;letter-spacing:0.04em;">
+              <span>📐 PENGATURAN UKURAN PANJANG, LEBAR &amp; TAMPILAN KOTAK SPONSOR</span>
+            </div>
+            <p style="color:var(--text-muted);font-size:0.8rem;margin-bottom:1.25rem;">Sesuaikan ukuran logo, panjang/lebar kotak sponsor, ketebalan padding, ukuran teks, serta kecepatan putaran.</p>
+            
+            <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(190px, 1fr));gap:1rem;">
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">LEBAR LOGO (PX)</label>
+                <input type="number" id="adsLogoWidth" class="form-input" min="15" max="150" placeholder="36" oninput="updateSponsorPreviewBadge()" />
+                <small style="color:var(--gray-light);font-size:0.72rem;">Lebar logo di dalam kotak (default: 36px).</small>
+              </div>
+
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">TINGGI LOGO (PX)</label>
+                <input type="number" id="adsLogoHeight" class="form-input" min="15" max="150" placeholder="36" oninput="updateSponsorPreviewBadge()" />
+                <small style="color:var(--gray-light);font-size:0.72rem;">Tinggi logo di dalam kotak (default: 36px).</small>
+              </div>
+
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">PANJANG MINIMAL KOTAK (PX)</label>
+                <input type="number" id="adsCardMinWidth" class="form-input" min="0" max="400" placeholder="140" oninput="updateSponsorPreviewBadge()" />
+                <small style="color:var(--gray-light);font-size:0.72rem;">Lebar/panjang minimum kotak (0 = auto).</small>
+              </div>
+
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">PADDING SAMPING / PANJANG (PX)</label>
+                <input type="number" id="adsItemPaddingX" class="form-input" min="4" max="60" placeholder="14" oninput="updateSponsorPreviewBadge()" />
+                <small style="color:var(--gray-light);font-size:0.72rem;">Ruang kiri-kanan dalam kotak (default: 14px).</small>
+              </div>
+
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">PADDING ATAS-BAWAH / TINGGI (PX)</label>
+                <input type="number" id="adsItemPaddingY" class="form-input" min="2" max="50" placeholder="8" oninput="updateSponsorPreviewBadge()" />
+                <small style="color:var(--gray-light);font-size:0.72rem;">Tinggi ruang atas-bawah kotak (default: 8px).</small>
+              </div>
+
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">UKURAN FONT NAMA (PX)</label>
+                <input type="number" id="adsFontSize" class="form-input" min="10" max="28" placeholder="14" oninput="updateSponsorPreviewBadge()" />
+                <small style="color:var(--gray-light);font-size:0.72rem;">Ukuran teks nama brand sponsor (default: 14px).</small>
+              </div>
+
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">KECEPATAN TICKER (DETIK)</label>
+                <input type="number" id="adsTickerSpeed" class="form-input" min="5" max="120" placeholder="24" />
+                <small style="color:var(--gray-light);font-size:0.72rem;">Durasi scroll 1 putaran (default: 24 detik).</small>
+              </div>
+            </div>
+
+            <!-- LIVE PREVIEW KOTAK SPONSOR -->
+            <div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid rgba(212,175,55,0.15);">
+              <div style="font-family:var(--font-mono);font-size:0.75rem;color:var(--text-muted);margin-bottom:0.6rem;">LIVE PREVIEW TAMPILAN KOTAK SPONSOR:</div>
+              <div style="display:inline-flex;align-items:center;gap:0.65rem;background:rgba(255,255,255,0.03);border:1px solid rgba(212,175,55,0.3);border-radius:4px;box-shadow:0 0 14px rgba(212,175,55,0.15);transition:all 0.2s;" id="adsSponsorPreviewBadge">
+                <img id="adsSponsorPreviewImg" src="assets/mothra-logo.png" alt="Preview Logo" style="width:36px;height:36px;object-fit:contain;filter:brightness(1.2);" />
+                <span id="adsSponsorPreviewText" style="font-family:var(--font-display);font-size:14px;font-weight:700;color:var(--gold-bright);letter-spacing:0.04em;">Logitech G</span>
+              </div>
+            </div>
+          </div>
+
+          <button onclick="saveAdsTicker()" class="btn-add" style="margin-top:1.25rem;background:#10B981;border-color:#10B981;">💾 SIMPAN SPONSOR TICKER &amp; UKURAN KOTAK ➔</button>
         </div>
 
         <!-- ZONE 3: PROMO BANNER -->
@@ -1629,7 +1690,7 @@
 
   <!-- Supabase Cloud Database & Realtime SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="data.js?v=3.7"></script>
-  <script src="admin.js?v=3.7"></script>
+  <script src="data.js?v=3.8"></script>
+  <script src="admin.js?v=3.8"></script>
 </body>
 </html>
