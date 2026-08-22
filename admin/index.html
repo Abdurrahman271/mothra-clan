@@ -143,6 +143,7 @@
       <button class="mobile-quick-item" data-panel="panelDossier">📜 Dossier</button>
       <button class="mobile-quick-item" data-panel="panelRecord">🏅 Record</button>
       <button class="mobile-quick-item" data-panel="panelGallery">📸 Galeri</button>
+      <button class="mobile-quick-item" data-panel="panelVideos">🎬 Videos</button>
       <button class="mobile-quick-item" data-panel="panelDatabase">☁️ Database</button>
       <button class="mobile-quick-item" data-panel="panelBackup">💾 Backup</button>
       <button class="mobile-quick-item" data-panel="panelUsers">👥 Users</button>
@@ -163,7 +164,7 @@
 
       <nav class="sidebar-nav">
         <div class="sidebar-nav-section">COMMAND CENTER</div>
-        <button class="nav-item active" data-panel="panelOverview">📊 Overview</button>
+        <button class="nav-item active" data-panel="panelBranding">🛡️ Identitas &amp; Logo Clan</button>
         <button class="nav-item" data-panel="panelPartnership">🤝 The Alliance (Partnership)</button>
         <button class="nav-item" data-panel="panelSchedule">📅 Match Schedule</button>
 
@@ -174,9 +175,9 @@
         <button class="nav-item" data-panel="panelDossier">📜 The Dossier</button>
         <button class="nav-item" data-panel="panelRecord">🏅 The Record (Prestasi)</button>
         <button class="nav-item" data-panel="panelGallery">📸 Field Notes (Galeri)</button>
+        <button class="nav-item" data-panel="panelVideos">🎬 Media / Videos</button>
 
         <div class="sidebar-nav-section" style="margin-top:0.75rem;">SYSTEM &amp; CLOUD</div>
-        <button class="nav-item" data-panel="panelBranding">🛡️ Identitas &amp; Logo Clan</button>
         <button class="nav-item" data-panel="panelAds">📢 Iklan &amp; Sponsor</button>
         <button class="nav-item" data-panel="panelDatabase">☁️ Database Online (Supabase)</button>
         <button class="nav-item" data-panel="panelBackup">💾 Backup &amp; Restore</button>
@@ -206,7 +207,7 @@
       </div>
 
       <!-- 0. IDENTITAS & LOGO CLAN PANEL -->
-      <section class="admin-panel" id="panelBranding">
+      <section class="admin-panel active" id="panelBranding">
         <div class="card-box">
           <h3 class="card-box-title">🛡️ IDENTITAS CLAN &amp; KUSTOMISASI LOGO</h3>
           <p style="color:var(--text-muted);font-size:0.9rem;margin-top:0.25rem;">
@@ -389,7 +390,7 @@
       </section>
 
       <!-- 1. OVERVIEW PANEL -->
-      <section class="admin-panel active" id="panelOverview">
+      <section class="admin-panel" id="panelOverview">
         <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:1.25rem;margin-bottom:2.5rem;">
           <div class="card-box" style="margin-bottom:0;text-align:center;">
             <span style="font-family:var(--font-mono);font-size:0.75rem;color:var(--gray-light);">KATEGORI TURNAMEN</span>
@@ -833,6 +834,77 @@
         </div>
       </section>
 
+      <!-- 7. MOTHRA MEDIA (VIDEOS & LIVE STREAMING) PANEL -->
+      <section class="admin-panel" id="panelVideos">
+        <div class="card-box">
+          <h3 class="card-box-title">🎬 KELOLA MOTHRA MEDIA (YOUTUBE VIDEOS &amp; LIVE STREAMING)</h3>
+          <p style="color:var(--text-muted);font-size:0.9rem;margin-top:0.25rem;">
+            Kelola video YouTube &amp; arsip Live Streaming turnamen Point Blank. Tersimpan realtime ke database Supabase (tabel <strong style="color:var(--gold);">clan_videos</strong>) dan mendukung auto-extract Video ID &amp; Thumbnail.
+          </p>
+
+          <div class="user-mgmt-header-actions" style="display:flex;gap:1rem;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:1.5rem 0 1.25rem;">
+            <div style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center;">
+              <button class="btn-add" id="btnAddVideo" style="padding:0.65rem 1.25rem;font-size:0.9rem;">
+                ＋ TAMBAH VIDEO BARU
+              </button>
+              <button class="btn-action-edit" id="btnRefreshVideos" style="padding:0.65rem 1.25rem;font-size:0.9rem;">
+                🔄 REFRESH DATA
+              </button>
+            </div>
+            <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
+              <select id="videoCategoryFilter" class="form-input" style="padding:0.45rem 0.85rem;font-size:0.8rem;width:auto;">
+                <option value="all">Semua Kategori</option>
+                <option value="live">🔴 Live Streaming</option>
+                <option value="gameplay">🎮 Gameplay</option>
+              </select>
+              <input type="text" id="videoSearchInput" class="form-input" placeholder="Cari video..." style="padding:0.45rem 0.85rem;font-size:0.8rem;width:170px;" />
+            </div>
+          </div>
+
+          <!-- Video Stats Grid -->
+          <div class="user-stats-grid" id="videoStatsGrid">
+            <div class="stat-card-item" style="background:rgba(96,165,250,0.08);border-color:rgba(96,165,250,0.25);">
+              <div class="stat-label">TOTAL VIDEO</div>
+              <div class="stat-num" style="color:#60A5FA;" id="statVideoTotal">0</div>
+            </div>
+            <div class="stat-card-item" style="background:rgba(239,68,68,0.08);border-color:rgba(239,68,68,0.25);">
+              <div class="stat-label">LIVE STREAMING</div>
+              <div class="stat-num" style="color:#EF4444;" id="statVideoLive">0</div>
+            </div>
+            <div class="stat-card-item" style="background:rgba(168,85,247,0.08);border-color:rgba(168,85,247,0.25);">
+              <div class="stat-label">GAMEPLAY</div>
+              <div class="stat-num" style="color:#C084FC;" id="statVideoGameplay">0</div>
+            </div>
+            <div class="stat-card-item" style="background:rgba(212,175,55,0.08);border-color:rgba(212,175,55,0.25);">
+              <div class="stat-label">PUBLISHED / LIVE</div>
+              <div class="stat-num" style="color:var(--gold);" id="statVideoPublished">0</div>
+            </div>
+          </div>
+
+          <!-- Videos Table -->
+          <div class="table-responsive">
+            <table class="admin-table" id="videosTable" style="min-width:760px;">
+              <thead>
+                <tr>
+                  <th style="width:40px;">#</th>
+                  <th style="width:90px;">THUMBNAIL</th>
+                  <th>JUDUL &amp; DESKRIPSI</th>
+                  <th>KATEGORI</th>
+                  <th>YOUTUBE ID</th>
+                  <th>STATUS</th>
+                  <th>FEATURED</th>
+                  <th style="width:70px;">URUTAN</th>
+                  <th style="text-align:center;width:150px;">AKSI</th>
+                </tr>
+              </thead>
+              <tbody id="videosTableBody">
+                <tr><td colspan="9" style="text-align:center;color:var(--gray-light);padding:2rem;">Memuat data video...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
       <!-- ADS & SPONSOR MANAGEMENT PANEL -->
       <section class="admin-panel" id="panelAds">
         <div class="card-box">
@@ -1233,7 +1305,7 @@
           <p style="color:var(--text-muted);font-size:0.9rem;margin-top:0.25rem;">
             Kelola semua akun admin yang bisa mengakses panel ini. Data tersimpan <strong style="color:var(--gold);">realtime ke Supabase</strong>. Hanya <strong style="color:var(--gold);">SUPER ADMIN</strong> yang dapat menambah, mengubah, atau menghapus akun operator lain.
           </p>
-          <div style="display:flex;gap:1rem;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:1.5rem 0 1.25rem;">
+          <div class="user-mgmt-header-actions" style="display:flex;gap:1rem;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:1.5rem 0 1.25rem;">
             <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
               <button class="btn-add" id="btnAddUser" style="padding:0.65rem 1.25rem;font-size:0.9rem;">
                 ＋ TAMBAH ADMIN BARU
@@ -1245,32 +1317,32 @@
             <div id="userRoleBadge" style="font-family:var(--font-mono);font-size:0.75rem;color:var(--gold);background:rgba(212,175,55,0.1);border:1px solid var(--gold-dark);padding:0.35rem 0.85rem;border-radius:var(--radius);">SUPER ADMIN ACCESS</div>
           </div>
 
-          <!-- Stats Bar -->
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:1.75rem;">
-            <div style="background:rgba(96,165,250,0.08);border:1px solid rgba(96,165,250,0.25);border-radius:var(--radius);padding:1rem;text-align:center;">
-              <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--gray-light);margin-bottom:0.35rem;">TOTAL USER</div>
-              <div style="font-family:var(--font-display);font-size:2.5rem;font-weight:900;color:#60A5FA;" id="statUserTotal">0</div>
+          <!-- Stats Grid -->
+          <div class="user-stats-grid">
+            <div class="stat-card-item" style="background:rgba(96,165,250,0.08);border-color:rgba(96,165,250,0.25);">
+              <div class="stat-label">TOTAL USER</div>
+              <div class="stat-num" style="color:#60A5FA;" id="statUserTotal">0</div>
             </div>
-            <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:var(--radius);padding:1rem;text-align:center;">
-              <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--gray-light);margin-bottom:0.35rem;">USER AKTIF</div>
-              <div style="font-family:var(--font-display);font-size:2.5rem;font-weight:900;color:#10B981;" id="statUserActive">0</div>
+            <div class="stat-card-item" style="background:rgba(16,185,129,0.08);border-color:rgba(16,185,129,0.25);">
+              <div class="stat-label">USER AKTIF</div>
+              <div class="stat-num" style="color:#10B981;" id="statUserActive">0</div>
             </div>
-            <div style="background:rgba(212,175,55,0.08);border:1px solid rgba(212,175,55,0.25);border-radius:var(--radius);padding:1rem;text-align:center;">
-              <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--gray-light);margin-bottom:0.35rem;">SUPER ADMIN</div>
-              <div style="font-family:var(--font-display);font-size:2.5rem;font-weight:900;color:var(--gold);" id="statUserSuperAdmin">0</div>
+            <div class="stat-card-item" style="background:rgba(212,175,55,0.08);border-color:rgba(212,175,55,0.25);">
+              <div class="stat-label">SUPER ADMIN</div>
+              <div class="stat-num" style="color:var(--gold);" id="statUserSuperAdmin">0</div>
             </div>
-            <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:var(--radius);padding:1rem;text-align:center;">
-              <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--gray-light);margin-bottom:0.35rem;">NONAKTIF</div>
-              <div style="font-family:var(--font-display);font-size:2.5rem;font-weight:900;color:#EF4444;" id="statUserInactive">0</div>
+            <div class="stat-card-item" style="background:rgba(239,68,68,0.08);border-color:rgba(239,68,68,0.25);">
+              <div class="stat-label">NONAKTIF</div>
+              <div class="stat-num" style="color:#EF4444;" id="statUserInactive">0</div>
             </div>
           </div>
 
           <!-- Users Table -->
-          <div class="table-wrap">
-            <table class="admin-table" id="usersTable">
+          <div class="table-responsive">
+            <table class="admin-table" id="usersTable" style="min-width:640px;">
               <thead>
                 <tr>
-                  <th style="width:50px;">#</th>
+                  <th style="width:45px;">#</th>
                   <th>NAMA</th>
                   <th>EMAIL / LOGIN</th>
                   <th>ROLE / HAK AKSES</th>
@@ -1296,7 +1368,7 @@
       <form id="userCrudForm" novalidate>
         <input type="hidden" id="userId" />
 
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="form-row-2">
           <div class="form-group">
             <label class="form-label">NAMA LENGKAP OPERATOR *</label>
             <input type="text" id="userName" class="form-input" placeholder="contoh: Abdurrahman" required />
@@ -1307,7 +1379,7 @@
           </div>
         </div>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="form-row-2">
           <div class="form-group">
             <label class="form-label">PASSWORD *</label>
             <div style="position:relative;">
@@ -1322,7 +1394,7 @@
           </div>
         </div>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="form-row-2">
           <div class="form-group">
             <label class="form-label">ROLE / HAK AKSES *</label>
             <select id="userRole" class="form-input" required>
@@ -1349,8 +1421,106 @@
         <div id="userFormAlert" style="display:none;background:rgba(239,68,68,0.12);border:1px solid #EF4444;color:#FCA5A5;padding:0.65rem 1rem;border-radius:var(--radius);font-size:0.85rem;margin-top:0.5rem;"></div>
 
         <div class="crud-modal-footer">
-          <button type="button" class="btn-cancel" id="userModalCancelBtn">BATAL</button>
-          <button type="submit" class="btn-add" id="userModalSubmitBtn">💾 SIMPAN USER</button>
+          <button type="button" class="btn-cancel" onclick="closeUserModal()">BATAL</button>
+          <button type="submit" class="btn-add" id="userModalSubmitBtn">💾 SIMPAN PENGGUNA</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL: MOTHRA MEDIA (VIDEO CRUD) ===================== -->
+  <div class="crud-modal" id="videoCrudModal">
+    <div class="crud-modal-box" style="max-width:680px;">
+      <h3 class="crud-modal-title" id="videoModalTitle">TAMBAH VIDEO BARU</h3>
+      <div id="videoFormAlert" style="display:none;background:rgba(239,68,68,0.15);border:1px solid #EF4444;color:#FCA5A5;padding:0.75rem 1rem;border-radius:var(--radius);margin-bottom:1rem;font-size:0.85rem;"></div>
+      <form id="videoCrudForm" novalidate>
+        <input type="hidden" id="crudVideoId" />
+
+        <div class="form-group">
+          <label class="form-label">JUDUL VIDEO *</label>
+          <input type="text" id="videoTitle" class="form-input" placeholder="contoh: MOTHRA ESPORTS vs RRQ PB — GRAND FINAL PBNC 2024" required />
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label">SLUG URL (AUTO)</label>
+            <input type="text" id="videoSlug" class="form-input" placeholder="contoh: mothra-vs-rrq-grand-final" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">KATEGORI *</label>
+            <select id="videoCategory" class="form-input" required>
+              <option value="live">🔴 Live Streaming</option>
+              <option value="gameplay">🎮 Gameplay</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">YOUTUBE URL / LINK VIDEO *</label>
+          <input type="url" id="videoUrlInput" class="form-input" placeholder="https://www.youtube.com/watch?v=... atau https://youtu.be/..." required />
+          <small style="color:var(--gray-light);font-size:0.75rem;margin-top:0.35rem;display:block;">
+            Mendukung link YouTube biasa, Shorts, Live, dan YouTu.be. Video ID akan diekstrak otomatis.
+          </small>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label">YOUTUBE VIDEO ID *</label>
+            <div style="display:flex;gap:0.5rem;align-items:center;">
+              <input type="text" id="extractedVideoId" class="form-input" placeholder="Otomatis terisi..." style="font-family:var(--font-mono);font-weight:700;color:var(--gold);" required />
+              <span id="videoIdStatusBadge" style="font-size:0.75rem;padding:0.35rem 0.6rem;border-radius:4px;white-space:nowrap;display:none;"></span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">SORT ORDER (URUTAN TAMPIL)</label>
+            <input type="number" id="videoSortOrder" class="form-input" value="1" min="1" max="999" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">CUSTOM THUMBNAIL URL (OPSIONAL)</label>
+          <div style="display:flex;gap:0.5rem;">
+            <input type="text" id="videoThumbnailUrl" class="form-input" placeholder="Otomatis diambil dari YouTube..." />
+            <label class="btn-action-edit" style="cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:0.35rem;padding:0 0.85rem;">
+              📁 UPLOAD
+              <input type="file" id="videoThumbFile" accept="image/*" style="display:none;" />
+            </label>
+          </div>
+        </div>
+
+        <!-- Live Preview Box -->
+        <div id="videoPreviewBox" style="margin-bottom:1rem;background:rgba(0,0,0,0.4);border:1px solid var(--border-dim);border-radius:var(--radius);padding:0.85rem;display:flex;gap:1rem;align-items:center;">
+          <img id="videoThumbPreview" src="assets/pb-bg-squad.jpg" alt="Preview Thumbnail" style="width:120px;aspect-ratio:16/9;object-fit:cover;border-radius:4px;border:1px solid var(--border);" onerror="this.src='assets/pb-bg-squad.jpg'" />
+          <div>
+            <div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--gold);margin-bottom:0.25rem;">PREVIEW YOUTUBE THUMBNAIL</div>
+            <div id="previewVideoTitle" style="font-size:0.85rem;font-weight:700;color:var(--white);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">Judul Video Preview</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">DESKRIPSI SINGKAT</label>
+          <textarea id="videoDescription" class="form-input" rows="3" placeholder="Tuliskan ringkasan taktis atau catatan match turnamen..."></textarea>
+        </div>
+
+        <div class="form-row-2" style="margin-bottom:1.5rem;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">STATUS PUBLIKASI</label>
+            <select id="videoPublishedSelect" class="form-input">
+              <option value="true">✅ PUBLISHED (Tampilkan di Website)</option>
+              <option value="false">🔒 DRAFT (Sembunyikan dari Publik)</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:0;display:flex;align-items:center;padding-top:1.5rem;">
+            <label style="display:flex;align-items:center;gap:0.6rem;cursor:pointer;font-family:var(--font-mono);font-size:0.82rem;color:var(--gold);">
+              <input type="checkbox" id="videoFeaturedCheck" style="width:18px;height:18px;accent-color:var(--gold);cursor:pointer;" />
+              <span>⭐ JADIKAN FEATURED VIDEO UTAMA</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="crud-modal-footer">
+          <button type="button" class="btn-cancel" onclick="closeVideoModal()">BATAL</button>
+          <button type="submit" class="btn-add" id="videoModalSubmitBtn">💾 SIMPAN VIDEO ➔</button>
         </div>
       </form>
     </div>

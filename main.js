@@ -570,7 +570,265 @@ function syncCmsData() {
       }
     }
   }
+
+  // 7. Sync Mothra Media (Videos & Live Streaming)
+  syncMothraMedia(db);
 }
+
+/* ============================================================
+   MOTHRA MEDIA (VIDEOS & LIVE STREAMING CONTROLLER)
+   ============================================================ */
+let currentMediaFilter = 'all';
+
+function syncMothraMedia(db) {
+  const featuredWrap = document.getElementById('mediaFeaturedWrap');
+  const mediaGrid = document.getElementById('mediaGrid');
+  if (!featuredWrap && !mediaGrid) return;
+
+  const rawVideos = Array.isArray(db && db.videos) ? db.videos : [];
+  // Public viewers only see published = true
+  const videos = rawVideos.filter(v => v.published !== false);
+
+  if (videos.length === 0) {
+    if (featuredWrap) featuredWrap.innerHTML = '';
+    if (mediaGrid) {
+      mediaGrid.innerHTML = `
+        <div class="no-filter-match" style="grid-column: 1 / -1; padding: 3rem 1rem; opacity: 0.75; text-align: center;">
+          <span class="text-gold" style="font-family: var(--font-mono); font-size: 0.85rem; letter-spacing: 0.15em;">BELUM ADA VIDEO / LIVE STREAMING YANG DIPUBLIKASIKAN.</span>
+        </div>
+      `;
+    }
+    return;
+  }
+
+  // Sort videos: sort_order ascending, then created_at descending
+  const sortedVideos = [...videos].sort((a, b) => {
+    const orderA = a.sort_order !== undefined && a.sort_order !== null ? Number(a.sort_order) : 999;
+    const orderB = b.sort_order !== undefined && b.sort_order !== null ? Number(b.sort_order) : 999;
+    if (orderA !== orderB) return orderA - orderB;
+    return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+  });
+
+  // Featured video: either with featured = true, or first item
+  const featuredVideo = sortedVideos.find(v => v.featured) || sortedVideos[0];
+  const gridVideos = sortedVideos.filter(v => v.id !== featuredVideo.id);
+
+  // Render Featured Video Hero
+  if (featuredWrap) {
+    const isMatchFilter = currentMediaFilter === 'all' || featuredVideo.category === currentMediaFilter;
+    if (!isMatchFilter && currentMediaFilter !== 'all') {
+      featuredWrap.style.display = 'none';
+      featuredWrap.innerHTML = '';
+    } else {
+      featuredWrap.style.display = '';
+      const isLive = featuredVideo.category === 'live';
+      const catBadge = isLive 
+        ? `<span class="category-badge-pill category-live"><span class="live-dot-pulse"></span> 🔴 LIVE STREAMING</span>` 
+        : `<span class="category-badge-pill category-gameplay">🎮 GAMEPLAY</span>`;
+      
+      const thumb = featuredVideo.thumbnail_url || (featuredVideo.video_id ? `https://img.youtube.com/vi/${featuredVideo.video_id}/maxresdefault.jpg` : 'assets/pb-bg-squad.jpg');
+      const dateFormatted = featuredVideo.created_at ? new Date(featuredVideo.created_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' }) : '';
+
+      featuredWrap.innerHTML = `
+        <div class="featured-video-card" data-video-id="${featuredVideo.video_id || ''}">
+          <div class="featured-video-thumb-wrap" role="button" tabindex="0" aria-label="Putar ${featuredVideo.title}">
+            <img src="${thumb}" alt="${featuredVideo.title}" loading="lazy" onerror="this.src='https://img.youtube.com/vi/${featuredVideo.video_id}/hqdefault.jpg'" />
+            <div class="video-play-btn-overlay">
+              <div class="video-play-btn-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+              </div>
+            </div>
+          </div>
+          <div class="featured-video-content">
+            <div class="featured-video-tag-row">
+              <span class="featured-badge-pill">⭐ FEATURED BROADCAST</span>
+              ${catBadge}
+            </div>
+            <h3 class="featured-video-title">${featuredVideo.title}</h3>
+            <p class="featured-video-desc">${featuredVideo.description || 'Saksikan pertandingan dan highlight gameplay Clan MOTHRA Point Blank Indonesia.'}</p>
+            <div class="featured-video-footer">
+              <span class="featured-video-date">📅 ${dateFormatted || 'OFFICIAL MATCH'}</span>
+              <button type="button" class="btn btn--primary btn--sm open-video-btn" data-video-obj="${encodeURIComponent(JSON.stringify(featuredVideo))}">
+                <span>TONTON SEKARANG ▶</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  // Render Grid Videos
+  if (mediaGrid) {
+    const matchingGrid = gridVideos.filter(v => currentMediaFilter === 'all' || v.category === currentMediaFilter);
+    if (matchingGrid.length === 0 && (!featuredWrap || featuredWrap.style.display === 'none')) {
+      mediaGrid.innerHTML = `
+        <div class="no-filter-match" style="grid-column: 1 / -1; padding: 3rem 1rem; opacity: 0.75; text-align: center;">
+          <span class="text-gold" style="font-family: var(--font-mono); font-size: 0.85rem; letter-spacing: 0.15em;">TIDAK ADA VIDEO DI KATEGORI INI.</span>
+        </div>
+      `;
+    } else {
+      let gridHtml = '';
+      matchingGrid.forEach(v => {
+        const isLive = v.category === 'live';
+        const catBadge = isLive 
+          ? `<span class="category-badge-pill category-live"><span class="live-dot-pulse"></span> 🔴 LIVE</span>` 
+          : `<span class="category-badge-pill category-gameplay">🎮 GAMEPLAY</span>`;
+        const thumb = v.thumbnail_url || (v.video_id ? `https://img.youtube.com/vi/${v.video_id}/hqdefault.jpg` : 'assets/pb-bg-squad.jpg');
+        const dateFormatted = v.created_at ? new Date(v.created_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' }) : '';
+
+        gridHtml += `
+          <div class="video-card" data-category="${v.category}" tabindex="0" role="button" aria-label="Putar ${v.title}" data-video-obj="${encodeURIComponent(JSON.stringify(v))}">
+            <div class="video-card-thumb-wrap">
+              <img src="${thumb}" alt="${v.title}" loading="lazy" onerror="this.src='https://img.youtube.com/vi/${v.video_id}/hqdefault.jpg'" />
+              <div class="video-card-play-overlay">
+                <div class="video-card-play-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+                </div>
+              </div>
+            </div>
+            <div class="video-card-body">
+              <div class="video-card-top-row">
+                ${catBadge}
+                <span class="video-card-date">${dateFormatted}</span>
+              </div>
+              <h4 class="video-card-title">${v.title}</h4>
+              <p class="video-card-desc">${v.description || 'Video gameplay Point Blank resmi Clan MOTHRA.'}</p>
+              <div class="video-card-footer">
+                <span class="video-card-btn-action">PUTAR VIDEO <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></span>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      mediaGrid.innerHTML = gridHtml;
+    }
+  }
+
+  bindVideoPlayTriggers();
+  bindMediaFilterEvents();
+}
+
+function initVideoModal() {
+  const modal = document.getElementById('videoModal');
+  const backdrop = document.getElementById('videoModalBackdrop');
+  const closeBtn = document.getElementById('videoModalClose');
+  const iframe = document.getElementById('videoModalIframe');
+  const titleEl = document.getElementById('videoModalTitle');
+  const badgeEl = document.getElementById('videoModalBadge');
+  const dateEl = document.getElementById('videoModalDate');
+  const descEl = document.getElementById('videoModalDesc');
+
+  if (!modal) return;
+
+  function closeModal() {
+    modal.classList.remove('open');
+    modal.setAttribute('aria-hidden', 'true');
+    if (iframe) iframe.src = '';
+    document.body.style.overflow = '';
+  }
+
+  if (closeBtn) closeBtn.addEventListener('click', closeModal);
+  if (backdrop) backdrop.addEventListener('click', closeModal);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.classList.contains('open')) {
+      closeModal();
+    }
+  });
+
+  window.playMothraVideo = function(videoObj) {
+    if (!videoObj || !videoObj.video_id) return;
+    if (titleEl) titleEl.textContent = videoObj.title || 'MOTHRA MEDIA';
+    if (descEl) descEl.textContent = videoObj.description || '';
+    if (badgeEl) {
+      badgeEl.innerHTML = videoObj.category === 'live' 
+        ? '<span class="live-dot-pulse"></span> 🔴 LIVE STREAMING' 
+        : '🎮 GAMEPLAY HIGHLIGHT';
+    }
+    if (dateEl) {
+      dateEl.textContent = videoObj.created_at ? new Date(videoObj.created_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' }) : '';
+    }
+    if (iframe) {
+      iframe.src = `https://www.youtube-nocookie.com/embed/${videoObj.video_id}?autoplay=1&rel=0&modestbranding=1`;
+    }
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  };
+}
+
+function bindVideoPlayTriggers() {
+  // Featured video triggers
+  const featuredCard = document.querySelector('.featured-video-card');
+  if (featuredCard) {
+    const thumbWrap = featuredCard.querySelector('.featured-video-thumb-wrap');
+    const openBtn = featuredCard.querySelector('.open-video-btn');
+    const clickHandler = (e) => {
+      e.stopPropagation();
+      const btn = openBtn || e.currentTarget;
+      const raw = btn ? btn.dataset.videoObj : null;
+      if (raw && window.playMothraVideo) {
+        try {
+          const obj = JSON.parse(decodeURIComponent(raw));
+          window.playMothraVideo(obj);
+        } catch (err) {}
+      }
+    };
+    if (thumbWrap && !thumbWrap._hasClick) {
+      thumbWrap._hasClick = true;
+      thumbWrap.addEventListener('click', () => {
+        if (openBtn) openBtn.click();
+      });
+      thumbWrap.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (openBtn) openBtn.click(); }
+      });
+    }
+    if (openBtn && !openBtn._hasClick) {
+      openBtn._hasClick = true;
+      openBtn.addEventListener('click', clickHandler);
+    }
+  }
+
+  // Video Grid triggers
+  document.querySelectorAll('.media-grid .video-card').forEach(card => {
+    if (card._hasClick) return;
+    card._hasClick = true;
+    const play = () => {
+      const raw = card.dataset.videoObj;
+      if (raw && window.playMothraVideo) {
+        try {
+          const obj = JSON.parse(decodeURIComponent(raw));
+          window.playMothraVideo(obj);
+        } catch (err) {}
+      }
+    };
+    card.addEventListener('click', play);
+    card.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); play(); }
+    });
+  });
+}
+
+function bindMediaFilterEvents() {
+  document.querySelectorAll('.media-filter-btn').forEach(btn => {
+    if (btn._hasMediaListener) return;
+    btn._hasMediaListener = true;
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.media-filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentMediaFilter = btn.dataset.mediaFilter || 'all';
+      if (typeof getMothraData === 'function') {
+        const db = getMothraData();
+        if (db) syncMothraMedia(db);
+      }
+    });
+  });
+}
+
+// Initialize video modal on script load
+initVideoModal();
+bindMediaFilterEvents();
 
 // Global Listeners for Realtime Sync
 window.addEventListener('storage', (e) => {

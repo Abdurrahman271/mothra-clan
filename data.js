@@ -369,6 +369,68 @@ const DEFAULT_MOTHRA_DATA = {
       "img": "assets/bootcamp.jpg",
       "large": false
     }
+  ],
+  "videos": [
+    {
+      "id": "vid_1",
+      "title": "MOTHRA ESPORTS vs RRQ PB — GRAND FINAL PBNC 2024 (MAP 3 DECIDER)",
+      "slug": "mothra-vs-rrq-grand-final-pbnc-2024",
+      "description": "Pertandingan sengit map penentu Grand Final PBNC 2024 di Map Luxville. Simak rotasi taktis dan clutch ronde ke-9 dari Clan MOTHRA.",
+      "category": "live",
+      "video_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "video_id": "dQw4w9WgXcQ",
+      "thumbnail_url": "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+      "published": true,
+      "featured": true,
+      "sort_order": 1,
+      "created_at": "2026-08-20T10:00:00.000Z",
+      "updated_at": "2026-08-20T10:00:00.000Z"
+    },
+    {
+      "id": "vid_2",
+      "title": "1v4 CLUTCH RETAKE BOMBSITE A LUXVILLE — MOTHRA•RAVEN",
+      "slug": "1v4-clutch-retake-luxville-raven",
+      "description": "Aksi clutch dramatis sang IGL Raka Pratama membalikkan keadaan dalam situasi krusial turnamen nasional PB.",
+      "category": "gameplay",
+      "video_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "video_id": "dQw4w9WgXcQ",
+      "thumbnail_url": "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+      "published": true,
+      "featured": false,
+      "sort_order": 2,
+      "created_at": "2026-08-18T14:30:00.000Z",
+      "updated_at": "2026-08-18T14:30:00.000Z"
+    },
+    {
+      "id": "vid_3",
+      "title": "🔴 LIVE SCRIM 5v5 BOMB MISSION — MOTHRA vs EVOS ECLIPSE",
+      "slug": "live-scrim-mothra-vs-evos-eclipse",
+      "description": "Latihan tanding resmi (Friendly Scrim) clan war 5v5 best of 3 jelang kualifikasi PBIC.",
+      "category": "live",
+      "video_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "video_id": "dQw4w9WgXcQ",
+      "thumbnail_url": "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+      "published": true,
+      "featured": false,
+      "sort_order": 3,
+      "created_at": "2026-08-15T19:00:00.000Z",
+      "updated_at": "2026-08-15T19:00:00.000Z"
+    },
+    {
+      "id": "vid_4",
+      "title": "CHEYTAC M200 QUICKSCOPE & NO-SCOPE MONTAGE — MOTHRA•NOVA",
+      "slug": "cheytac-quickscope-montage-nova",
+      "description": "Kumpulan sniper highlight terbaik dengan akurasi 82% headshot rate di kompetisi Point Blank.",
+      "category": "gameplay",
+      "video_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "video_id": "dQw4w9WgXcQ",
+      "thumbnail_url": "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+      "published": true,
+      "featured": false,
+      "sort_order": 4,
+      "created_at": "2026-08-10T12:00:00.000Z",
+      "updated_at": "2026-08-10T12:00:00.000Z"
+    }
   ]
 };
 
@@ -696,6 +758,9 @@ function sanitizeMothraData(data) {
   if (!data.users || !Array.isArray(data.users) || data.users.length === 0) {
     data.users = JSON.parse(JSON.stringify(DEFAULT_MOTHRA_DATA.users));
   }
+  if (!data.videos || !Array.isArray(data.videos) || data.videos.length === 0) {
+    data.videos = JSON.parse(JSON.stringify(DEFAULT_MOTHRA_DATA.videos));
+  }
 
   // Terapkan deep security sanitization
   sanitizeDataDeep(data);
@@ -766,6 +831,30 @@ function saveMothraData(data) {
               }
             })
             .catch((err) => console.error('❌ [SUPABASE NETWORK ERROR]', err));
+
+          // Sync to clan_videos relational table if available
+          if (Array.isArray(data.videos) && data.videos.length > 0) {
+            _supabaseClient
+              .from('clan_videos')
+              .upsert(data.videos.map(v => ({
+                id: v.id,
+                title: v.title,
+                slug: v.slug || '',
+                description: v.description || '',
+                category: v.category || 'gameplay',
+                video_url: v.video_url || '',
+                video_id: v.video_id || '',
+                thumbnail_url: v.thumbnail_url || '',
+                published: v.published !== false,
+                featured: !!v.featured,
+                sort_order: Number(v.sort_order || 1),
+                updated_at: new Date().toISOString()
+              })))
+              .then(({ error }) => {
+                if (error) console.warn('clan_videos relational sync notice:', error.message);
+              })
+              .catch(() => {});
+          }
         }
 
         // 2. Dual Sync via Direct HTTPS REST API (Jaminan 100% terkirim)

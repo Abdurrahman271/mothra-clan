@@ -242,7 +242,6 @@ function initDashboard() {
 
 function renderAllPanels() {
   if (!db) db = getMothraData();
-  renderOverviewStats();
   renderBrandingForm();
   renderDossierForm();
   renderCategoriesTable();
@@ -254,6 +253,7 @@ function renderAllPanels() {
   renderPartnershipsTable();
   renderRecordsTable();
   renderGalleryTable();
+  renderVideosTable();
   renderSupabasePanel();
   renderUsersTable();
   renderAdsPanel();
@@ -2636,6 +2636,413 @@ if (userCrudForm) {
     const modal = document.getElementById('userCrudModal');
     if (modal) modal.classList.remove('open');
     showToast(isEdit ? '✅ Data operator berhasil diperbarui dan disinkronkan ke Supabase!' : '✅ Akun admin baru berhasil ditambahkan dan disinkronkan ke Supabase!');
+  });
+}
+
+function closeUserModal() {
+  const modal = document.getElementById('userCrudModal');
+  if (modal) modal.classList.remove('open');
+}
+
+// ============================================================
+// MOTHRA MEDIA (VIDEOS & LIVE STREAMING) CRUD CONTROLLER
+// ============================================================
+let videoCategoryFilterVal = 'all';
+let videoSearchQuery = '';
+
+function extractYouTubeId(url) {
+  if (!url) return '';
+  const trimmed = url.trim();
+  // Match standard, embed, shorts, youtu.be, live formats
+  const regExp = /(?:youtube(?:-nocookie)?\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?|live|shorts)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i;
+  const match = trimmed.match(regExp);
+  if (match && match[1]) {
+    return match[1];
+  }
+  // Fallback: if raw 11-char ID is entered
+  if (/^[a-zA-Z0-9_-]{11}$/.test(trimmed)) {
+    return trimmed;
+  }
+  return '';
+}
+
+function renderVideosTable() {
+  const tbody = document.getElementById('videosTableBody');
+  if (!tbody) return;
+
+  const rawVideos = (db && Array.isArray(db.videos)) ? db.videos : [];
+
+  // Update Stats
+  const total = rawVideos.length;
+  const liveCount = rawVideos.filter(v => v.category === 'live').length;
+  const gameplayCount = rawVideos.filter(v => v.category === 'gameplay').length;
+  const publishedCount = rawVideos.filter(v => v.published !== false).length;
+
+  const elTotal = document.getElementById('statVideoTotal');
+  const elLive = document.getElementById('statVideoLive');
+  const elGameplay = document.getElementById('statVideoGameplay');
+  const elPublished = document.getElementById('statVideoPublished');
+  if (elTotal) elTotal.textContent = total;
+  if (elLive) elLive.textContent = liveCount;
+  if (elGameplay) elGameplay.textContent = gameplayCount;
+  if (elPublished) elPublished.textContent = publishedCount;
+
+  // Filter
+  let filtered = [...rawVideos];
+  if (videoCategoryFilterVal !== 'all') {
+    filtered = filtered.filter(v => v.category === videoCategoryFilterVal);
+  }
+  if (videoSearchQuery) {
+    const q = videoSearchQuery.toLowerCase();
+    filtered = filtered.filter(v => 
+      (v.title && v.title.toLowerCase().includes(q)) || 
+      (v.description && v.description.toLowerCase().includes(q)) ||
+      (v.video_id && v.video_id.toLowerCase().includes(q))
+    );
+  }
+
+  // Sort
+  filtered.sort((a, b) => {
+    const orderA = a.sort_order !== undefined && a.sort_order !== null ? Number(a.sort_order) : 999;
+    const orderB = b.sort_order !== undefined && b.sort_order !== null ? Number(b.sort_order) : 999;
+    if (orderA !== orderB) return orderA - orderB;
+    return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+  });
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--gray-light);padding:2rem;">Tidak ada data video yang cocok. Klik <strong>＋ TAMBAH VIDEO BARU</strong> untuk menambah.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map((v, i) => {
+    const isLive = v.category === 'live';
+    const catBadge = isLive 
+      ? '<span style="background:rgba(239,68,68,0.15);color:#FCA5A5;border:1px solid #EF4444;padding:0.2rem 0.55rem;border-radius:3px;font-family:var(--font-mono);font-size:0.7rem;font-weight:700;">🔴 LIVE</span>' 
+      : '<span style="background:rgba(59,130,246,0.15);color:#93C5FD;border:1px solid #3B82F6;padding:0.2rem 0.55rem;border-radius:3px;font-family:var(--font-mono);font-size:0.7rem;font-weight:700;">🎮 GAMEPLAY</span>';
+    
+    const isPub = v.published !== false;
+    const pubBadge = isPub 
+      ? `<span style="background:rgba(16,185,129,0.15);color:#86EFAC;border:1px solid #22C55E;padding:0.2rem 0.5rem;border-radius:3px;font-family:var(--font-mono);font-size:0.7rem;font-weight:700;cursor:pointer;" onclick="toggleVideoPublish('${v.id}')" title="Klik untuk ubah ke Draft">✅ PUBLISHED</span>` 
+      : `<span style="background:rgba(239,68,68,0.15);color:#FCA5A5;border:1px solid #EF4444;padding:0.2rem 0.5rem;border-radius:3px;font-family:var(--font-mono);font-size:0.7rem;font-weight:700;cursor:pointer;" onclick="toggleVideoPublish('${v.id}')" title="Klik untuk Publish">🔒 DRAFT</span>`;
+
+    const featBadge = v.featured 
+      ? `<span style="background:rgba(212,175,55,0.15);color:var(--gold-bright);border:1px solid var(--gold);padding:0.2rem 0.5rem;border-radius:3px;font-family:var(--font-mono);font-size:0.7rem;font-weight:800;cursor:pointer;" onclick="toggleVideoFeatured('${v.id}')" title="Featured Utama">⭐ UTAMA</span>` 
+      : `<button type="button" class="btn-action-edit" onclick="toggleVideoFeatured('${v.id}')" style="padding:0.2rem 0.5rem;font-size:0.7rem;">Set Featured</button>`;
+
+    const thumb = v.thumbnail_url || (v.video_id ? `https://img.youtube.com/vi/${v.video_id}/hqdefault.jpg` : 'assets/pb-bg-squad.jpg');
+
+    return `
+      <tr>
+        <td style="color:var(--gray-light);font-size:0.8rem;">${i + 1}</td>
+        <td>
+          <a href="${v.video_url || '#'}" target="_blank" rel="noopener" title="Tonton di YouTube">
+            <img src="${thumb}" alt="Thumb" class="table-video-thumb" onerror="this.src='assets/pb-bg-squad.jpg'" />
+          </a>
+        </td>
+        <td>
+          <div style="font-weight:800;font-size:0.9rem;color:var(--white);margin-bottom:0.2rem;">${v.title}</div>
+          <div style="color:var(--gray-light);font-size:0.75rem;max-width:280px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${v.description || '—'}</div>
+        </td>
+        <td>${catBadge}</td>
+        <td style="font-family:var(--font-mono);font-size:0.78rem;color:var(--gold);">${v.video_id || '—'}</td>
+        <td>${pubBadge}</td>
+        <td>${featBadge}</td>
+        <td style="font-family:var(--font-mono);font-size:0.8rem;text-align:center;">${v.sort_order || 1}</td>
+        <td style="text-align:center;">
+          <div style="display:flex;gap:0.35rem;justify-content:center;">
+            <button class="btn-action-edit" onclick="openVideoModal('edit','${v.id}')" style="padding:0.3rem 0.6rem;font-size:0.75rem;">✏️ EDIT</button>
+            <button class="btn-action-del" onclick="deleteVideo('${v.id}')" style="padding:0.3rem 0.6rem;font-size:0.75rem;">🗑️ HAPUS</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function closeVideoModal() {
+  const modal = document.getElementById('videoCrudModal');
+  if (modal) modal.classList.remove('open');
+}
+
+function openVideoModal(mode, videoId) {
+  const modal = document.getElementById('videoCrudModal');
+  const title = document.getElementById('videoModalTitle');
+  const formAlert = document.getElementById('videoFormAlert');
+  if (!modal) return;
+
+  const form = document.getElementById('videoCrudForm');
+  if (form) form.reset();
+  document.getElementById('crudVideoId').value = '';
+  if (formAlert) { formAlert.style.display = 'none'; formAlert.textContent = ''; }
+
+  const statusBadge = document.getElementById('videoIdStatusBadge');
+  if (statusBadge) { statusBadge.style.display = 'none'; }
+
+  if (mode === 'edit' && videoId) {
+    const videos = (db && Array.isArray(db.videos)) ? db.videos : [];
+    const v = videos.find(item => item.id === videoId);
+    if (!v) return;
+
+    if (title) title.textContent = 'EDIT VIDEO: ' + v.title.substring(0, 30);
+    document.getElementById('crudVideoId').value = v.id;
+    document.getElementById('videoTitle').value = v.title || '';
+    document.getElementById('videoSlug').value = v.slug || '';
+    document.getElementById('videoCategory').value = v.category || 'gameplay';
+    document.getElementById('videoUrlInput').value = v.video_url || (v.video_id ? `https://www.youtube.com/watch?v=${v.video_id}` : '');
+    document.getElementById('extractedVideoId').value = v.video_id || '';
+    document.getElementById('videoSortOrder').value = v.sort_order !== undefined ? v.sort_order : 1;
+    document.getElementById('videoThumbnailUrl').value = v.thumbnail_url || '';
+    document.getElementById('videoDescription').value = v.description || '';
+    document.getElementById('videoPublishedSelect').value = v.published !== false ? 'true' : 'false';
+    document.getElementById('videoFeaturedCheck').checked = !!v.featured;
+
+    updateVideoModalPreview();
+
+    const submitBtn = document.getElementById('videoModalSubmitBtn');
+    if (submitBtn) submitBtn.textContent = '💾 SIMPAN PERUBAHAN ➔';
+  } else {
+    if (title) title.textContent = 'TAMBAH VIDEO BARU';
+    document.getElementById('videoSortOrder').value = (db && Array.isArray(db.videos) ? db.videos.length + 1 : 1);
+    updateVideoModalPreview();
+    const submitBtn = document.getElementById('videoModalSubmitBtn');
+    if (submitBtn) submitBtn.textContent = '💾 TAMBAH SEKARANG ➔';
+  }
+
+  modal.classList.add('open');
+}
+
+function updateVideoModalPreview() {
+  const videoId = (document.getElementById('extractedVideoId') ? document.getElementById('extractedVideoId').value : '').trim();
+  const customThumb = (document.getElementById('videoThumbnailUrl') ? document.getElementById('videoThumbnailUrl').value : '').trim();
+  const title = (document.getElementById('videoTitle') ? document.getElementById('videoTitle').value : '').trim() || 'Judul Video Preview';
+
+  const previewImg = document.getElementById('videoThumbPreview');
+  const previewTitle = document.getElementById('previewVideoTitle');
+
+  if (previewTitle) previewTitle.textContent = title;
+  if (previewImg) {
+    if (customThumb) {
+      previewImg.src = customThumb;
+    } else if (videoId) {
+      previewImg.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+    } else {
+      previewImg.src = 'assets/pb-bg-squad.jpg';
+    }
+  }
+}
+
+function toggleVideoPublish(videoId) {
+  if (!db || !Array.isArray(db.videos)) return;
+  const v = db.videos.find(item => item.id === videoId);
+  if (!v) return;
+  v.published = v.published === false ? true : false;
+  v.updated_at = new Date().toISOString();
+  saveMothraData(db);
+  renderVideosTable();
+  showToast(`✅ Video "${v.title}" sekarang ${v.published ? 'DIPUBLIKASIKAN' : 'DRAFT'}.`);
+}
+
+function toggleVideoFeatured(videoId) {
+  if (!db || !Array.isArray(db.videos)) return;
+  db.videos.forEach(v => {
+    if (v.id === videoId) {
+      v.featured = !v.featured;
+    }
+  });
+  saveMothraData(db);
+  renderVideosTable();
+  showToast('⭐ Status Featured Video diperbarui.');
+}
+
+function deleteVideo(videoId) {
+  if (!confirm('Yakin ingin menghapus video ini dari arsip? Tindakan tidak bisa dibatalkan.')) return;
+  if (!db || !Array.isArray(db.videos)) return;
+  const idx = db.videos.findIndex(v => v.id === videoId);
+  if (idx === -1) return;
+  const title = db.videos[idx].title;
+  db.videos.splice(idx, 1);
+  saveMothraData(db);
+  renderVideosTable();
+  showToast(`🗑️ Video "${title}" berhasil dihapus.`);
+}
+
+// Auto-extract YouTube video_id on URL input
+const videoUrlInput = document.getElementById('videoUrlInput');
+if (videoUrlInput) {
+  videoUrlInput.addEventListener('input', () => {
+    const url = videoUrlInput.value;
+    const extracted = extractYouTubeId(url);
+    const idField = document.getElementById('extractedVideoId');
+    const badge = document.getElementById('videoIdStatusBadge');
+    if (idField) {
+      if (extracted) {
+        idField.value = extracted;
+        if (badge) {
+          badge.style.display = 'inline-block';
+          badge.style.background = 'rgba(16,185,129,0.15)';
+          badge.style.color = '#86EFAC';
+          badge.style.border = '1px solid #22C55E';
+          badge.textContent = '✓ ID VALID: ' + extracted;
+        }
+      } else {
+        if (badge) {
+          badge.style.display = 'inline-block';
+          badge.style.background = 'rgba(239,68,68,0.15)';
+          badge.style.color = '#FCA5A5';
+          badge.style.border = '1px solid #EF4444';
+          badge.textContent = '✗ LINK TIDAK VALID';
+        }
+      }
+      updateVideoModalPreview();
+    }
+  });
+}
+
+const extractedVideoIdInput = document.getElementById('extractedVideoId');
+if (extractedVideoIdInput) {
+  extractedVideoIdInput.addEventListener('input', updateVideoModalPreview);
+}
+const videoTitleInput = document.getElementById('videoTitle');
+if (videoTitleInput) {
+  videoTitleInput.addEventListener('input', () => {
+    const slugInput = document.getElementById('videoSlug');
+    if (slugInput && !slugInput.dataset.manualEdited) {
+      slugInput.value = videoTitleInput.value
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)+/g, '');
+    }
+    updateVideoModalPreview();
+  });
+}
+const videoSlugInput = document.getElementById('videoSlug');
+if (videoSlugInput) {
+  videoSlugInput.addEventListener('input', () => {
+    videoSlugInput.dataset.manualEdited = 'true';
+  });
+}
+
+// Local image file upload for custom video thumbnail
+const videoThumbFileInput = document.getElementById('videoThumbFile');
+if (videoThumbFileInput) {
+  videoThumbFileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (re) => {
+        const thumbUrlField = document.getElementById('videoThumbnailUrl');
+        if (thumbUrlField) thumbUrlField.value = re.target.result;
+        updateVideoModalPreview();
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+}
+
+// Video search & filter
+const videoCatFilter = document.getElementById('videoCategoryFilter');
+if (videoCatFilter) {
+  videoCatFilter.addEventListener('change', (e) => {
+    videoCategoryFilterVal = e.target.value;
+    renderVideosTable();
+  });
+}
+const videoSearchEl = document.getElementById('videoSearchInput');
+if (videoSearchEl) {
+  videoSearchEl.addEventListener('input', (e) => {
+    videoSearchQuery = e.target.value.trim();
+    renderVideosTable();
+  });
+}
+const btnAddVid = document.getElementById('btnAddVideo');
+if (btnAddVid) {
+  btnAddVid.addEventListener('click', () => openVideoModal('add'));
+}
+const btnRefreshVid = document.getElementById('btnRefreshVideos');
+if (btnRefreshVid) {
+  btnRefreshVid.addEventListener('click', () => {
+    if (!db) db = getMothraData();
+    renderVideosTable();
+    showToast('🔄 Data video berhasil dimuat ulang.');
+  });
+}
+
+// Video CRUD Form Submit
+const videoCrudForm = document.getElementById('videoCrudForm');
+if (videoCrudForm) {
+  videoCrudForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const formAlert = document.getElementById('videoFormAlert');
+    const showErr = (msg) => {
+      if (formAlert) { formAlert.style.display = 'block'; formAlert.textContent = msg; }
+    };
+
+    const id = (document.getElementById('crudVideoId').value || '').trim();
+    const title = (document.getElementById('videoTitle').value || '').trim();
+    let slug = (document.getElementById('videoSlug').value || '').trim();
+    const category = document.getElementById('videoCategory').value;
+    const url = (document.getElementById('videoUrlInput').value || '').trim();
+    let videoId = (document.getElementById('extractedVideoId').value || '').trim();
+    const sortOrder = parseInt(document.getElementById('videoSortOrder').value || '1', 10);
+    const thumbUrl = (document.getElementById('videoThumbnailUrl').value || '').trim();
+    const desc = (document.getElementById('videoDescription').value || '').trim();
+    const published = document.getElementById('videoPublishedSelect').value === 'true';
+    const featured = document.getElementById('videoFeaturedCheck').checked;
+
+    if (!title) return showErr('Judul video wajib diisi.');
+    if (!url && !videoId) return showErr('YouTube URL atau Video ID wajib diisi.');
+
+    if (!videoId && url) {
+      videoId = extractYouTubeId(url);
+    }
+    if (!videoId) {
+      return showErr('Gagal mengekstrak YouTube Video ID. Harap periksa kembali format URL YouTube.');
+    }
+
+    if (!slug) {
+      slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+    }
+
+    if (!db.videos) db.videos = [];
+    const isEdit = !!id;
+
+    if (isEdit) {
+      const idx = db.videos.findIndex(v => v.id === id);
+      if (idx === -1) return showErr('Video tidak ditemukan.');
+      db.videos[idx].title = title;
+      db.videos[idx].slug = slug;
+      db.videos[idx].category = category;
+      db.videos[idx].video_url = url || `https://www.youtube.com/watch?v=${videoId}`;
+      db.videos[idx].video_id = videoId;
+      db.videos[idx].thumbnail_url = thumbUrl || `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+      db.videos[idx].sort_order = isNaN(sortOrder) ? 1 : sortOrder;
+      db.videos[idx].description = desc;
+      db.videos[idx].published = published;
+      db.videos[idx].featured = featured;
+      db.videos[idx].updated_at = new Date().toISOString();
+    } else {
+      const newVideo = {
+        id: 'vid_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+        title: title,
+        slug: slug,
+        category: category,
+        video_url: url || `https://www.youtube.com/watch?v=${videoId}`,
+        video_id: videoId,
+        thumbnail_url: thumbUrl || `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+        sort_order: isNaN(sortOrder) ? 1 : sortOrder,
+        description: desc,
+        published: published,
+        featured: featured,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      db.videos.push(newVideo);
+    }
+
+    saveMothraData(db);
+    renderVideosTable();
+    closeVideoModal();
+    showToast(isEdit ? '✅ Video berhasil diperbarui & disinkronkan ke Supabase!' : '✅ Video baru berhasil ditambahkan & disinkronkan ke Supabase!');
   });
 }
 

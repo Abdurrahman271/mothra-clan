@@ -155,6 +155,7 @@
         <li role="none"><a href="#partnership" role="menuitem" class="nav-link">Partnership</a></li>
         <li role="none"><a href="#record" role="menuitem" class="nav-link">The Record</a></li>
         <li role="none"><a href="#gallery" role="menuitem" class="nav-link">Field Notes</a></li>
+        <li role="none"><a href="#media" role="menuitem" class="nav-link">Media</a></li>
         <li role="none"><a href="#join" role="menuitem" class="nav-link nav-cta">Join Us</a></li>
       </ul>
 
@@ -187,7 +188,8 @@
       <a href="#partnership" class="mobile-link">04 / PARTNERSHIP &amp; SCRIM</a>
       <a href="#record" class="mobile-link">05 / THE RECORD</a>
       <a href="#gallery" class="mobile-link">06 / FIELD NOTES</a>
-      <a href="#join" class="mobile-link mobile-link--cta">07 / JOIN THE HUNT</a>
+      <a href="#media" class="mobile-link">07 / MOTHRA MEDIA</a>
+      <a href="#join" class="mobile-link mobile-link--cta">08 / JOIN THE HUNT</a>
 
       <div class="mobile-socials">
         <a href="https://www.instagram.com/mothra.officiall" target="_blank" rel="noopener"
@@ -950,14 +952,52 @@
       </div>
     </section>
 
-    <!-- ===================== 07 / JOIN / RECRUITMENT ===================== -->
+    <!-- ===================== 07 / MOTHRA MEDIA (VIDEOS & LIVE STREAMING) ===================== -->
+    <section class="section media-section" id="media" aria-labelledby="mediaHeading">
+      <div class="section-container">
+        <div class="section-tag reveal-fade">07 / MOTHRA MEDIA</div>
+        <div class="media-header">
+          <div>
+            <h2 id="mediaHeading" class="section-heading reveal-left">
+              BROADCAST &amp; <span class="text-gold">MEDIA.</span>
+            </h2>
+            <span class="media-hint">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              Tonton live streaming turnamen PB, match highlight, dan gameplay taktis Clan MOTHRA
+            </span>
+          </div>
+          <p class="media-sub reveal-right">Arsip siaran langsung kompetisi Point Blank nasional, clutch gameplay, dan video dokumentasi skuad.</p>
+        </div>
+
+        <!-- Video Filter Tabs -->
+        <div class="media-filters reveal-fade">
+          <button type="button" class="media-filter-btn active" data-media-filter="all">SEMUA VIDEO</button>
+          <button type="button" class="media-filter-btn" data-media-filter="live"><span class="live-dot-pulse"></span> 🔴 LIVE STREAMING</button>
+          <button type="button" class="media-filter-btn" data-media-filter="gameplay">🎮 GAMEPLAY</button>
+        </div>
+
+        <!-- Featured Video (Hero Highlight) Container -->
+        <div class="media-featured-wrap reveal-fade" id="mediaFeaturedWrap">
+          <!-- Populated by JS dynamic sync -->
+        </div>
+
+        <!-- Video Grid Container (Newest first) -->
+        <div class="media-grid reveal-fade" id="mediaGrid">
+          <!-- Populated by JS dynamic sync -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== 08 / JOIN / RECRUITMENT ===================== -->
     <section class="section join" id="join" aria-labelledby="joinHeading">
       <div class="join-bg">
         <div class="join-bg-img"></div>
         <div class="join-overlay"></div>
       </div>
       <div class="section-container">
-        <div class="section-tag reveal-fade">07 / OPEN RECRUITMENT</div>
+        <div class="section-tag reveal-fade">08 / OPEN RECRUITMENT</div>
         <div class="join-content">
           <div class="join-left reveal-left">
             <h2 id="joinHeading" class="section-heading join-heading">
@@ -1404,6 +1444,7 @@
           <a href="#partnership" class="footer-link">Partnership &amp; Scrim</a>
           <a href="#record" class="footer-link">The Record</a>
           <a href="#gallery" class="footer-link">Field Notes</a>
+          <a href="#media" class="footer-link">Mothra Media</a>
           <a href="#join" class="footer-link">Join Recruitment</a>
         </div>
 
@@ -1453,6 +1494,33 @@
   <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Image viewer">
     <button class="lightbox-close" id="lightboxClose" aria-label="Tutup lightbox">&#10005;</button>
     <img class="lightbox-img" id="lightboxImg" src="" alt="" />
+  </div>
+
+  <!-- ===================== MODAL: RESPONSIVE YOUTUBE VIDEO PLAYER ===================== -->
+  <div class="video-modal" id="videoModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="videoModalTitle">
+    <div class="video-modal-backdrop" id="videoModalBackdrop"></div>
+    <div class="video-modal-dialog">
+      <div class="video-modal-header">
+        <div class="video-modal-badge" id="videoModalBadge">🔴 LIVE STREAMING</div>
+        <button class="video-modal-close" id="videoModalClose" aria-label="Tutup Video Player">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="video-player-frame-wrap">
+        <iframe id="videoModalIframe" src="" title="Mothra Media YouTube Player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+      </div>
+      <div class="video-modal-info">
+        <h3 class="video-modal-title" id="videoModalTitle">Judul Video</h3>
+        <div class="video-modal-meta">
+          <span class="video-modal-date" id="videoModalDate">2026-08-20</span>
+          <span class="video-modal-category" id="videoModalCategory">LIVE STREAMING</span>
+        </div>
+        <p class="video-modal-desc" id="videoModalDesc">Deskripsi video...</p>
+      </div>
+    </div>
   </div>
 
   <!-- Supabase Cloud Database & Realtime SDK -->

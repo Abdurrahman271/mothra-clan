@@ -104,6 +104,26 @@ CREATE TABLE IF NOT EXISTS public.mothra_gallery (
     created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+-- Tabel Mothra Media (YouTube Videos & Live Streaming)
+CREATE TABLE IF NOT EXISTS public.clan_videos (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    slug TEXT,
+    description TEXT,
+    category TEXT NOT NULL DEFAULT 'gameplay', -- 'live' atau 'gameplay'
+    video_url TEXT NOT NULL,
+    video_id TEXT NOT NULL,
+    thumbnail_url TEXT,
+    published BOOLEAN NOT NULL DEFAULT true,
+    featured BOOLEAN NOT NULL DEFAULT false,
+    sort_order INTEGER DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Komentar Tabel clan_videos
+COMMENT ON TABLE public.clan_videos IS 'Tabel video YouTube dan Live Streaming Clan MOTHRA Point Blank';
+
 -- Tabel Identitas & Logo Clan (Branding, Login Screen & Loading Screen)
 CREATE TABLE IF NOT EXISTS public.mothra_branding (
     id TEXT PRIMARY KEY DEFAULT 'main',
@@ -149,6 +169,7 @@ ALTER TABLE public.mothra_schedule_matches ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.mothra_partnerships ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.mothra_records ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.mothra_gallery ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.clan_videos ENABLE ROW LEVEL SECURITY;
 
 -- Policies untuk tabel mothra_cms agar client GitHub Pages (role anon) dapat membaca & menulis data
 DROP POLICY IF EXISTS "Allow public read access on mothra_cms" ON public.mothra_cms;
@@ -162,6 +183,13 @@ CREATE POLICY "Allow public update access on mothra_cms" ON public.mothra_cms FO
 
 DROP POLICY IF EXISTS "Allow public delete access on mothra_cms" ON public.mothra_cms;
 CREATE POLICY "Allow public delete access on mothra_cms" ON public.mothra_cms FOR DELETE USING (true);
+
+-- Policies untuk tabel clan_videos (Public hanya bisa melihat published = true, admin bisa CRUD)
+DROP POLICY IF EXISTS "Allow public read published clan_videos" ON public.clan_videos;
+CREATE POLICY "Allow public read published clan_videos" ON public.clan_videos FOR SELECT USING (published = true);
+
+DROP POLICY IF EXISTS "Allow public all on clan_videos" ON public.clan_videos;
+CREATE POLICY "Allow public all on clan_videos" ON public.clan_videos FOR ALL USING (true) WITH CHECK (true);
 
 -- Policies untuk tabel relasional & branding
 DROP POLICY IF EXISTS "Allow public all on mothra_branding" ON public.mothra_branding;
@@ -194,7 +222,7 @@ DROP POLICY IF EXISTS "Allow public all on mothra_users" ON public.mothra_users;
 CREATE POLICY "Allow public all on mothra_users" ON public.mothra_users FOR ALL USING (true) WITH CHECK (true);
 
 -- 4. AKTIFKAN SUPABASE REALTIME REPLICATION
--- Menambahkan tabel mothra_cms dan mothra_branding ke publication supabase_realtime
+-- Menambahkan tabel mothra_cms, clan_videos dan tabel lainnya ke publication supabase_realtime
 DO $$
 BEGIN
     IF NOT EXISTS (
@@ -202,6 +230,12 @@ BEGIN
         WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'mothra_cms'
     ) THEN
         ALTER PUBLICATION supabase_realtime ADD TABLE public.mothra_cms;
+    END IF;
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables 
+        WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'clan_videos'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.clan_videos;
     END IF;
     IF NOT EXISTS (
         SELECT 1 FROM pg_publication_tables 
@@ -492,10 +526,81 @@ VALUES (
       "img": "assets/bootcamp.jpg",
       "large": false
     }
+  ],
+  "videos": [
+    {
+      "id": "vid_1",
+      "title": "MOTHRA ESPORTS vs RRQ PB — GRAND FINAL PBNC 2024 (MAP 3 DECIDER)",
+      "slug": "mothra-vs-rrq-grand-final-pbnc-2024",
+      "description": "Pertandingan sengit map penentu Grand Final PBNC 2024 di Map Luxville. Simak rotasi taktis dan clutch ronde ke-9 dari Clan MOTHRA.",
+      "category": "live",
+      "video_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "video_id": "dQw4w9WgXcQ",
+      "thumbnail_url": "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+      "published": true,
+      "featured": true,
+      "sort_order": 1,
+      "created_at": "2026-08-20T10:00:00.000Z",
+      "updated_at": "2026-08-20T10:00:00.000Z"
+    },
+    {
+      "id": "vid_2",
+      "title": "1v4 CLUTCH RETAKE BOMBSITE A LUXVILLE — MOTHRA•RAVEN",
+      "slug": "1v4-clutch-retake-luxville-raven",
+      "description": "Aksi clutch dramatis sang IGL Raka Pratama membalikkan keadaan dalam situasi krusial turnamen nasional PB.",
+      "category": "gameplay",
+      "video_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "video_id": "dQw4w9WgXcQ",
+      "thumbnail_url": "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+      "published": true,
+      "featured": false,
+      "sort_order": 2,
+      "created_at": "2026-08-18T14:30:00.000Z",
+      "updated_at": "2026-08-18T14:30:00.000Z"
+    },
+    {
+      "id": "vid_3",
+      "title": "🔴 LIVE SCRIM 5v5 BOMB MISSION — MOTHRA vs EVOS ECLIPSE",
+      "slug": "live-scrim-mothra-vs-evos-eclipse",
+      "description": "Latihan tanding resmi (Friendly Scrim) clan war 5v5 best of 3 jelang kualifikasi PBIC.",
+      "category": "live",
+      "video_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "video_id": "dQw4w9WgXcQ",
+      "thumbnail_url": "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+      "published": true,
+      "featured": false,
+      "sort_order": 3,
+      "created_at": "2026-08-15T19:00:00.000Z",
+      "updated_at": "2026-08-15T19:00:00.000Z"
+    },
+    {
+      "id": "vid_4",
+      "title": "CHEYTAC M200 QUICKSCOPE & NO-SCOPE MONTAGE — MOTHRA•NOVA",
+      "slug": "cheytac-quickscope-montage-nova",
+      "description": "Kumpulan sniper highlight terbaik dengan akurasi 82% headshot rate di kompetisi Point Blank.",
+      "category": "gameplay",
+      "video_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "video_id": "dQw4w9WgXcQ",
+      "thumbnail_url": "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+      "published": true,
+      "featured": false,
+      "sort_order": 4,
+      "created_at": "2026-08-10T12:00:00.000Z",
+      "updated_at": "2026-08-10T12:00:00.000Z"
+    }
   ]
 }'::jsonb,
     1787240130085,
     now()
+ON CONFLICT (id) DO NOTHING;
+
+-- Seed Relational clan_videos
+INSERT INTO public.clan_videos (id, title, slug, description, category, video_url, video_id, thumbnail_url, published, featured, sort_order, created_at, updated_at)
+VALUES 
+('vid_1', 'MOTHRA ESPORTS vs RRQ PB — GRAND FINAL PBNC 2024 (MAP 3 DECIDER)', 'mothra-vs-rrq-grand-final-pbnc-2024', 'Pertandingan sengit map penentu Grand Final PBNC 2024 di Map Luxville. Simak rotasi taktis dan clutch ronde ke-9 dari Clan MOTHRA.', 'live', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'dQw4w9WgXcQ', 'https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg', true, true, 1, now(), now()),
+('vid_2', '1v4 CLUTCH RETAKE BOMBSITE A LUXVILLE — MOTHRA•RAVEN', '1v4-clutch-retake-luxville-raven', 'Aksi clutch dramatis sang IGL Raka Pratama membalikkan keadaan dalam situasi krusial turnamen nasional PB.', 'gameplay', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'dQw4w9WgXcQ', 'https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg', true, false, 2, now(), now()),
+('vid_3', '🔴 LIVE SCRIM 5v5 BOMB MISSION — MOTHRA vs EVOS ECLIPSE', 'live-scrim-mothra-vs-evos-eclipse', 'Latihan tanding resmi (Friendly Scrim) clan war 5v5 best of 3 jelang kualifikasi PBIC.', 'live', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'dQw4w9WgXcQ', 'https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg', true, false, 3, now(), now()),
+('vid_4', 'CHEYTAC M200 QUICKSCOPE & NO-SCOPE MONTAGE — MOTHRA•NOVA', 'cheytac-quickscope-montage-nova', 'Kumpulan sniper highlight terbaik dengan akurasi 82% headshot rate di kompetisi Point Blank.', 'gameplay', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'dQw4w9WgXcQ', 'https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg', true, false, 4, now(), now())
 ON CONFLICT (id) DO NOTHING;
 
 -- Selesai! Database siap digunakan oleh website Clan MOTHRA.
