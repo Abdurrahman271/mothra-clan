@@ -816,7 +816,32 @@ function getMothraData() {
   }
 }
 
-// Fungsi simpan data: Menyimpan ke memory, LocalStorage, Supabase Online (Dual Sync), dan server lokal
+let _supabaseSaveTimeout = null;
+
+// Fungsi helper simpan data via REST API jika SDK tidak tersedia / gagal
+function fallbackRestSave(config, data) {
+  if (typeof fetch === 'undefined') return;
+  const directPayload = [{
+    id: config.docId,
+    data: data,
+    data_version: data.dataVersion,
+    updated_at: data.updatedAt
+  }];
+  fetch(`${config.url}/rest/v1/${config.tableName}?on_conflict=id`, {
+    method: 'POST',
+    headers: {
+      'apikey': config.anonKey,
+      'Authorization': 'Bearer ' + config.anonKey,
+      'Content-Type': 'application/json',
+      'Prefer': 'resolution=merge-duplicates,return=minimal'
+    },
+    body: JSON.stringify(directPayload)
+  }).then((res) => {
+    if (res.ok) console.log('☁️ [SUPABASE REST] Data tersimpan di Supabase via REST API fallback!');
+  }).catch(() => {});
+}
+
+// Fungsi simpan data: Menyimpan ke memory & LocalStorage secara instan, dan sync ke Supabase secara debounced & hemat egress
 function saveMothraData(data) {
   try {
     // Sanitasi data menyeluruh sebelum disimpan
@@ -830,82 +855,73 @@ function saveMothraData(data) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     }
 
-    // Trigger local UI update immediately
+    // Trigger local UI update immediately (0 latency)
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('mothra_data_updated', { detail: data }));
 
-      const config = getSupabaseConfig();
-      if (config.isConfigured) {
-        if (!_supabaseClient) initSupabase();
-
-        // 1. Simpan via Supabase JS SDK
-        if (_supabaseClient) {
-          _supabaseClient
-            .from(config.tableName)
-            .upsert({
-              id: config.docId,
-              data: data,
-              data_version: data.dataVersion,
-              updated_at: data.updatedAt
-            })
-            .then(({ error }) => {
-              if (error) {
-                console.error('❌ [SUPABASE SAVE ERROR]', error.message);
-              } else {
-                console.log('☁️ [SUPABASE SAVED] Perubahan tersimpan di database online via SDK!');
-              }
-            })
-            .catch((err) => console.error('❌ [SUPABASE NETWORK ERROR]', err));
-
-          // Sync to clan_videos relational table if available
-          if (Array.isArray(data.videos) && data.videos.length > 0) {
-            _supabaseClient
-              .from('clan_videos')
-              .upsert(data.videos.map(v => ({
-                id: v.id,
-                title: v.title,
-                slug: v.slug || '',
-                description: v.description || '',
-                category: v.category || 'gameplay',
-                video_url: v.video_url || '',
-                video_id: v.video_id || '',
-                thumbnail_url: v.thumbnail_url || '',
-                published: v.published !== false,
-                featured: !!v.featured,
-                sort_order: Number(v.sort_order || 1),
-                updated_at: new Date().toISOString()
-              })))
-              .then(({ error }) => {
-                if (error) console.warn('clan_videos relational sync notice:', error.message);
-              })
-              .catch(() => {});
-          }
-        }
-
-        // 2. Dual Sync via Direct HTTPS REST API (Jaminan 100% terkirim)
-        if (typeof fetch !== 'undefined') {
-          const directPayload = [{
-            id: config.docId,
-            data: data,
-            data_version: data.dataVersion,
-            updated_at: data.updatedAt
-          }];
-          fetch(`${config.url}/rest/v1/${config.tableName}?on_conflict=id`, {
-            method: 'POST',
-            headers: {
-              'apikey': config.anonKey,
-              'Authorization': 'Bearer ' + config.anonKey,
-              'Content-Type': 'application/json',
-              'Prefer': 'resolution=merge-duplicates,return=minimal'
-            },
-            body: JSON.stringify(directPayload)
-          }).then((res) => {
-            if (res.ok) console.log('☁️ [SUPABASE REST] Data tersimpan di Supabase via REST API!');
-          }).catch(() => {});
-        }
+      // Debounce Cloud Sync (350ms) untuk mencegah spam save dan broadcast berlebihan ke pengunjung
+      if (_supabaseSaveTimeout) {
+        clearTimeout(_supabaseSaveTimeout);
       }
 
-      // 3. Simpan ke Server lokal disk via server.js jika sedang dijalankan
+      _supabaseSaveTimeout = setTimeout(() => {
+        const config = getSupabaseConfig();
+        if (config.isConfigured) {
+          if (!_supabaseClient) initSupabase();
+
+          // 1. Simpan via Supabase JS SDK (Prioritas Utama)
+          if (_supabaseClient) {
+            _supabaseClient
+              .from(config.tableName)
+              .upsert({
+                id: config.docId,
+                data: data,
+                data_version: data.dataVersion,
+                updated_at: data.updatedAt
+              })
+              .then(({ error }) => {
+                if (error) {
+                  console.error('❌ [SUPABASE SAVE ERROR]', error.message);
+                  fallbackRestSave(config, data);
+                } else {
+                  console.log('☁️ [SUPABASE SAVED] Perubahan tersimpan di database online via SDK!');
+                }
+              })
+              .catch((err) => {
+                console.error('❌ [SUPABASE NETWORK ERROR]', err);
+                fallbackRestSave(config, data);
+              });
+
+            // Sync to clan_videos relational table if available
+            if (Array.isArray(data.videos) && data.videos.length > 0) {
+              _supabaseClient
+                .from('clan_videos')
+                .upsert(data.videos.map(v => ({
+                  id: v.id,
+                  title: v.title,
+                  slug: v.slug || '',
+                  description: v.description || '',
+                  category: v.category || 'gameplay',
+                  video_url: v.video_url || '',
+                  video_id: v.video_id || '',
+                  thumbnail_url: v.thumbnail_url || '',
+                  published: v.published !== false,
+                  featured: !!v.featured,
+                  sort_order: Number(v.sort_order || 1),
+                  updated_at: new Date().toISOString()
+                })))
+                .then(({ error }) => {
+                  if (error) console.warn('clan_videos relational sync notice:', error.message);
+                })
+                .catch(() => {});
+            }
+          } else {
+            fallbackRestSave(config, data);
+          }
+        }
+      }, 350);
+
+      // Simpan ke Server lokal disk via server.js jika sedang dijalankan
       try {
         fetch('/api/data', {
           method: 'POST',

@@ -474,6 +474,30 @@ if (mobileLogoutBtn) {
 
 
 /* ============================================================
+   HELPER: DIRECT IMAGE URL CONVERTER & OPTIMIZER
+   (Mendukung Direct Embed Google Drive, Dropbox, Discord, ImgBB, dll)
+   ============================================================ */
+function convertDirectImageUrl(url) {
+  if (!url || typeof url !== 'string') return url;
+  let trimmed = url.trim();
+
+  // 1. Google Drive view/sharing link conversion
+  // Example: https://drive.google.com/file/d/FILE_ID/view?usp=sharing
+  // or https://drive.google.com/open?id=FILE_ID
+  const gDriveMatch = trimmed.match(/drive\.google\.com\/(?:file\/d\/|open\?id=)([a-zA-Z0-9_-]+)/);
+  if (gDriveMatch && gDriveMatch[1]) {
+    return `https://lh3.googleusercontent.com/d/${gDriveMatch[1]}`;
+  }
+
+  // 2. Dropbox share link conversion (dl=0 -> raw=1)
+  if (trimmed.includes('dropbox.com') && trimmed.includes('dl=0')) {
+    return trimmed.replace('dl=0', 'raw=1');
+  }
+
+  return trimmed;
+}
+
+/* ============================================================
    HELPER: LOCAL PC IMAGE FILE UPLOAD WITH WEBP CANVAS COMPRESSION
    (Hemat Egress Bandwidth Supabase hingga 98.5%)
    ============================================================ */
@@ -539,19 +563,27 @@ function setupImageUploader(fileInputId, textInputId, previewImgId, maxW = 800, 
       const compressedDataUrl = await compressAndReadFile(file, maxW, maxH, 0.78);
       textInput.value = compressedDataUrl;
       previewImg.src = compressedDataUrl;
-      showToast(`⚡ Foto "${file.name}" berhasil dioptimasi & siap disimpan!`);
+      showToast(`⚡ Foto "${file.name}" berhasil dikompresi ke WebP & siap disimpan!`);
     } catch (err) {
       console.error('Error processing image upload', err);
       alert('Gagal memproses gambar: ' + err.message);
     }
   });
 
-  textInput.addEventListener('input', () => {
-    const val = textInput.value.trim();
-    if (val) {
-      previewImg.src = val;
+  const handleUrlInput = () => {
+    const rawVal = textInput.value.trim();
+    const converted = convertDirectImageUrl(rawVal);
+    if (converted !== rawVal) {
+      textInput.value = converted;
+      showToast('⚡ Link Google Drive / Cloud otomatis diubah ke Direct Image URL!');
     }
-  });
+    if (converted) {
+      previewImg.src = converted;
+    }
+  };
+
+  textInput.addEventListener('input', handleUrlInput);
+  textInput.addEventListener('change', handleUrlInput);
 }
 
 // Initialize File Uploaders dengan resolusi taktis hemat bandwidth
@@ -3290,4 +3322,35 @@ if (videoCrudForm) {
     showToast(isEdit ? '✅ Video berhasil diperbarui & disinkronkan ke Supabase!' : '✅ Video baru berhasil ditambahkan & disinkronkan ke Supabase!');
   });
 }
+
+/* ============================================================
+   ANTI-SPAM & MULTI-CLICK PROTECTOR FOR ADMIN FORMS
+   (Mencegah penekanan tombol Simpan berulang kali & hemat Egress)
+   ============================================================ */
+function protectSubmitButton(formEl) {
+  if (!formEl) return;
+  const submitBtn = formEl.querySelector('button[type="submit"], input[type="submit"], .btn-add, .btn-primary');
+  if (!submitBtn || submitBtn.disabled) return;
+
+  const origHtml = submitBtn.innerHTML;
+  submitBtn.disabled = true;
+  submitBtn.style.opacity = '0.75';
+  submitBtn.style.cursor = 'not-allowed';
+  submitBtn.innerHTML = '⏳ <span>MENYIMPAN...</span>';
+
+  setTimeout(() => {
+    submitBtn.disabled = false;
+    submitBtn.style.opacity = '1';
+    submitBtn.style.cursor = 'pointer';
+    submitBtn.innerHTML = origHtml;
+  }, 1200);
+}
+
+// Global submit listener to lock buttons and throttle clicks across all admin panels
+document.addEventListener('submit', (e) => {
+  if (e.target && e.target.tagName === 'FORM') {
+    protectSubmitButton(e.target);
+  }
+}, true);
+
 

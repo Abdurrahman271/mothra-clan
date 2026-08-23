@@ -814,12 +814,13 @@ window.addEventListener('focus', () => {
   syncCmsData();
 });
 
-// Periodic Auto-Sync Background Poll (Jaminan Realtime di HP / Mobile)
+// Periodic Auto-Sync Background Poll (Hemat Egress: Interval 60s & hanya jika tab aktif)
+// Catatan: Pembaruan data instan sudah ditangani oleh Supabase Realtime WebSocket & visibility listener.
 setInterval(() => {
-  if (typeof fetchMothraDataOnline === 'function') {
+  if (document.visibilityState === 'visible' && typeof fetchMothraDataOnline === 'function') {
     fetchMothraDataOnline();
   }
-}, 3000);
+}, 60000);
 
 // Initial run
 syncCmsData();
