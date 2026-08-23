@@ -34,13 +34,25 @@ function showToast(msg) {
 }
 
 function updateOperatorBadge(user) {
-  const badge = document.querySelector('.top-bar [style*="OPERATOR"]');
-  if (badge && user) {
-    const freshUser = (db && db.users ? db.users.find(u => u.id === user.id || u.email.toLowerCase() === user.email.toLowerCase()) : null) || user;
-    const roleName = freshUser.role || 'ADMIN';
-    const roleColor = (typeof ROLE_COLORS !== 'undefined' && ROLE_COLORS[roleName]) ? ROLE_COLORS[roleName] : '#D4AF37';
-    badge.innerHTML = `OPERATOR: <span style="color:#93C5FD;">${freshUser.name || freshUser.email}</span> &bull; <span style="color:${roleColor};font-weight:bold;">[${roleName}]</span>`;
-  }
+  const badge = document.getElementById('operatorBadgeText');
+  if (!badge || !user) return;
+
+  // Ambil data terkini dari DB agar role/nama selalu sinkron
+  const freshUser = (db && db.users
+    ? db.users.find(u => u.id === user.id || u.email.toLowerCase() === user.email.toLowerCase())
+    : null) || user;
+
+  const roleName  = freshUser.role  || 'OPERATOR';
+  const nameText  = freshUser.name  || freshUser.email || '—';
+  const emailText = freshUser.email || '';
+  const roleColor = (typeof ROLE_COLORS !== 'undefined' && ROLE_COLORS[roleName])
+    ? ROLE_COLORS[roleName]
+    : '#D4AF37';
+
+  badge.innerHTML =
+    `OPERATOR: <span style="color:#93C5FD;font-weight:600;">${nameText}</span>` +
+    (emailText && emailText !== nameText ? ` <span style="color:#64748B;font-size:0.82em;">&lt;${emailText}&gt;</span>` : '') +
+    ` &bull; <span style="color:${roleColor};font-weight:700;letter-spacing:0.04em;">[${roleName}]</span>`;
 }
 
 function checkAuth() {
