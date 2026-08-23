@@ -844,6 +844,21 @@ function fallbackRestSave(config, data) {
 // Fungsi simpan data: Menyimpan ke memory & LocalStorage secara instan, dan sync ke Supabase secara debounced & hemat egress
 function saveMothraData(data) {
   try {
+    // Verifikasi izin penulisan (Write Permission) jika login di Admin Panel
+    if (typeof getCurrentUser === 'function' && typeof getUserEffectivePermissions === 'function') {
+      const curUser = getCurrentUser();
+      if (curUser) {
+        const freshUser = (data && data.users ? data.users.find(u => u.id === curUser.id || u.email.toLowerCase() === curUser.email.toLowerCase()) : null) || curUser;
+        const perms = getUserEffectivePermissions(freshUser);
+        if (!perms.canWrite) {
+          if (typeof showToast === 'function') {
+            showToast('🔒 [AKSES DITOLAK] Akun dengan role ' + (freshUser.role || 'VIEWER') + ' tidak memiliki izin untuk menyimpan perubahan data.');
+          }
+          return false;
+        }
+      }
+    }
+
     // Sanitasi data menyeluruh sebelum disimpan
     sanitizeDataDeep(data);
 

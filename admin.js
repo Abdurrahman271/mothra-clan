@@ -35,7 +35,12 @@ function showToast(msg) {
 
 function updateOperatorBadge(user) {
   const badge = document.querySelector('.top-bar [style*="OPERATOR"]');
-  if (badge && user) badge.textContent = `OPERATOR: ${user.email} [${user.role || 'ADMIN'}]`;
+  if (badge && user) {
+    const freshUser = (db && db.users ? db.users.find(u => u.id === user.id || u.email.toLowerCase() === user.email.toLowerCase()) : null) || user;
+    const roleName = freshUser.role || 'ADMIN';
+    const roleColor = (typeof ROLE_COLORS !== 'undefined' && ROLE_COLORS[roleName]) ? ROLE_COLORS[roleName] : '#D4AF37';
+    badge.innerHTML = `OPERATOR: <span style="color:#93C5FD;">${freshUser.name || freshUser.email}</span> &bull; <span style="color:${roleColor};font-weight:bold;">[${roleName}]</span>`;
+  }
 }
 
 function checkAuth() {
@@ -63,8 +68,10 @@ function checkAuth() {
   if (isAuth) {
     loginScreen.classList.add('hidden');
     dashboardWrap.classList.remove('hidden');
-    updateOperatorBadge(getCurrentUser());
+    const curUser = getCurrentUser();
+    updateOperatorBadge(curUser);
     initDashboard();
+    applyRolePermissions();
   } else {
     loginScreen.classList.remove('hidden');
     dashboardWrap.classList.add('hidden');
@@ -402,6 +409,19 @@ const mobileLogoutBtn = document.getElementById('mobileLogoutBtn');
 
 function switchAdminPanel(panelId) {
   if (!panelId) return;
+
+  // Verifikasi izin akses modul pengguna aktif
+  const currentUser = getCurrentUser();
+  if (currentUser) {
+    const freshUser = (db && db.users ? db.users.find(u => u.id === currentUser.id || u.email.toLowerCase() === currentUser.email.toLowerCase()) : null) || currentUser;
+    if (typeof getUserEffectivePermissions === 'function') {
+      const perms = getUserEffectivePermissions(freshUser);
+      if (!perms.panels.includes(panelId)) {
+        showToast(`🚫 [AKSES DITOLAK] Role "${freshUser.role || 'OPERATOR'}" tidak memiliki izin untuk membuka modul ini.`);
+        return;
+      }
+    }
+  }
 
   // Update Sidebar Nav
   navItems.forEach((b) => b.classList.toggle('active', b.dataset.panel === panelId));
@@ -2640,13 +2660,76 @@ document.querySelectorAll('.btn-cancel').forEach((btn) => {
 });
 
 /* ============================================================
-   USER MANAGEMENT CRUD
+   ROLE-BASED ACCESS CONTROL (RBAC) & USER MANAGEMENT ENGINE
+   (Hak Akses & Role Berfungsi Dinamis per Operator)
    ============================================================ */
+const ALL_ADMIN_PANELS = [
+  'panelOverview', 'panelBranding', 'panelPartnership', 'panelSchedule',
+  'panelCategories', 'panelRoles', 'panelLineup', 'panelDossier',
+  'panelRecord', 'panelGallery', 'panelVideos', 'panelAds',
+  'panelDatabase', 'panelBackup', 'panelUsers'
+];
+
+const ROLE_PERMISSIONS = {
+  'SUPER ADMIN': {
+    label: 'SUPER ADMIN (Full Access)',
+    color: '#D4AF37',
+    canWrite: true,
+    canManageUsers: true,
+    canManageSystem: true,
+    panels: [...ALL_ADMIN_PANELS]
+  },
+  'TACTICAL OPERATOR': {
+    label: 'TACTICAL OPERATOR (Read + Edit Operasional)',
+    color: '#60A5FA',
+    canWrite: true,
+    canManageUsers: false,
+    canManageSystem: false,
+    panels: [
+      'panelOverview', 'panelPartnership', 'panelSchedule',
+      'panelCategories', 'panelRoles', 'panelLineup', 'panelDossier',
+      'panelRecord', 'panelGallery', 'panelVideos', 'panelAds'
+    ]
+  },
+  'CONTENT WRITER': {
+    label: 'CONTENT WRITER (Konten & Media Saja)',
+    color: '#10B981',
+    canWrite: true,
+    canManageUsers: false,
+    canManageSystem: false,
+    panels: [
+      'panelOverview', 'panelGallery', 'panelVideos',
+      'panelSchedule', 'panelRecord', 'panelDossier'
+    ]
+  },
+  'VIEWER': {
+    label: 'VIEWER (Read Only / Hanya Lihat)',
+    color: '#94A3B8',
+    canWrite: false,
+    canManageUsers: false,
+    canManageSystem: false,
+    panels: [
+      'panelOverview', 'panelBranding', 'panelPartnership', 'panelSchedule',
+      'panelCategories', 'panelRoles', 'panelLineup', 'panelDossier',
+      'panelRecord', 'panelGallery', 'panelVideos', 'panelAds'
+    ]
+  },
+  'CUSTOM': {
+    label: 'CUSTOM (Hak Akses Mandiri)',
+    color: '#F59E0B',
+    canWrite: true,
+    canManageUsers: false,
+    canManageSystem: false,
+    panels: []
+  }
+};
+
 const ROLE_COLORS = {
   'SUPER ADMIN': '#D4AF37',
   'TACTICAL OPERATOR': '#60A5FA',
   'CONTENT WRITER': '#10B981',
-  'VIEWER': '#94A3B8'
+  'VIEWER': '#94A3B8',
+  'CUSTOM': '#F59E0B'
 };
 
 function generateUserId() {
@@ -2656,6 +2739,126 @@ function generateUserId() {
 function maskPassword(pwd) {
   if (!pwd) return '—';
   return pwd.slice(0, 2) + '•'.repeat(Math.max(4, pwd.length - 2));
+}
+
+// Menghitung hak akses efektif dari user (Preset / Custom Matrix)
+function getUserEffectivePermissions(user) {
+  if (!user) {
+    return { canWrite: false, canManageUsers: false, canManageSystem: false, panels: [] };
+  }
+
+  // 1. Super Admin Utama (u_1) selalu Full Access
+  if (user.id === 'u_1' || user.role === 'SUPER ADMIN') {
+    return {
+      canWrite: true,
+      canManageUsers: true,
+      canManageSystem: true,
+      panels: [...ALL_ADMIN_PANELS]
+    };
+  }
+
+  // 2. Custom Role / Array Custom Panels
+  if (user.role === 'CUSTOM' || Array.isArray(user.customPanels)) {
+    const panels = Array.isArray(user.customPanels) ? user.customPanels : [];
+    return {
+      canWrite: user.canWrite !== false,
+      canManageUsers: panels.includes('panelUsers'),
+      canManageSystem: panels.includes('panelDatabase') || panels.includes('panelBackup'),
+      panels: panels.length > 0 ? panels : ['panelOverview']
+    };
+  }
+
+  // 3. Preset Roles Standar
+  const preset = ROLE_PERMISSIONS[user.role] || ROLE_PERMISSIONS['VIEWER'];
+  return {
+    canWrite: user.canWrite !== undefined ? user.canWrite : preset.canWrite,
+    canManageUsers: preset.canManageUsers,
+    canManageSystem: preset.canManageSystem,
+    panels: preset.panels
+  };
+}
+
+// Terapkan izin hak akses role ke seluruh antarmuka admin
+function applyRolePermissions() {
+  const currentUser = getCurrentUser();
+  if (!currentUser) return;
+
+  const freshUser = (db && db.users ? db.users.find(u => u.id === currentUser.id || u.email.toLowerCase() === currentUser.email.toLowerCase()) : null) || currentUser;
+  const perms = getUserEffectivePermissions(freshUser);
+
+  // 1. Filter Sidebar Nav items
+  let firstAllowedPanel = null;
+  document.querySelectorAll('.nav-item').forEach((btn) => {
+    const pId = btn.dataset.panel;
+    const allowed = perms.panels.includes(pId);
+    btn.style.display = allowed ? '' : 'none';
+    if (allowed && !firstAllowedPanel) firstAllowedPanel = pId;
+  });
+
+  // 2. Filter Mobile Quick-Nav items
+  document.querySelectorAll('.mobile-quick-item').forEach((btn) => {
+    const pId = btn.dataset.panel;
+    const allowed = perms.panels.includes(pId);
+    btn.style.display = allowed ? '' : 'none';
+  });
+
+  // 3. Sembunyikan header section di sidebar jika semua child di bawahnya tersembunyi
+  document.querySelectorAll('.sidebar-nav-section').forEach((sec) => {
+    let nextEl = sec.nextElementSibling;
+    let hasVisible = false;
+    while (nextEl && !nextEl.classList.contains('sidebar-nav-section')) {
+      if (nextEl.classList.contains('nav-item') && nextEl.style.display !== 'none') {
+        hasVisible = true;
+        break;
+      }
+      nextEl = nextEl.nextElementSibling;
+    }
+    sec.style.display = hasVisible ? '' : 'none';
+  });
+
+  // 4. Pastikan panel yang sedang aktif diizinkan
+  const activePanel = document.querySelector('.admin-panel.active');
+  if (activePanel && !perms.panels.includes(activePanel.id)) {
+    switchAdminPanel(firstAllowedPanel || 'panelOverview');
+  }
+
+  // 5. Terapkan Pembatasan Read-Only (Hanya Lihat) jika canWrite === false
+  let readOnlyNotice = document.getElementById('roleReadOnlyNotice');
+  if (!perms.canWrite) {
+    if (!readOnlyNotice) {
+      readOnlyNotice = document.createElement('div');
+      readOnlyNotice.id = 'roleReadOnlyNotice';
+      readOnlyNotice.style.cssText = 'background:rgba(239,68,68,0.14);border:1px solid #EF4444;color:#FCA5A5;padding:0.75rem 1.25rem;border-radius:6px;margin-bottom:1.5rem;font-family:var(--font-mono);font-size:0.82rem;display:flex;align-items:center;gap:0.75rem;box-shadow:0 0 15px rgba(239,68,68,0.15);';
+      readOnlyNotice.innerHTML = `<span>🔒 <strong>MODE READ-ONLY AKTIF</strong>: Akun Anda memiliki role <strong>${freshUser.role || 'VIEWER'}</strong> (Hak Akses Hanya Lihat). Tombol Simpan, Tambah, Edit, dan Hapus dinonaktifkan demi keamanan.</span>`;
+      const topBar = document.querySelector('.top-bar');
+      if (topBar && topBar.parentNode) {
+        topBar.parentNode.insertBefore(readOnlyNotice, topBar.nextSibling);
+      }
+    } else {
+      readOnlyNotice.style.display = 'flex';
+      readOnlyNotice.innerHTML = `<span>🔒 <strong>MODE READ-ONLY AKTIF</strong>: Akun Anda memiliki role <strong>${freshUser.role || 'VIEWER'}</strong> (Hak Akses Hanya Lihat). Tombol Simpan, Tambah, Edit, dan Hapus dinonaktifkan demi keamanan.</span>`;
+    }
+
+    // Nonaktifkan tombol aksi tambah/edit/hapus dan input file
+    document.querySelectorAll('.btn-add, .btn-primary, button[type="submit"], input[type="file"], .btn-action-del, .btn-action-edit').forEach((el) => {
+      if (el.id !== 'logoutBtn' && el.id !== 'mobileLogoutBtn' && !el.closest('#loginForm') && el.id !== 'userModalCancelBtn') {
+        el.disabled = true;
+        el.style.opacity = '0.4';
+        el.style.cursor = 'not-allowed';
+        el.title = 'Aksi dinonaktifkan untuk role Read-Only (Hanya Lihat).';
+      }
+    });
+  } else {
+    if (readOnlyNotice) readOnlyNotice.style.display = 'none';
+    document.querySelectorAll('.btn-add, .btn-primary, button[type="submit"], input[type="file"], .btn-action-del, .btn-action-edit').forEach((el) => {
+      if (el.id !== 'logoutBtn' && el.id !== 'mobileLogoutBtn') {
+        el.disabled = false;
+        el.style.opacity = '1';
+        el.style.cursor = 'pointer';
+        el.removeAttribute('title');
+      }
+    });
+  }
 }
 
 function renderUsersTable() {
@@ -2697,6 +2900,9 @@ function renderUsersTable() {
     const roleColor = ROLE_COLORS[u.role] || '#94A3B8';
     const statusColor = u.status === 'ACTIVE' ? '#10B981' : '#EF4444';
     const statusBg = u.status === 'ACTIVE' ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)';
+    const writeBadge = u.canWrite === false ? '<span style="color:#EF4444;font-size:0.65rem;margin-left:0.3rem;">[READ-ONLY]</span>' : '';
+    const panelCount = (u.customPanels && Array.isArray(u.customPanels)) ? u.customPanels.length : (ROLE_PERMISSIONS[u.role] ? ROLE_PERMISSIONS[u.role].panels.length : 0);
+
     return `
       <tr>
         <td style="color:var(--gray-light);font-size:0.8rem;">${globalIdx + 1}</td>
@@ -2711,7 +2917,10 @@ function renderUsersTable() {
         </td>
         <td style="font-family:var(--font-mono);font-size:0.8rem;color:#93C5FD;">${u.email || '—'}</td>
         <td>
-          <span style="background:${roleColor}22;color:${roleColor};border:1px solid ${roleColor}55;padding:0.2rem 0.6rem;border-radius:4px;font-family:var(--font-mono);font-size:0.7rem;font-weight:700;white-space:nowrap;">${u.role || 'VIEWER'}</span>
+          <div style="display:flex;align-items:center;gap:0.3rem;flex-wrap:wrap;">
+            <span style="background:${roleColor}22;color:${roleColor};border:1px solid ${roleColor}55;padding:0.2rem 0.6rem;border-radius:4px;font-family:var(--font-mono);font-size:0.7rem;font-weight:700;white-space:nowrap;">${u.role || 'VIEWER'}${writeBadge}</span>
+            <span style="font-size:0.68rem;color:var(--gray-light);font-family:var(--font-mono);">(${panelCount} Modul)</span>
+          </div>
         </td>
         <td>
           <span style="background:${statusBg};color:${statusColor};border:1px solid ${statusColor}55;padding:0.2rem 0.6rem;border-radius:4px;font-family:var(--font-mono);font-size:0.7rem;font-weight:700;">${u.status || 'ACTIVE'}</span>
@@ -2729,7 +2938,94 @@ function renderUsersTable() {
   renderTablePagination('usersPagination', users.length, 'users', renderUsersTable);
 }
 
+// Sinkronisasi Preset Role ke Checkbox Matriks di Modal
+function applyRolePresetToModal(roleKey, customWrite, customPanels) {
+  const writeCheckbox = document.getElementById('perm_can_write');
+  const panelCheckboxes = document.querySelectorAll('.perm-panel-checkbox');
+  const hintEl = document.getElementById('roleBadgeHint');
+
+  if (roleKey === 'CUSTOM' || Array.isArray(customPanels)) {
+    if (hintEl) hintEl.textContent = 'MODE: CUSTOM (Disesuaikan)';
+    if (writeCheckbox) writeCheckbox.checked = customWrite !== false;
+    const selected = Array.isArray(customPanels) ? customPanels : [];
+    panelCheckboxes.forEach((cb) => {
+      cb.checked = selected.includes(cb.dataset.panel);
+    });
+    return;
+  }
+
+  const preset = ROLE_PERMISSIONS[roleKey] || ROLE_PERMISSIONS['VIEWER'];
+  if (hintEl) hintEl.textContent = 'PRESET: ' + roleKey;
+  if (writeCheckbox) writeCheckbox.checked = customWrite !== undefined ? customWrite : preset.canWrite;
+
+  panelCheckboxes.forEach((cb) => {
+    cb.checked = preset.panels.includes(cb.dataset.panel);
+  });
+}
+
+// Cek apakah kombinasi checkbox saat ini cocok dengan preset tertentu
+function checkMatchingRolePreset() {
+  const writeCheckbox = document.getElementById('perm_can_write');
+  const roleSelect = document.getElementById('userRole');
+  const hintEl = document.getElementById('roleBadgeHint');
+  const checkedPanels = Array.from(document.querySelectorAll('.perm-panel-checkbox:checked')).map(cb => cb.dataset.panel);
+  const canWrite = writeCheckbox ? writeCheckbox.checked : true;
+
+  // Cek preset yang cocok
+  for (const [key, preset] of Object.entries(ROLE_PERMISSIONS)) {
+    if (key === 'CUSTOM') continue;
+    if (preset.canWrite === canWrite &&
+        preset.panels.length === checkedPanels.length &&
+        preset.panels.every(p => checkedPanels.includes(p))) {
+      if (roleSelect) roleSelect.value = key;
+      if (hintEl) hintEl.textContent = 'PRESET: ' + key;
+      return key;
+    }
+  }
+
+  // Jika tidak cocok dengan preset manapun, ubah ke CUSTOM
+  if (roleSelect) roleSelect.value = 'CUSTOM';
+  if (hintEl) hintEl.textContent = 'MODE: CUSTOM (Disesuaikan)';
+  return 'CUSTOM';
+}
+
+// Pasang event listener pada dropdown Role dan Checkbox Matriks
+function setupRoleMatrixEventListeners() {
+  const roleSelect = document.getElementById('userRole');
+  const writeCheckbox = document.getElementById('perm_can_write');
+  const panelCheckboxes = document.querySelectorAll('.perm-panel-checkbox');
+
+  if (roleSelect) {
+    roleSelect.addEventListener('change', (e) => {
+      applyRolePresetToModal(e.target.value);
+    });
+  }
+
+  if (writeCheckbox) {
+    writeCheckbox.addEventListener('change', () => {
+      checkMatchingRolePreset();
+    });
+  }
+
+  panelCheckboxes.forEach((cb) => {
+    cb.addEventListener('change', () => {
+      checkMatchingRolePreset();
+    });
+  });
+}
+
 function openUserModal(mode, userId) {
+  // Verifikasi izin Super Admin / Manage Users
+  const currentUser = getCurrentUser();
+  if (currentUser) {
+    const freshUser = (db && db.users ? db.users.find(u => u.id === currentUser.id || u.email.toLowerCase() === currentUser.email.toLowerCase()) : null) || currentUser;
+    const perms = getUserEffectivePermissions(freshUser);
+    if (!perms.canManageUsers) {
+      showToast('🚫 [AKSES DITOLAK] Hanya SUPER ADMIN yang memiliki wewenang mengelola akun operator.');
+      return;
+    }
+  }
+
   const modal = document.getElementById('userCrudModal');
   const title = document.getElementById('userModalTitle');
   const formAlert = document.getElementById('userFormAlert');
@@ -2753,10 +3049,16 @@ function openUserModal(mode, userId) {
     document.getElementById('userRole').value = user.role || 'TACTICAL OPERATOR';
     document.getElementById('userStatus').value = user.status || 'ACTIVE';
     document.getElementById('userNotes').value = user.notes || '';
+    
+    // Terapkan izin modul yang tersimpan
+    applyRolePresetToModal(user.role || 'TACTICAL OPERATOR', user.canWrite, user.customPanels);
+
     const submitBtn = document.getElementById('userModalSubmitBtn');
     if (submitBtn) submitBtn.textContent = '💾 SIMPAN PERUBAHAN';
   } else {
     if (title) title.textContent = 'TAMBAH ADMIN BARU';
+    document.getElementById('userRole').value = 'TACTICAL OPERATOR';
+    applyRolePresetToModal('TACTICAL OPERATOR');
     const submitBtn = document.getElementById('userModalSubmitBtn');
     if (submitBtn) submitBtn.textContent = '💾 TAMBAH SEKARANG';
   }
@@ -2765,6 +3067,21 @@ function openUserModal(mode, userId) {
 }
 
 function deleteUser(userId) {
+  const currentUser = getCurrentUser();
+  if (currentUser) {
+    const freshUser = (db && db.users ? db.users.find(u => u.id === currentUser.id || u.email.toLowerCase() === currentUser.email.toLowerCase()) : null) || currentUser;
+    const perms = getUserEffectivePermissions(freshUser);
+    if (!perms.canManageUsers) {
+      showToast('🚫 [AKSES DITOLAK] Hanya SUPER ADMIN yang memiliki wewenang menghapus akun operator.');
+      return;
+    }
+  }
+
+  if (userId === 'u_1') {
+    showToast('⚠️ Akun Super Admin Utama (u_1) dilindungi dan tidak dapat dihapus.');
+    return;
+  }
+
   if (!confirm('Yakin ingin menghapus akun admin ini? Tindakan tidak bisa dibatalkan.')) return;
   if (!db.users) return;
   const idx = db.users.findIndex(u => u.id === userId);
@@ -2811,10 +3128,18 @@ if (btnRefreshUsers) {
 const userModalCancelBtn = document.getElementById('userModalCancelBtn');
 if (userModalCancelBtn) {
   userModalCancelBtn.addEventListener('click', () => {
-    const modal = document.getElementById('userCrudModal');
-    if (modal) modal.classList.remove('open');
+    closeUserModal();
   });
 }
+
+function closeUserModal() {
+  const modal = document.getElementById('userCrudModal');
+  if (modal) modal.classList.remove('open');
+}
+window.closeUserModal = closeUserModal;
+
+// Inisialisasi Event Listener Matrix Role saat DOM siap
+setupRoleMatrixEventListeners();
 
 // User CRUD Form Submit
 const userCrudForm = document.getElementById('userCrudForm');
@@ -2834,9 +3159,12 @@ if (userCrudForm) {
     const role    = document.getElementById('userRole').value;
     const status  = document.getElementById('userStatus').value;
     const notes   = (document.getElementById('userNotes').value || '').trim();
+    const canWrite = document.getElementById('perm_can_write') ? document.getElementById('perm_can_write').checked : true;
+    const customPanels = Array.from(document.querySelectorAll('.perm-panel-checkbox:checked')).map(cb => cb.dataset.panel);
 
     if (!name) return showFormErr('Nama operator wajib diisi.');
     if (!email || !email.includes('@')) return showFormErr('Email login harus valid.');
+    if (customPanels.length === 0) return showFormErr('Pilih minimal 1 modul hak akses yang dapat dibuka oleh operator.');
 
     if (!db.users) db.users = [];
     const isEdit = !!id;
@@ -2858,34 +3186,40 @@ if (userCrudForm) {
       db.users[idx].role   = role;
       db.users[idx].status = status;
       db.users[idx].notes  = notes;
+      db.users[idx].canWrite = canWrite;
+      db.users[idx].customPanels = customPanels;
+
+      // Jika user mengedit akunnya sendiri, perbarui sesi aktif
+      const cur = getCurrentUser();
+      if (cur && (cur.id === id || cur.email === email)) {
+        sessionStorage.setItem(AUTH_USER_KEY, JSON.stringify(db.users[idx]));
+        updateOperatorBadge(db.users[idx]);
+        applyRolePermissions();
+      }
     } else {
       if (!pwd) return showFormErr('Password wajib diisi untuk akun baru.');
       if (pwd.length < 6) return showFormErr('Password minimal 6 karakter.');
       if (pwd !== pwdConf) return showFormErr('Konfirmasi password tidak cocok.');
       db.users.push({
-        id:        generateUserId(),
-        name:      name,
-        email:     email,
-        password:  pwd,
-        role:      role,
-        status:    status,
-        notes:     notes,
-        avatar:    'assets/mothra-logo.png',
-        createdAt: new Date().toISOString().split('T')[0]
+        id:           generateUserId(),
+        name:         name,
+        email:        email,
+        password:     pwd,
+        role:         role,
+        status:       status,
+        notes:        notes,
+        canWrite:     canWrite,
+        customPanels: customPanels,
+        avatar:       'assets/mothra-logo.png',
+        createdAt:    new Date().toISOString().split('T')[0]
       });
     }
 
     saveMothraData(db);
     renderUsersTable();
-    const modal = document.getElementById('userCrudModal');
-    if (modal) modal.classList.remove('open');
-    showToast(isEdit ? '✅ Data operator berhasil diperbarui dan disinkronkan ke Supabase!' : '✅ Akun admin baru berhasil ditambahkan dan disinkronkan ke Supabase!');
+    closeUserModal();
+    showToast(isEdit ? '✅ Data operator berhasil diperbarui & disinkronkan ke Supabase!' : '✅ Akun admin baru berhasil ditambahkan & disinkronkan ke Supabase!');
   });
-}
-
-function closeUserModal() {
-  const modal = document.getElementById('userCrudModal');
-  if (modal) modal.classList.remove('open');
 }
 
 // ============================================================

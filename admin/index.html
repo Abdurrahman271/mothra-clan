@@ -1405,12 +1405,13 @@
 
         <div class="form-row-2">
           <div class="form-group">
-            <label class="form-label">ROLE / HAK AKSES *</label>
+            <label class="form-label">ROLE / PRESET HAK AKSES *</label>
             <select id="userRole" class="form-input" required>
               <option value="SUPER ADMIN">SUPER ADMIN (Full Access)</option>
-              <option value="TACTICAL OPERATOR">TACTICAL OPERATOR (Read + Edit)</option>
-              <option value="CONTENT WRITER">CONTENT WRITER (Konten Saja)</option>
-              <option value="VIEWER">VIEWER (Read Only)</option>
+              <option value="TACTICAL OPERATOR">TACTICAL OPERATOR (Read + Edit Operasional)</option>
+              <option value="CONTENT WRITER">CONTENT WRITER (Konten &amp; Media Saja)</option>
+              <option value="VIEWER">VIEWER (Read Only / Hanya Lihat)</option>
+              <option value="CUSTOM">CUSTOM (Pilih Hak Akses Mandiri)</option>
             </select>
           </div>
           <div class="form-group">
@@ -1419,6 +1420,75 @@
               <option value="ACTIVE">ACTIVE (Dapat Login)</option>
               <option value="INACTIVE">INACTIVE (Diblokir)</option>
             </select>
+          </div>
+        </div>
+
+        <!-- Custom Role & Module Permissions Box -->
+        <div class="form-group" style="background:rgba(18,18,24,0.85);border:1px solid rgba(212,175,55,0.3);border-radius:6px;padding:1rem;margin-bottom:1rem;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.6rem;flex-wrap:wrap;gap:0.5rem;">
+            <label class="form-label" style="margin-bottom:0;color:var(--gold,#D4AF37);font-size:0.85rem;">⚙️ SESUAIKAN HAK AKSES MODUL (PERMISSIONS MATRIX)</label>
+            <span id="roleBadgeHint" style="font-family:var(--font-mono);font-size:0.7rem;color:var(--gold);background:rgba(212,175,55,0.12);border:1px solid rgba(212,175,55,0.3);padding:0.15rem 0.5rem;border-radius:3px;">PRESET: SUPER ADMIN</span>
+          </div>
+          <p style="font-size:0.75rem;color:var(--gray-light,#94A3B8);margin:0 0 0.75rem 0;line-height:1.4;">
+            Centang modul yang diizinkan untuk diakses operator ini. Memilih preset di atas akan mengisi otomatis izin di bawah, atau sesuaikan sendiri untuk mengaktifkan mode <strong>CUSTOM</strong>:
+          </p>
+
+          <!-- Master Write Access Toggle -->
+          <div style="background:rgba(212,175,55,0.08);border:1px solid rgba(212,175,55,0.3);border-radius:4px;padding:0.5rem 0.75rem;margin-bottom:0.75rem;display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <div style="font-weight:700;font-size:0.82rem;color:#FFF;">✏️ IZIN TULIS / EDIT DATA (WRITE PERMISSION)</div>
+              <div style="font-size:0.7rem;color:var(--gray-light);">Jika tidak dicentang, akun ini otomatis menjadi Read-Only (tanpa tombol Simpan/Tambah/Hapus).</div>
+            </div>
+            <input type="checkbox" id="perm_can_write" checked style="width:18px;height:18px;cursor:pointer;accent-color:var(--gold,#D4AF37);" />
+          </div>
+
+          <!-- Module Checkbox Matrix -->
+          <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(160px, 1fr));gap:0.4rem;" id="userPermissionsGrid">
+            <label style="display:flex;align-items:center;gap:0.45rem;font-size:0.75rem;color:#E2E8F0;background:#14141B;border:1px solid var(--border-dim);padding:0.35rem 0.5rem;border-radius:4px;cursor:pointer;">
+              <input type="checkbox" class="perm-panel-checkbox" data-panel="panelOverview" checked style="accent-color:var(--gold);" /> 📊 Overview
+            </label>
+            <label style="display:flex;align-items:center;gap:0.45rem;font-size:0.75rem;color:#E2E8F0;background:#14141B;border:1px solid var(--border-dim);padding:0.35rem 0.5rem;border-radius:4px;cursor:pointer;">
+              <input type="checkbox" class="perm-panel-checkbox" data-panel="panelBranding" checked style="accent-color:var(--gold);" /> 🛡️ Branding &amp; Logo
+            </label>
+            <label style="display:flex;align-items:center;gap:0.45rem;font-size:0.75rem;color:#E2E8F0;background:#14141B;border:1px solid var(--border-dim);padding:0.35rem 0.5rem;border-radius:4px;cursor:pointer;">
+              <input type="checkbox" class="perm-panel-checkbox" data-panel="panelPartnership" checked style="accent-color:var(--gold);" /> 🤝 The Alliance
+            </label>
+            <label style="display:flex;align-items:center;gap:0.45rem;font-size:0.75rem;color:#E2E8F0;background:#14141B;border:1px solid var(--border-dim);padding:0.35rem 0.5rem;border-radius:4px;cursor:pointer;">
+              <input type="checkbox" class="perm-panel-checkbox" data-panel="panelSchedule" checked style="accent-color:var(--gold);" /> 📅 Match Schedule
+            </label>
+            <label style="display:flex;align-items:center;gap:0.45rem;font-size:0.75rem;color:#E2E8F0;background:#14141B;border:1px solid var(--border-dim);padding:0.35rem 0.5rem;border-radius:4px;cursor:pointer;">
+              <input type="checkbox" class="perm-panel-checkbox" data-panel="panelCategories" checked style="accent-color:var(--gold);" /> 🏆 Kategori
+            </label>
+            <label style="display:flex;align-items:center;gap:0.45rem;font-size:0.75rem;color:#E2E8F0;background:#14141B;border:1px solid var(--border-dim);padding:0.35rem 0.5rem;border-radius:4px;cursor:pointer;">
+              <input type="checkbox" class="perm-panel-checkbox" data-panel="panelRoles" checked style="accent-color:var(--gold);" /> 🎯 Role Tactical
+            </label>
+            <label style="display:flex;align-items:center;gap:0.45rem;font-size:0.75rem;color:#E2E8F0;background:#14141B;border:1px solid var(--border-dim);padding:0.35rem 0.5rem;border-radius:4px;cursor:pointer;">
+              <input type="checkbox" class="perm-panel-checkbox" data-panel="panelLineup" checked style="accent-color:var(--gold);" /> 🎮 The Lineup
+            </label>
+            <label style="display:flex;align-items:center;gap:0.45rem;font-size:0.75rem;color:#E2E8F0;background:#14141B;border:1px solid var(--border-dim);padding:0.35rem 0.5rem;border-radius:4px;cursor:pointer;">
+              <input type="checkbox" class="perm-panel-checkbox" data-panel="panelDossier" checked style="accent-color:var(--gold);" /> 📜 The Dossier
+            </label>
+            <label style="display:flex;align-items:center;gap:0.45rem;font-size:0.75rem;color:#E2E8F0;background:#14141B;border:1px solid var(--border-dim);padding:0.35rem 0.5rem;border-radius:4px;cursor:pointer;">
+              <input type="checkbox" class="perm-panel-checkbox" data-panel="panelRecord" checked style="accent-color:var(--gold);" /> 🏅 The Record
+            </label>
+            <label style="display:flex;align-items:center;gap:0.45rem;font-size:0.75rem;color:#E2E8F0;background:#14141B;border:1px solid var(--border-dim);padding:0.35rem 0.5rem;border-radius:4px;cursor:pointer;">
+              <input type="checkbox" class="perm-panel-checkbox" data-panel="panelGallery" checked style="accent-color:var(--gold);" /> 📸 Galeri
+            </label>
+            <label style="display:flex;align-items:center;gap:0.45rem;font-size:0.75rem;color:#E2E8F0;background:#14141B;border:1px solid var(--border-dim);padding:0.35rem 0.5rem;border-radius:4px;cursor:pointer;">
+              <input type="checkbox" class="perm-panel-checkbox" data-panel="panelVideos" checked style="accent-color:var(--gold);" /> 🎬 Media / Videos
+            </label>
+            <label style="display:flex;align-items:center;gap:0.45rem;font-size:0.75rem;color:#E2E8F0;background:#14141B;border:1px solid var(--border-dim);padding:0.35rem 0.5rem;border-radius:4px;cursor:pointer;">
+              <input type="checkbox" class="perm-panel-checkbox" data-panel="panelAds" checked style="accent-color:var(--gold);" /> 📢 Iklan &amp; Sponsor
+            </label>
+            <label style="display:flex;align-items:center;gap:0.45rem;font-size:0.75rem;color:#FCA5A5;background:#1A1114;border:1px solid rgba(239,68,68,0.3);padding:0.35rem 0.5rem;border-radius:4px;cursor:pointer;">
+              <input type="checkbox" class="perm-panel-checkbox" data-panel="panelDatabase" checked style="accent-color:#EF4444;" /> ☁️ Database
+            </label>
+            <label style="display:flex;align-items:center;gap:0.45rem;font-size:0.75rem;color:#FCA5A5;background:#1A1114;border:1px solid rgba(239,68,68,0.3);padding:0.35rem 0.5rem;border-radius:4px;cursor:pointer;">
+              <input type="checkbox" class="perm-panel-checkbox" data-panel="panelBackup" checked style="accent-color:#EF4444;" /> 💾 Backup
+            </label>
+            <label style="display:flex;align-items:center;gap:0.45rem;font-size:0.75rem;color:#FCA5A5;background:#1A1114;border:1px solid rgba(239,68,68,0.3);padding:0.35rem 0.5rem;border-radius:4px;cursor:pointer;">
+              <input type="checkbox" class="perm-panel-checkbox" data-panel="panelUsers" checked style="accent-color:#EF4444;" /> 👥 Management User
+            </label>
           </div>
         </div>
 

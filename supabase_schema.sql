@@ -147,6 +147,8 @@ CREATE TABLE IF NOT EXISTS public.mothra_users (
     email TEXT NOT NULL UNIQUE,
     password TEXT NOT NULL,
     role TEXT NOT NULL DEFAULT 'TACTICAL OPERATOR',
+    can_write BOOLEAN DEFAULT true,
+    custom_panels JSONB,
     status TEXT DEFAULT 'ACTIVE',
     notes TEXT,
     avatar TEXT,
@@ -154,8 +156,8 @@ CREATE TABLE IF NOT EXISTS public.mothra_users (
 );
 
 -- Seed initial Super Admin
-INSERT INTO public.mothra_users (id, name, email, password, role, status, created_at)
-VALUES ('u_1', 'Abdurrahman', 'abdurrrahman09@gmail.com', 'Senayan@18', 'SUPER ADMIN', 'ACTIVE', '2026-08-20')
+INSERT INTO public.mothra_users (id, name, email, password, role, can_write, status, created_at)
+VALUES ('u_1', 'Abdurrahman', 'abdurrrahman09@gmail.com', 'Senayan@18', 'SUPER ADMIN', true, 'ACTIVE', '2026-08-20')
 ON CONFLICT (id) DO NOTHING;
 
 -- 3. KONFIGURASI ROW LEVEL SECURITY (RLS) & POLICIES (BEBAS WARNING LINTER)
