@@ -158,12 +158,13 @@ INSERT INTO public.mothra_users (id, name, email, password, role, status, create
 VALUES ('u_1', 'Abdurrahman', 'abdurrrahman09@gmail.com', 'Senayan@18', 'SUPER ADMIN', 'ACTIVE', '2026-08-20')
 ON CONFLICT (id) DO NOTHING;
 
--- 3. KONFIGURASI ROW LEVEL SECURITY (RLS) & POLICIES
+-- 3. KONFIGURASI ROW LEVEL SECURITY (RLS) & POLICIES (BEBAS WARNING LINTER)
 -- Aktifkan RLS di setiap tabel
 ALTER TABLE public.mothra_cms ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.mothra_branding ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.mothra_users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.mothra_categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.mothra_roles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.mothra_lineup ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.mothra_schedule_matches ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.mothra_partnerships ENABLE ROW LEVEL SECURITY;
@@ -171,55 +172,72 @@ ALTER TABLE public.mothra_records ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.mothra_gallery ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.clan_videos ENABLE ROW LEVEL SECURITY;
 
--- Policies untuk tabel mothra_cms agar client GitHub Pages (role anon) dapat membaca & menulis data
-DROP POLICY IF EXISTS "Allow public read access on mothra_cms" ON public.mothra_cms;
-CREATE POLICY "Allow public read access on mothra_cms" ON public.mothra_cms FOR SELECT USING (true);
+-- Hapus seluruh policy lama secara dinamis untuk mencegah warning overlapping/duplicate permissive policies
+DO $$
+DECLARE
+    pol record;
+BEGIN
+    FOR pol IN 
+        SELECT policyname, tablename 
+        FROM pg_policies 
+        WHERE schemaname = 'public' AND tablename IN (
+            'mothra_cms', 'mothra_branding', 'mothra_users', 'mothra_categories',
+            'mothra_roles', 'mothra_lineup', 'mothra_schedule_matches',
+            'mothra_partnerships', 'mothra_records', 'mothra_gallery', 'clan_videos'
+        )
+    LOOP
+        EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', pol.policyname, pol.tablename);
+    END LOOP;
+END
+$$;
 
-DROP POLICY IF EXISTS "Allow public insert access on mothra_cms" ON public.mothra_cms;
-CREATE POLICY "Allow public insert access on mothra_cms" ON public.mothra_cms FOR INSERT WITH CHECK (true);
+-- Table: mothra_cms
+CREATE POLICY "mothra_cms_select" ON public.mothra_cms FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "mothra_cms_insert" ON public.mothra_cms FOR INSERT TO anon, authenticated WITH CHECK (true);
+CREATE POLICY "mothra_cms_update" ON public.mothra_cms FOR UPDATE TO anon, authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "mothra_cms_delete" ON public.mothra_cms FOR DELETE TO anon, authenticated USING (true);
 
-DROP POLICY IF EXISTS "Allow public update access on mothra_cms" ON public.mothra_cms;
-CREATE POLICY "Allow public update access on mothra_cms" ON public.mothra_cms FOR UPDATE USING (true) WITH CHECK (true);
+-- Table: clan_videos
+CREATE POLICY "clan_videos_select" ON public.clan_videos FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "clan_videos_insert" ON public.clan_videos FOR INSERT TO anon, authenticated WITH CHECK (true);
+CREATE POLICY "clan_videos_update" ON public.clan_videos FOR UPDATE TO anon, authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "clan_videos_delete" ON public.clan_videos FOR DELETE TO anon, authenticated USING (true);
 
-DROP POLICY IF EXISTS "Allow public delete access on mothra_cms" ON public.mothra_cms;
-CREATE POLICY "Allow public delete access on mothra_cms" ON public.mothra_cms FOR DELETE USING (true);
+-- Table: mothra_branding
+CREATE POLICY "mothra_branding_select" ON public.mothra_branding FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "mothra_branding_write" ON public.mothra_branding FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
 
--- Policies untuk tabel clan_videos (Public hanya bisa melihat published = true, admin bisa CRUD)
-DROP POLICY IF EXISTS "Allow public read published clan_videos" ON public.clan_videos;
-CREATE POLICY "Allow public read published clan_videos" ON public.clan_videos FOR SELECT USING (published = true);
+-- Table: mothra_categories
+CREATE POLICY "mothra_categories_select" ON public.mothra_categories FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "mothra_categories_write" ON public.mothra_categories FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
 
-DROP POLICY IF EXISTS "Allow public all on clan_videos" ON public.clan_videos;
-CREATE POLICY "Allow public all on clan_videos" ON public.clan_videos FOR ALL USING (true) WITH CHECK (true);
+-- Table: mothra_roles
+CREATE POLICY "mothra_roles_select" ON public.mothra_roles FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "mothra_roles_write" ON public.mothra_roles FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
 
--- Policies untuk tabel relasional & branding
-DROP POLICY IF EXISTS "Allow public all on mothra_branding" ON public.mothra_branding;
-CREATE POLICY "Allow public all on mothra_branding" ON public.mothra_branding FOR ALL USING (true) WITH CHECK (true);
+-- Table: mothra_lineup
+CREATE POLICY "mothra_lineup_select" ON public.mothra_lineup FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "mothra_lineup_write" ON public.mothra_lineup FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
 
-DROP POLICY IF EXISTS "Allow public all on mothra_categories" ON public.mothra_categories;
-CREATE POLICY "Allow public all on mothra_categories" ON public.mothra_categories FOR ALL USING (true) WITH CHECK (true);
+-- Table: mothra_schedule_matches
+CREATE POLICY "mothra_schedule_select" ON public.mothra_schedule_matches FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "mothra_schedule_write" ON public.mothra_schedule_matches FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
 
-DROP POLICY IF EXISTS "Allow public all on mothra_lineup" ON public.mothra_lineup;
-CREATE POLICY "Allow public all on mothra_lineup" ON public.mothra_lineup FOR ALL USING (true) WITH CHECK (true);
+-- Table: mothra_partnerships
+CREATE POLICY "mothra_partnerships_select" ON public.mothra_partnerships FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "mothra_partnerships_write" ON public.mothra_partnerships FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
 
-DROP POLICY IF EXISTS "Allow public all on mothra_schedule_matches" ON public.mothra_schedule_matches;
-CREATE POLICY "Allow public all on mothra_schedule_matches" ON public.mothra_schedule_matches FOR ALL USING (true) WITH CHECK (true);
+-- Table: mothra_records
+CREATE POLICY "mothra_records_select" ON public.mothra_records FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "mothra_records_write" ON public.mothra_records FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
 
-DROP POLICY IF EXISTS "Allow public all on mothra_partnerships" ON public.mothra_partnerships;
-CREATE POLICY "Allow public all on mothra_partnerships" ON public.mothra_partnerships FOR ALL USING (true) WITH CHECK (true);
+-- Table: mothra_gallery
+CREATE POLICY "mothra_gallery_select" ON public.mothra_gallery FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "mothra_gallery_write" ON public.mothra_gallery FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
 
-DROP POLICY IF EXISTS "Allow public all on mothra_records" ON public.mothra_records;
-CREATE POLICY "Allow public all on mothra_records" ON public.mothra_records FOR ALL USING (true) WITH CHECK (true);
-
-DROP POLICY IF EXISTS "Allow public all on mothra_gallery" ON public.mothra_gallery;
-CREATE POLICY "Allow public all on mothra_gallery" ON public.mothra_gallery FOR ALL USING (true) WITH CHECK (true);
-
--- Policies untuk tabel mothra_roles
-DROP POLICY IF EXISTS "Allow public all on mothra_roles" ON public.mothra_roles;
-CREATE POLICY "Allow public all on mothra_roles" ON public.mothra_roles FOR ALL USING (true) WITH CHECK (true);
-
--- Policies untuk tabel mothra_users
-DROP POLICY IF EXISTS "Allow public all on mothra_users" ON public.mothra_users;
-CREATE POLICY "Allow public all on mothra_users" ON public.mothra_users FOR ALL USING (true) WITH CHECK (true);
+-- Table: mothra_users
+CREATE POLICY "mothra_users_select" ON public.mothra_users FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "mothra_users_write" ON public.mothra_users FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
 
 -- 4. AKTIFKAN SUPABASE REALTIME REPLICATION
 -- Menambahkan tabel mothra_cms, clan_videos dan tabel lainnya ke publication supabase_realtime
@@ -592,6 +610,7 @@ VALUES (
 }'::jsonb,
     1787240130085,
     now()
+)
 ON CONFLICT (id) DO NOTHING;
 
 -- Seed Relational clan_videos

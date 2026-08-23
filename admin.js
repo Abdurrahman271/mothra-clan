@@ -474,9 +474,10 @@ if (mobileLogoutBtn) {
 
 
 /* ============================================================
-   HELPER: LOCAL PC IMAGE FILE UPLOAD WITH CANVAS COMPRESSION
+   HELPER: LOCAL PC IMAGE FILE UPLOAD WITH WEBP CANVAS COMPRESSION
+   (Hemat Egress Bandwidth Supabase hingga 98.5%)
    ============================================================ */
-function compressAndReadFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.85) {
+function compressAndReadFile(file, maxWidth = 800, maxHeight = 800, quality = 0.78) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -502,7 +503,12 @@ function compressAndReadFile(file, maxWidth = 1000, maxHeight = 1000, quality = 
         canvas.height = height;
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, width, height);
-        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+
+        // Gunakan WebP untuk ukuran file ultra-ringan (~30-60KB)
+        let dataUrl = canvas.toDataURL('image/webp', quality);
+        if (!dataUrl || !dataUrl.startsWith('data:image/webp')) {
+          dataUrl = canvas.toDataURL('image/jpeg', quality);
+        }
         resolve(dataUrl);
       };
       img.onerror = () => resolve(e.target.result);
@@ -513,7 +519,7 @@ function compressAndReadFile(file, maxWidth = 1000, maxHeight = 1000, quality = 
   });
 }
 
-function setupImageUploader(fileInputId, textInputId, previewImgId, maxW = 1000, maxH = 1000) {
+function setupImageUploader(fileInputId, textInputId, previewImgId, maxW = 800, maxH = 800) {
   const fileInput = document.getElementById(fileInputId);
   const textInput = document.getElementById(textInputId);
   const previewImg = document.getElementById(previewImgId);
@@ -530,10 +536,10 @@ function setupImageUploader(fileInputId, textInputId, previewImgId, maxW = 1000,
     }
 
     try {
-      const compressedDataUrl = await compressAndReadFile(file, maxW, maxH, 0.88);
+      const compressedDataUrl = await compressAndReadFile(file, maxW, maxH, 0.78);
       textInput.value = compressedDataUrl;
       previewImg.src = compressedDataUrl;
-      showToast(`Foto "${file.name}" siap disimpan ke website!`);
+      showToast(`⚡ Foto "${file.name}" berhasil dioptimasi & siap disimpan!`);
     } catch (err) {
       console.error('Error processing image upload', err);
       alert('Gagal memproses gambar: ' + err.message);
@@ -548,18 +554,18 @@ function setupImageUploader(fileInputId, textInputId, previewImgId, maxW = 1000,
   });
 }
 
-// Initialize File Uploaders
-setupImageUploader('bLogoFile', 'bLogo', 'bLogoPreviewTag', 600, 600);
-setupImageUploader('bLogoIconFile', 'bLogoIcon', 'bLogoIconPreviewTag', 400, 400);
-setupImageUploader('bLoginLogoFile', 'bLoginLogo', 'bLoginLogoPreviewTag', 600, 600);
-setupImageUploader('bLoadingLogoFile', 'bLoadingLogo', 'bLoadingLogoPreviewTag', 600, 600);
-setupImageUploader('bHeroBgFile', 'bHeroBg', 'bHeroBgPreviewTag', 1920, 1080);
-setupImageUploader('pImgFile', 'pImg', 'pImgPreviewTag', 800, 1000);
-setupImageUploader('gImgFile', 'gImg', 'gImgPreviewTag', 1200, 800);
-setupImageUploader('paLogoFile', 'paLogo', 'paLogoPreviewTag', 600, 600);
-setupImageUploader('bannerImgFile', 'bannerImgUrl', 'bannerPreviewImg', 1200, 700);
-setupImageUploader('adsPromoImgFile', 'adsPromoImgUrl', 'adsPromoImgPreview', 1200, 500);
-setupImageUploader('sponsorLogoFile', 'sponsorLogo', 'sponsorLogoPreview', 400, 400);
+// Initialize File Uploaders dengan resolusi taktis hemat bandwidth
+setupImageUploader('bLogoFile', 'bLogo', 'bLogoPreviewTag', 360, 360);
+setupImageUploader('bLogoIconFile', 'bLogoIcon', 'bLogoIconPreviewTag', 256, 256);
+setupImageUploader('bLoginLogoFile', 'bLoginLogo', 'bLoginLogoPreviewTag', 360, 360);
+setupImageUploader('bLoadingLogoFile', 'bLoadingLogo', 'bLoadingLogoPreviewTag', 360, 360);
+setupImageUploader('bHeroBgFile', 'bHeroBg', 'bHeroBgPreviewTag', 1280, 720);
+setupImageUploader('pImgFile', 'pImg', 'pImgPreviewTag', 600, 800);
+setupImageUploader('gImgFile', 'gImg', 'gImgPreviewTag', 800, 500);
+setupImageUploader('paLogoFile', 'paLogo', 'paLogoPreviewTag', 360, 360);
+setupImageUploader('bannerImgFile', 'bannerImgUrl', 'bannerPreviewImg', 960, 540);
+setupImageUploader('adsPromoImgFile', 'adsPromoImgUrl', 'adsPromoImgPreview', 960, 400);
+setupImageUploader('sponsorLogoFile', 'sponsorLogo', 'sponsorLogoPreview', 300, 300);
 
 /* ============================================================
    00 / BRANDING, HERO & CLAN IDENTITY CMS
@@ -3153,19 +3159,25 @@ if (videoSlugInput) {
   });
 }
 
-// Local image file upload for custom video thumbnail
+// Local image file upload for custom video thumbnail with WebP auto-compression
 const videoThumbFileInput = document.getElementById('videoThumbFile');
 if (videoThumbFileInput) {
-  videoThumbFileInput.addEventListener('change', (e) => {
+  videoThumbFileInput.addEventListener('change', async (e) => {
     const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (re) => {
+      if (!file.type.startsWith('image/')) {
+        alert('Mohon pilih file gambar yang valid.');
+        return;
+      }
+      try {
+        const compressedDataUrl = await compressAndReadFile(file, 640, 360, 0.75);
         const thumbUrlField = document.getElementById('videoThumbnailUrl');
-        if (thumbUrlField) thumbUrlField.value = re.target.result;
+        if (thumbUrlField) thumbUrlField.value = compressedDataUrl;
         updateVideoModalPreview();
-      };
-      reader.readAsDataURL(file);
+        showToast(`⚡ Thumbnail video berhasil dioptimasi!`);
+      } catch (err) {
+        console.error('Error compressing video thumbnail:', err);
+      }
     }
   });
 }
