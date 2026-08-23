@@ -147,6 +147,7 @@
       <button class="mobile-quick-item" data-panel="panelDatabase">☁️ Database</button>
       <button class="mobile-quick-item" data-panel="panelBackup">💾 Backup</button>
       <button class="mobile-quick-item" data-panel="panelUsers">👥 Users</button>
+      <button class="mobile-quick-item" data-panel="panelAuditLog">🔍 Audit Trail</button>
     </nav>
 
     <!-- Sidebar / Drawer -->
@@ -182,6 +183,7 @@
         <button class="nav-item" data-panel="panelDatabase">☁️ Database Online (Supabase)</button>
         <button class="nav-item" data-panel="panelBackup">💾 Backup &amp; Restore</button>
         <button class="nav-item" data-panel="panelUsers">👥 Management User</button>
+        <button class="nav-item" data-panel="panelAuditLog">🔍 Audit Trail</button>
       </nav>
 
       <div class="sidebar-footer">
@@ -1306,6 +1308,66 @@
         </div>
       </section>
 
+      <!-- ===================== AUDIT TRAIL PANEL ===================== -->
+      <section class="admin-panel" id="panelAuditLog">
+        <div class="card-box">
+          <h3 class="card-box-title">🔍 AUDIT TRAIL — RIWAYAT AKTIVITAS ADMIN</h3>
+          <p style="color:var(--text-muted);font-size:0.9rem;margin-top:0.25rem;">
+            Catat setiap perubahan yang dilakukan oleh semua operator admin. Data tersimpan lokal secara instan dan dikirim ke
+            <strong style="color:var(--gold);">Supabase</strong> secara <strong style="color:var(--gold);">batched (hemat egress)</strong>.
+            Hanya <strong style="color:var(--gold);">SUPER ADMIN</strong> yang dapat melihat riwayat ini.
+          </p>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:0.75rem;margin:1.25rem 0 1.5rem;">
+            <div class="stat-card"><div class="stat-value" id="auditStatTotal">0</div><div class="stat-label">Total Log</div></div>
+            <div class="stat-card"><div class="stat-value" id="auditStatToday">0</div><div class="stat-label">Hari Ini</div></div>
+            <div class="stat-card"><div class="stat-value" id="auditStatPending">0</div><div class="stat-label">Belum Sync</div></div>
+            <div class="stat-card"><div class="stat-value" id="auditStatSynced">0</div><div class="stat-label">Tersync Supabase</div></div>
+          </div>
+          <div style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+            <div style="display:flex;gap:0.6rem;flex-wrap:wrap;">
+              <select id="auditFilterAction" class="form-input" style="width:auto;font-size:0.82rem;padding:0.4rem 0.75rem;">
+                <option value="">Semua Aksi</option>
+                <option value="LOGIN">🔑 Login</option>
+                <option value="LOGOUT">🚪 Logout</option>
+                <option value="CREATE">➕ Create</option>
+                <option value="UPDATE">✏️ Update</option>
+                <option value="DELETE">🗑️ Delete</option>
+                <option value="SAVE">💾 Save</option>
+              </select>
+              <select id="auditFilterUser" class="form-input" style="width:auto;font-size:0.82rem;padding:0.4rem 0.75rem;">
+                <option value="">Semua Operator</option>
+              </select>
+              <input type="text" id="auditSearchInput" class="form-input" placeholder="🔎 Cari modul / deskripsi..." style="width:200px;font-size:0.82rem;padding:0.4rem 0.75rem;" />
+            </div>
+            <div style="display:flex;gap:0.6rem;flex-wrap:wrap;">
+              <button class="btn-action-edit" id="btnSyncAuditLog" style="padding:0.5rem 1rem;font-size:0.82rem;">☁️ SYNC KE SUPABASE</button>
+              <button class="btn-action-edit" id="btnRefreshAuditLog" style="padding:0.5rem 1rem;font-size:0.82rem;">🔄 REFRESH</button>
+              <button class="btn-action-del" id="btnClearAuditLog" style="padding:0.5rem 1rem;font-size:0.82rem;">🗑️ HAPUS LOG LOKAL</button>
+            </div>
+          </div>
+          <div id="auditSyncStatus" style="display:none;margin-bottom:0.75rem;font-size:0.8rem;font-family:var(--font-mono);"></div>
+          <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:0.82rem;">
+              <thead>
+                <tr style="background:rgba(212,175,55,0.08);border-bottom:1px solid var(--border-dim);">
+                  <th style="padding:0.6rem 0.75rem;text-align:left;color:var(--gold);font-family:var(--font-mono);font-size:0.75rem;white-space:nowrap;">#</th>
+                  <th style="padding:0.6rem 0.75rem;text-align:left;color:var(--gold);font-family:var(--font-mono);font-size:0.75rem;white-space:nowrap;">WAKTU</th>
+                  <th style="padding:0.6rem 0.75rem;text-align:left;color:var(--gold);font-family:var(--font-mono);font-size:0.75rem;white-space:nowrap;">OPERATOR</th>
+                  <th style="padding:0.6rem 0.75rem;text-align:left;color:var(--gold);font-family:var(--font-mono);font-size:0.75rem;white-space:nowrap;">AKSI</th>
+                  <th style="padding:0.6rem 0.75rem;text-align:left;color:var(--gold);font-family:var(--font-mono);font-size:0.75rem;">MODUL</th>
+                  <th style="padding:0.6rem 0.75rem;text-align:left;color:var(--gold);font-family:var(--font-mono);font-size:0.75rem;">DESKRIPSI</th>
+                  <th style="padding:0.6rem 0.75rem;text-align:center;color:var(--gold);font-family:var(--font-mono);font-size:0.75rem;">STATUS</th>
+                </tr>
+              </thead>
+              <tbody id="auditLogTableBody">
+                <tr><td colspan="7" style="text-align:center;color:var(--gray-light);padding:2.5rem;">Belum ada riwayat aktivitas.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div id="auditLogPagination" style="display:flex;gap:0.5rem;justify-content:center;margin-top:1rem;flex-wrap:wrap;"></div>
+        </div>
+      </section>
+
       <!-- USER MANAGEMENT PANEL -->
       <section class="admin-panel" id="panelUsers">
         <div class="card-box">
@@ -1488,6 +1550,9 @@
             </label>
             <label style="display:flex;align-items:center;gap:0.45rem;font-size:0.75rem;color:#FCA5A5;background:#1A1114;border:1px solid rgba(239,68,68,0.3);padding:0.35rem 0.5rem;border-radius:4px;cursor:pointer;">
               <input type="checkbox" class="perm-panel-checkbox" data-panel="panelUsers" checked style="accent-color:#EF4444;" /> 👥 Management User
+            </label>
+            <label style="display:flex;align-items:center;gap:0.45rem;font-size:0.75rem;color:#FCA5A5;background:#1A1114;border:1px solid rgba(239,68,68,0.3);padding:0.35rem 0.5rem;border-radius:4px;cursor:pointer;">
+              <input type="checkbox" class="perm-panel-checkbox" data-panel="panelAuditLog" checked style="accent-color:#EF4444;" /> 🔍 Audit Trail
             </label>
           </div>
         </div>

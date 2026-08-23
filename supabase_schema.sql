@@ -160,6 +160,19 @@ INSERT INTO public.mothra_users (id, name, email, password, role, can_write, sta
 VALUES ('u_1', 'Abdurrahman', 'abdurrrahman09@gmail.com', 'Senayan@18', 'SUPER ADMIN', true, 'ACTIVE', '2026-08-20')
 ON CONFLICT (id) DO NOTHING;
 
+-- Tabel Audit Trail (Riwayat Aktivitas Operator Admin)
+CREATE TABLE IF NOT EXISTS public.mothra_audit_log (
+    id TEXT PRIMARY KEY,
+    created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+    user_id TEXT,
+    user_name TEXT,
+    user_email TEXT,
+    user_role TEXT,
+    action TEXT NOT NULL,
+    module TEXT,
+    description TEXT
+);
+
 -- 3. KONFIGURASI ROW LEVEL SECURITY (RLS) & POLICIES (BEBAS WARNING LINTER)
 -- Aktifkan RLS di setiap tabel
 ALTER TABLE public.mothra_cms ENABLE ROW LEVEL SECURITY;
@@ -173,6 +186,7 @@ ALTER TABLE public.mothra_partnerships ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.mothra_records ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.mothra_gallery ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.clan_videos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.mothra_audit_log ENABLE ROW LEVEL SECURITY;
 
 -- Hapus seluruh policy lama secara dinamis untuk mencegah warning overlapping/duplicate permissive policies
 DO $$
@@ -185,7 +199,8 @@ BEGIN
         WHERE schemaname = 'public' AND tablename IN (
             'mothra_cms', 'mothra_branding', 'mothra_users', 'mothra_categories',
             'mothra_roles', 'mothra_lineup', 'mothra_schedule_matches',
-            'mothra_partnerships', 'mothra_records', 'mothra_gallery', 'clan_videos'
+            'mothra_partnerships', 'mothra_records', 'mothra_gallery', 'clan_videos',
+            'mothra_audit_log'
         )
     LOOP
         EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', pol.policyname, pol.tablename);
@@ -198,6 +213,10 @@ CREATE POLICY "mothra_cms_select" ON public.mothra_cms FOR SELECT TO anon, authe
 CREATE POLICY "mothra_cms_insert" ON public.mothra_cms FOR INSERT TO anon, authenticated WITH CHECK (true);
 CREATE POLICY "mothra_cms_update" ON public.mothra_cms FOR UPDATE TO anon, authenticated USING (true) WITH CHECK (true);
 CREATE POLICY "mothra_cms_delete" ON public.mothra_cms FOR DELETE TO anon, authenticated USING (true);
+
+-- Table: mothra_audit_log (Audit Trail)
+CREATE POLICY "mothra_audit_log_select" ON public.mothra_audit_log FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "mothra_audit_log_write" ON public.mothra_audit_log FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
 
 -- Table: clan_videos
 CREATE POLICY "clan_videos_select" ON public.clan_videos FOR SELECT TO anon, authenticated USING (true);

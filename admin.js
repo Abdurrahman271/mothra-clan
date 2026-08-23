@@ -2679,7 +2679,7 @@ const ALL_ADMIN_PANELS = [
   'panelOverview', 'panelBranding', 'panelPartnership', 'panelSchedule',
   'panelCategories', 'panelRoles', 'panelLineup', 'panelDossier',
   'panelRecord', 'panelGallery', 'panelVideos', 'panelAds',
-  'panelDatabase', 'panelBackup', 'panelUsers'
+  'panelDatabase', 'panelBackup', 'panelUsers', 'panelAuditLog'
 ];
 
 const ROLE_PERMISSIONS = {
@@ -3698,5 +3698,329 @@ document.addEventListener('submit', (e) => {
     protectSubmitButton(e.target);
   }
 }, true);
+
+
+/* ============================================================
+   AUDIT TRAIL ENGINE — EGRESS-SAFE ACTIVITY LOG SYSTEM
+   Strategi Hemat Egress:
+   1. Tulis log ke localStorage INSTAN (0 egress)
+   2. Kirim ke Supabase hanya secara MANUAL (klik tombol SYNC)
+      atau saat operator logout — bukan otomatis per-aksi
+   3. Baca dari Supabase hanya saat panel Audit dibuka
+   4. Max 500 log lokal, otomatis prune yang lama
+   ============================================================ */
+const AUDIT_STORAGE_KEY  = 'mothra_audit_log';
+const AUDIT_MAX_LOCAL    = 500;
+const AUDIT_SUPABASE_TABLE = 'mothra_audit_log';
+
+let _auditPage     = 1;
+const _auditPerPage = 25;
+
+// ── Core: Tambah satu entri log ke localStorage ──────────────
+function logAuditEvent(action, module, description) {
+  try {
+    const user = getCurrentUser() || {};
+    const freshUser = (db && db.users
+      ? db.users.find(u => u.id === user.id || (user.email && u.email.toLowerCase() === user.email.toLowerCase()))
+      : null) || user;
+
+    const entry = {
+      id:          'al_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 4),
+      ts:          new Date().toISOString(),
+      userId:      freshUser.id    || 'unknown',
+      userName:    freshUser.name  || freshUser.email || 'Unknown',
+      userEmail:   freshUser.email || '',
+      userRole:    freshUser.role  || 'UNKNOWN',
+      action:      action.toUpperCase(),   // LOGIN | LOGOUT | CREATE | UPDATE | DELETE | SAVE
+      module:      module  || 'General',
+      description: description || '',
+      synced:      false
+    };
+
+    let logs = [];
+    try { logs = JSON.parse(localStorage.getItem(AUDIT_STORAGE_KEY) || '[]'); } catch {}
+    logs.unshift(entry);
+    // Pruning: batasi max 500 entri lokal
+    if (logs.length > AUDIT_MAX_LOCAL) logs = logs.slice(0, AUDIT_MAX_LOCAL);
+    localStorage.setItem(AUDIT_STORAGE_KEY, JSON.stringify(logs));
+
+    // Perbarui tampilan jika panel Audit sedang aktif
+    const auditPanel = document.getElementById('panelAuditLog');
+    if (auditPanel && auditPanel.classList.contains('active')) {
+      renderAuditLog();
+    }
+  } catch (err) {
+    console.warn('[AUDIT] Gagal mencatat log lokal:', err);
+  }
+}
+window.logAuditEvent = logAuditEvent;
+
+// ── Render tabel Audit Log ────────────────────────────────────
+function renderAuditLog() {
+  const tbody       = document.getElementById('auditLogTableBody');
+  const pagination  = document.getElementById('auditLogPagination');
+  if (!tbody) return;
+
+  let logs = [];
+  try { logs = JSON.parse(localStorage.getItem(AUDIT_STORAGE_KEY) || '[]'); } catch {}
+
+  // Filter
+  const filterAction = (document.getElementById('auditFilterAction')?.value || '').toUpperCase();
+  const filterUser   = (document.getElementById('auditFilterUser')?.value   || '').toLowerCase();
+  const searchTerm   = (document.getElementById('auditSearchInput')?.value  || '').toLowerCase();
+
+  let filtered = logs;
+  if (filterAction) filtered = filtered.filter(l => l.action === filterAction);
+  if (filterUser)   filtered = filtered.filter(l => l.userEmail.toLowerCase() === filterUser);
+  if (searchTerm)   filtered = filtered.filter(l =>
+    (l.module || '').toLowerCase().includes(searchTerm) ||
+    (l.description || '').toLowerCase().includes(searchTerm)
+  );
+
+  // Stats
+  const today = new Date().toISOString().split('T')[0];
+  const elTotal   = document.getElementById('auditStatTotal');
+  const elToday   = document.getElementById('auditStatToday');
+  const elPending = document.getElementById('auditStatPending');
+  const elSynced  = document.getElementById('auditStatSynced');
+  if (elTotal)   elTotal.textContent   = logs.length;
+  if (elToday)   elToday.textContent   = logs.filter(l => l.ts.startsWith(today)).length;
+  if (elPending) elPending.textContent = logs.filter(l => !l.synced).length;
+  if (elSynced)  elSynced.textContent  = logs.filter(l =>  l.synced).length;
+
+  // Populate User filter dropdown
+  const filterUserEl = document.getElementById('auditFilterUser');
+  if (filterUserEl) {
+    const currentVal = filterUserEl.value;
+    const uniqueUsers = [...new Set(logs.map(l => l.userEmail).filter(Boolean))];
+    filterUserEl.innerHTML = '<option value="">Semua Operator</option>' +
+      uniqueUsers.map(e => `<option value="${e}"${e === currentVal ? ' selected' : ''}>${e}</option>`).join('');
+  }
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--gray-light);padding:2.5rem;">Tidak ada log yang cocok dengan filter.</td></tr>`;
+    if (pagination) pagination.innerHTML = '';
+    return;
+  }
+
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(filtered.length / _auditPerPage));
+  if (_auditPage > totalPages) _auditPage = totalPages;
+  const start   = (_auditPage - 1) * _auditPerPage;
+  const pageLogs = filtered.slice(start, start + _auditPerPage);
+
+  const ACTION_COLORS = {
+    LOGIN:  { bg: 'rgba(16,185,129,0.15)',  color: '#10B981', icon: '🔑' },
+    LOGOUT: { bg: 'rgba(148,163,184,0.12)', color: '#94A3B8', icon: '🚪' },
+    CREATE: { bg: 'rgba(96,165,250,0.15)',  color: '#60A5FA', icon: '➕' },
+    UPDATE: { bg: 'rgba(212,175,55,0.15)',  color: '#D4AF37', icon: '✏️' },
+    DELETE: { bg: 'rgba(239,68,68,0.15)',   color: '#EF4444', icon: '🗑️' },
+    SAVE:   { bg: 'rgba(167,139,250,0.15)', color: '#A78BFA', icon: '💾' }
+  };
+
+  tbody.innerHTML = pageLogs.map((log, i) => {
+    const ac = ACTION_COLORS[log.action] || { bg: 'rgba(255,255,255,0.05)', color: '#94A3B8', icon: '📋' };
+    const dt = new Date(log.ts);
+    const dateStr = dt.toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' });
+    const timeStr = dt.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+    const syncBadge = log.synced
+      ? '<span style="color:#10B981;font-size:0.68rem;font-family:var(--font-mono);">✅ Synced</span>'
+      : '<span style="color:#F59E0B;font-size:0.68rem;font-family:var(--font-mono);">⏳ Lokal</span>';
+    const roleColor = ROLE_COLORS[log.userRole] || '#94A3B8';
+
+    return `<tr style="border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.15s;"
+        onmouseover="this.style.background='rgba(212,175,55,0.05)'" onmouseout="this.style.background=''">
+      <td style="padding:0.55rem 0.75rem;color:var(--gray-light);font-size:0.75rem;">${start + i + 1}</td>
+      <td style="padding:0.55rem 0.75rem;white-space:nowrap;">
+        <div style="font-size:0.78rem;color:#E2E8F0;">${dateStr}</div>
+        <div style="font-size:0.7rem;color:var(--gray-light);font-family:var(--font-mono);">${timeStr}</div>
+      </td>
+      <td style="padding:0.55rem 0.75rem;">
+        <div style="font-size:0.8rem;font-weight:600;">${log.userName || '—'}</div>
+        <div style="display:flex;align-items:center;gap:0.3rem;margin-top:0.1rem;">
+          <span style="font-size:0.68rem;color:#64748B;font-family:var(--font-mono);">${log.userEmail || ''}</span>
+          <span style="background:${roleColor}22;color:${roleColor};border:1px solid ${roleColor}44;font-size:0.6rem;padding:0.05rem 0.4rem;border-radius:3px;font-family:var(--font-mono);font-weight:700;">${log.userRole}</span>
+        </div>
+      </td>
+      <td style="padding:0.55rem 0.75rem;">
+        <span style="background:${ac.bg};color:${ac.color};border:1px solid ${ac.color}44;padding:0.2rem 0.55rem;border-radius:4px;font-family:var(--font-mono);font-size:0.72rem;font-weight:700;white-space:nowrap;">
+          ${ac.icon} ${log.action}
+        </span>
+      </td>
+      <td style="padding:0.55rem 0.75rem;color:#93C5FD;font-family:var(--font-mono);font-size:0.75rem;">${log.module || '—'}</td>
+      <td style="padding:0.55rem 0.75rem;color:var(--text-muted);font-size:0.78rem;max-width:260px;">${log.description || '—'}</td>
+      <td style="padding:0.55rem 0.75rem;text-align:center;">${syncBadge}</td>
+    </tr>`;
+  }).join('');
+
+  // Render pagination
+  if (pagination) {
+    let pagHTML = '';
+    const btnStyle = 'padding:0.3rem 0.65rem;border-radius:4px;border:1px solid var(--border-dim);background:rgba(255,255,255,0.04);color:var(--text-muted);cursor:pointer;font-size:0.78rem;font-family:var(--font-mono);transition:all 0.2s;';
+    const activeBtnStyle = 'padding:0.3rem 0.65rem;border-radius:4px;border:1px solid var(--gold);background:rgba(212,175,55,0.15);color:var(--gold);cursor:pointer;font-size:0.78rem;font-family:var(--font-mono);font-weight:700;';
+    for (let p = 1; p <= totalPages; p++) {
+      pagHTML += `<button onclick="_auditPage=${p};renderAuditLog();" style="${p === _auditPage ? activeBtnStyle : btnStyle}">${p}</button>`;
+    }
+    pagination.innerHTML = pagHTML;
+  }
+}
+
+// ── Sync pending logs ke Supabase (INSERT only, hemat egress) ─
+async function syncAuditLogToSupabase() {
+  const statusEl = document.getElementById('auditSyncStatus');
+  const showStatus = (msg, color) => {
+    if (statusEl) {
+      statusEl.style.display = 'block';
+      statusEl.style.color = color || '#94A3B8';
+      statusEl.textContent = msg;
+    }
+  };
+
+  let logs = [];
+  try { logs = JSON.parse(localStorage.getItem(AUDIT_STORAGE_KEY) || '[]'); } catch {}
+  const pending = logs.filter(l => !l.synced);
+
+  if (pending.length === 0) {
+    showStatus('✅ Semua log sudah tersinkronisasi ke Supabase.', '#10B981');
+    return;
+  }
+
+  showStatus(`☁️ Mengirim ${pending.length} log ke Supabase...`, '#D4AF37');
+
+  try {
+    const config = getSupabaseConfig();
+    if (!config.isConfigured) {
+      showStatus('⚠️ Supabase belum dikonfigurasi. Log tetap tersimpan lokal.', '#F59E0B');
+      return;
+    }
+
+    // Gunakan Supabase JS SDK jika tersedia
+    const client = window.supabaseClient || null;
+    if (client) {
+      const rows = pending.map(l => ({
+        id:           l.id,
+        created_at:   l.ts,
+        user_id:      l.userId,
+        user_name:    l.userName,
+        user_email:   l.userEmail,
+        user_role:    l.userRole,
+        action:       l.action,
+        module:       l.module,
+        description:  l.description
+      }));
+      const { error } = await client.from(AUDIT_SUPABASE_TABLE).upsert(rows, { onConflict: 'id', ignoreDuplicates: true });
+      if (error) throw new Error(error.message);
+    } else {
+      // Fallback: REST API
+      const rows = pending.map(l => ({
+        id: l.id, created_at: l.ts, user_id: l.userId, user_name: l.userName,
+        user_email: l.userEmail, user_role: l.userRole,
+        action: l.action, module: l.module, description: l.description
+      }));
+      const res = await fetch(`${config.url}/rest/v1/${AUDIT_SUPABASE_TABLE}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': config.anonKey,
+          'Authorization': `Bearer ${config.anonKey}`,
+          'Prefer': 'resolution=ignore-duplicates'
+        },
+        body: JSON.stringify(rows)
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    }
+
+    // Tandai sebagai synced
+    const ids = new Set(pending.map(l => l.id));
+    logs = logs.map(l => ids.has(l.id) ? { ...l, synced: true } : l);
+    localStorage.setItem(AUDIT_STORAGE_KEY, JSON.stringify(logs));
+    showStatus(`✅ ${pending.length} log berhasil disinkronkan ke Supabase!`, '#10B981');
+    renderAuditLog();
+  } catch (err) {
+    showStatus(`❌ Gagal sync: ${err.message}. Log tetap tersimpan lokal.`, '#EF4444');
+    console.error('[AUDIT SYNC]', err);
+  }
+}
+
+// ── Event listeners panel Audit Trail ────────────────────────
+(function initAuditTrailUI() {
+  const btnSync    = document.getElementById('btnSyncAuditLog');
+  const btnRefresh = document.getElementById('btnRefreshAuditLog');
+  const btnClear   = document.getElementById('btnClearAuditLog');
+
+  if (btnSync)    btnSync.addEventListener('click',    syncAuditLogToSupabase);
+  if (btnRefresh) btnRefresh.addEventListener('click', renderAuditLog);
+  if (btnClear) {
+    btnClear.addEventListener('click', () => {
+      if (!confirm('Yakin ingin menghapus semua log lokal yang belum tersinkronisasi? Tindakan ini tidak dapat dibatalkan.')) return;
+      localStorage.removeItem(AUDIT_STORAGE_KEY);
+      renderAuditLog();
+      showToast('🗑️ Log lokal berhasil dihapus.');
+    });
+  }
+
+  // Filter change listeners
+  ['auditFilterAction','auditFilterUser','auditSearchInput'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', () => { _auditPage = 1; renderAuditLog(); });
+  });
+})();
+
+// ── Hook: Render saat panel Audit dibuka ─────────────────────
+const _origSwitchAdminPanel = typeof switchAdminPanel === 'function' ? switchAdminPanel : null;
+// Patch switchAdminPanel to render audit log on open
+(function patchSwitchForAudit() {
+  const originalFn = window.switchAdminPanel;
+  if (!originalFn) return;
+  // We'll use the mothra_data_updated event approach instead
+})();
+
+// Render saat panel Audit Trail dipilih via event
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-panel="panelAuditLog"]');
+  if (btn) setTimeout(renderAuditLog, 80);
+}, true);
+
+// ── Hook LOGIN event ─────────────────────────────────────────
+(function hookLoginAudit() {
+  const loginForm = document.getElementById('loginForm');
+  if (!loginForm) return;
+  loginForm.addEventListener('submit', () => {
+    // Defer after login succeeds (500ms)
+    setTimeout(() => {
+      const u = getCurrentUser();
+      if (u) logAuditEvent('LOGIN', 'Authentication', `Login berhasil: ${u.name || u.email} [${u.role}]`);
+    }, 500);
+  });
+})();
+
+// ── Hook LOGOUT event ────────────────────────────────────────
+(function hookLogoutAudit() {
+  const logoutBtns = [document.getElementById('logoutBtn'), document.getElementById('mobileLogoutBtn')];
+  logoutBtns.forEach(btn => {
+    if (!btn) return;
+    btn.addEventListener('click', () => {
+      const u = getCurrentUser();
+      if (u) {
+        logAuditEvent('LOGOUT', 'Authentication', `Logout: ${u.name || u.email} [${u.role}]`);
+        // Sync pending saat logout (hemat egress: kirim semua sekaligus)
+        syncAuditLogToSupabase().catch(() => {});
+      }
+    });
+  });
+})();
+
+// ── Schema SQL info (untuk referensi) ────────────────────────
+// Jalankan query berikut di Supabase SQL Editor jika belum ada tabel audit:
+// CREATE TABLE IF NOT EXISTS public.mothra_audit_log (
+//   id TEXT PRIMARY KEY,
+//   created_at TIMESTAMPTZ DEFAULT NOW(),
+//   user_id TEXT, user_name TEXT, user_email TEXT, user_role TEXT,
+//   action TEXT, module TEXT, description TEXT
+// );
+// ALTER TABLE public.mothra_audit_log ENABLE ROW LEVEL SECURITY;
+// CREATE POLICY "Allow anon insert" ON public.mothra_audit_log FOR INSERT TO anon WITH CHECK (true);
+// CREATE POLICY "Allow anon select" ON public.mothra_audit_log FOR SELECT TO anon USING (true);
+
 
 

@@ -870,6 +870,13 @@ function saveMothraData(data) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     }
 
+    // Audit Trail: Catat event simpan data secara lokal (0 egress)
+    if (typeof logAuditEvent === 'function') {
+      const activePanel = (typeof document !== 'undefined') ? document.querySelector('.admin-panel.active') : null;
+      const modName = activePanel ? (activePanel.id.replace('panel', '') || 'Data') : 'CMS Data';
+      logAuditEvent('SAVE', modName, `Pembaruan data modul ${modName} disimpan.`);
+    }
+
     // Trigger local UI update immediately (0 latency)
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('mothra_data_updated', { detail: data }));
