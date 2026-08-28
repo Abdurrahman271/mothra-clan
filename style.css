@@ -4703,22 +4703,25 @@ button {
    ============================================================ */
 .aim-modal-overlay {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(5, 5, 8, 0.92);
-  backdrop-filter: blur(12px);
+  inset: 0;
+  background: rgba(5, 5, 8, 0.94);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   z-index: 999999;
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   padding: 1rem;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.25s ease;
 }
 
+.aim-modal-overlay.open,
 .aim-modal-overlay.active {
-  opacity: 1;
-  pointer-events: auto;
+  display: flex !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
 }
 
 .aim-game-card {

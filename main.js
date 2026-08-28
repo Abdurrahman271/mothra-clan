@@ -2410,7 +2410,6 @@ if (document.readyState === 'loading') {
    14. MOTHRA AIM REFLEX TRAINER MINI-GAME ENGINE
    ============================================================ */
 (function initAimReflexTrainer() {
-  const openBtn = document.getElementById('openAimTrainerBtn');
   const modal = document.getElementById('aimTrainerModal');
   const closeBtn = document.getElementById('closeAimTrainerBtn');
   const arena = document.getElementById('aimArena');
@@ -2442,26 +2441,42 @@ if (document.readyState === 'loading') {
 
   function openGame() {
     modal.classList.add('open');
+    modal.classList.add('active');
+    modal.style.display = 'flex';
     modal.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
     resetGameToStart();
-    TacticalAudio.playGunClick();
+    if (typeof TacticalAudio !== 'undefined') TacticalAudio.playGunClick();
   }
 
   function closeGame() {
     modal.classList.remove('open');
+    modal.classList.remove('active');
+    modal.style.display = 'none';
     modal.setAttribute('aria-hidden', 'true');
     document.body.style.overflow = '';
     stopGame();
   }
 
-  if (openBtn) openBtn.addEventListener('click', openGame);
+  window.openAimTrainer = openGame;
+  window.closeAimTrainer = closeGame;
+
+  // Bind all trigger buttons
+  document.querySelectorAll('#openAimTrainerBtn, .btn-aim-launch, [data-open-aim], a[href="#aimtrainer"]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      openGame();
+    });
+  });
+
   if (closeBtn) closeBtn.addEventListener('click', closeGame);
   modal.addEventListener('click', (e) => {
     if (e.target === modal) closeGame();
   });
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && modal.classList.contains('open')) closeGame();
+    if (e.key === 'Escape' && (modal.classList.contains('open') || modal.classList.contains('active'))) {
+      closeGame();
+    }
   });
 
   if (claimRecruitBtn) {
@@ -2493,12 +2508,12 @@ if (document.readyState === 'loading') {
     reactionTimes = [];
 
     updateHud();
-    TacticalAudio.playHeadshot();
+    if (typeof TacticalAudio !== 'undefined') TacticalAudio.playHeadshot();
 
     timerInterval = setInterval(() => {
       timeLeft--;
       if (timerDisplay) timerDisplay.textContent = `${timeLeft}s`;
-      if (timeLeft <= 5) {
+      if (timeLeft <= 5 && typeof TacticalAudio !== 'undefined') {
         TacticalAudio.playBlip(1200, 'sine', 0.05, 0.04);
       }
       if (timeLeft <= 0) {
@@ -2527,32 +2542,36 @@ if (document.readyState === 'loading') {
       currentTargetEl = null;
     }
 
-    const arenaRect = arena.getBoundingClientRect();
-    const targetSize = 56;
-    const padding = 20;
+    const arenaW = arena.clientWidth || arena.getBoundingClientRect().width || 640;
+    const arenaH = arena.clientHeight || arena.getBoundingClientRect().height || 380;
+    const targetSize = 54;
+    const padding = 28;
 
-    const maxX = Math.max(20, arenaRect.width - targetSize - padding * 2);
-    const maxY = Math.max(20, arenaRect.height - targetSize - padding * 2);
+    const maxX = Math.max(padding, arenaW - targetSize - padding);
+    const maxY = Math.max(padding, arenaH - targetSize - padding);
 
-    const randX = padding + Math.random() * maxX;
-    const randY = padding + Math.random() * maxY;
+    const randX = padding + Math.random() * (maxX - padding);
+    const randY = padding + Math.random() * (maxY - padding);
 
     const disc = document.createElement('div');
     disc.className = 'aim-target-disc';
     disc.style.left = `${randX}px`;
     disc.style.top = `${randY}px`;
     disc.innerHTML = `
-      <div class="aim-target-bullseye"></div>
-      <div class="aim-target-crosshair"></div>
+      <div class="aim-target-bullseye" style="width:18px;height:18px;background:#FFF;border-radius:50%;box-shadow:0 0 8px #fff;pointer-events:none;"></div>
     `;
 
     currentTargetSpawnTime = performance.now();
     currentTargetEl = disc;
 
-    disc.addEventListener('mousedown', (e) => {
+    const handleHit = (e) => {
+      e.preventDefault();
       e.stopPropagation();
-      onHitTarget(disc);
-    });
+      onHitTarget(disc, randX, randY);
+    };
+
+    disc.addEventListener('pointerdown', handleHit);
+    disc.addEventListener('mousedown', handleHit);
 
     arena.appendChild(disc);
 
@@ -2564,7 +2583,7 @@ if (document.readyState === 'loading') {
     }, 950);
   }
 
-  function onHitTarget(disc) {
+  function onHitTarget(disc, x, y) {
     if (!isPlaying) return;
 
     const reactionTime = Math.round(performance.now() - currentTargetSpawnTime);
@@ -2574,22 +2593,26 @@ if (document.readyState === 'loading') {
 
     // Speed bonus calculation
     let earnedScore = 100;
-    if (reactionTime < 300) earnedScore = 150;
-    else if (reactionTime < 450) earnedScore = 120;
-    else if (reactionTime < 650) earnedScore = 100;
-    else earnedScore = 75;
+    let label = 'HIT';
+    if (reactionTime < 300) { earnedScore = 150; label = 'CRITICAL HEADSHOT!'; }
+    else if (reactionTime < 450) { earnedScore = 120; label = 'PERFECT!'; }
+    else if (reactionTime < 650) { earnedScore = 100; label = 'FAST!'; }
+    else { earnedScore = 75; label = 'GOOD'; }
 
     score += earnedScore;
 
-    TacticalAudio.playHeadshot();
+    if (typeof TacticalAudio !== 'undefined') TacticalAudio.playHeadshot();
+
+    // Spawn floating score indicator
+    showFloatingScore(x, y, `+${earnedScore} ${label}`);
 
     // Create hit ripple effect
     if (disc && disc.parentNode) {
-      disc.style.transform = 'scale(1.35)';
+      disc.style.transform = 'translate(-50%, -50%) scale(1.35)';
       disc.style.opacity = '0';
       setTimeout(() => {
         if (disc.parentNode) disc.parentNode.removeChild(disc);
-      }, 120);
+      }, 100);
     }
 
     updateHud();
@@ -2597,14 +2620,41 @@ if (document.readyState === 'loading') {
     spawnNextTarget();
   }
 
+  function showFloatingScore(x, y, text) {
+    const pop = document.createElement('div');
+    pop.style.position = 'absolute';
+    pop.style.left = `${x}px`;
+    pop.style.top = `${y - 15}px`;
+    pop.style.transform = 'translate(-50%, -50%)';
+    pop.style.color = 'var(--gold)';
+    pop.style.fontFamily = 'var(--font-mono)';
+    pop.style.fontSize = '0.85rem';
+    pop.style.fontWeight = '900';
+    pop.style.pointerEvents = 'none';
+    pop.style.zIndex = '5';
+    pop.style.textShadow = '0 0 8px rgba(212,175,55,0.8), 0 0 15px rgba(0,0,0,0.9)';
+    pop.style.transition = 'all 0.4s ease-out';
+    pop.textContent = text;
+    arena.appendChild(pop);
+
+    requestAnimationFrame(() => {
+      pop.style.top = `${y - 45}px`;
+      pop.style.opacity = '0';
+    });
+
+    setTimeout(() => {
+      if (pop.parentNode) pop.parentNode.removeChild(pop);
+    }, 450);
+  }
+
   // Missed click inside arena
-  arena.addEventListener('mousedown', (e) => {
+  arena.addEventListener('pointerdown', (e) => {
     if (!isPlaying) return;
     if (e.target.closest('.aim-target-disc') || e.target.closest('.aim-start-screen') || e.target.closest('.aim-result-screen')) {
       return;
     }
     totalClicks++;
-    TacticalAudio.playGunClick();
+    if (typeof TacticalAudio !== 'undefined') TacticalAudio.playGunClick();
     updateHud();
   });
 
@@ -2621,7 +2671,7 @@ if (document.readyState === 'loading') {
 
   function endGame() {
     stopGame();
-    TacticalAudio.playSuccess();
+    if (typeof TacticalAudio !== 'undefined') TacticalAudio.playSuccess();
 
     const acc = totalClicks > 0 ? Math.round((hits / totalClicks) * 100) : 100;
     const avgSpeed = reactionTimes.length > 0
