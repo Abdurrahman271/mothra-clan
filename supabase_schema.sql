@@ -104,6 +104,26 @@ CREATE TABLE IF NOT EXISTS public.mothra_gallery (
     created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+-- Tabel Mothra Media (YouTube Videos & Live Streaming)
+CREATE TABLE IF NOT EXISTS public.clan_videos (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    slug TEXT,
+    description TEXT,
+    category TEXT NOT NULL DEFAULT 'gameplay', -- 'live' atau 'gameplay'
+    video_url TEXT NOT NULL,
+    video_id TEXT NOT NULL,
+    thumbnail_url TEXT,
+    published BOOLEAN NOT NULL DEFAULT true,
+    featured BOOLEAN NOT NULL DEFAULT false,
+    sort_order INTEGER DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Komentar Tabel clan_videos
+COMMENT ON TABLE public.clan_videos IS 'Tabel video YouTube dan Live Streaming Clan MOTHRA Point Blank';
+
 -- Tabel Identitas & Logo Clan (Branding, Login Screen & Loading Screen)
 CREATE TABLE IF NOT EXISTS public.mothra_branding (
     id TEXT PRIMARY KEY DEFAULT 'main',
@@ -127,6 +147,8 @@ CREATE TABLE IF NOT EXISTS public.mothra_users (
     email TEXT NOT NULL UNIQUE,
     password TEXT NOT NULL,
     role TEXT NOT NULL DEFAULT 'TACTICAL OPERATOR',
+    can_write BOOLEAN DEFAULT true,
+    custom_panels JSONB,
     status TEXT DEFAULT 'ACTIVE',
     notes TEXT,
     avatar TEXT,
@@ -134,67 +156,144 @@ CREATE TABLE IF NOT EXISTS public.mothra_users (
 );
 
 -- Seed initial Super Admin
-INSERT INTO public.mothra_users (id, name, email, password, role, status, created_at)
-VALUES ('u_1', 'Abdurrahman', 'abdurrrahman09@gmail.com', 'Senayan@18', 'SUPER ADMIN', 'ACTIVE', '2026-08-20')
+INSERT INTO public.mothra_users (id, name, email, password, role, can_write, status, created_at)
+VALUES ('u_1', 'Abdurrahman', 'abdurrrahman09@gmail.com', 'Senayan@18', 'SUPER ADMIN', true, 'ACTIVE', '2026-08-20')
 ON CONFLICT (id) DO NOTHING;
 
--- 3. KONFIGURASI ROW LEVEL SECURITY (RLS) & POLICIES
+-- Tabel Audit Trail (Riwayat Aktivitas Operator Admin)
+CREATE TABLE IF NOT EXISTS public.mothra_audit_log (
+    id TEXT PRIMARY KEY,
+    created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+    user_id TEXT,
+    user_name TEXT,
+    user_email TEXT,
+    user_role TEXT,
+    action TEXT NOT NULL,
+    module TEXT,
+    description TEXT
+);
+
+-- Tabel Recruitment CRM (Inbox Lamaran Rekrutmen Publik)
+-- Diisi oleh form publik di halaman utama (Join Section)
+-- Admin dapat membaca, memperbarui status, dan menghapus via Admin Panel
+CREATE TABLE IF NOT EXISTS public.mothra_recruitment (
+    id TEXT PRIMARY KEY,
+    created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+    name TEXT NOT NULL,
+    ign TEXT NOT NULL,              -- In-Game Nickname
+    role TEXT NOT NULL,             -- Role yang dilamar
+    contact TEXT NOT NULL,          -- Nomor WhatsApp pelamar
+    kd_ratio TEXT,                  -- K/D Ratio pelamar
+    hs_percent TEXT,                -- Headshot % pelamar
+    experience TEXT,                -- Pengalaman kompetitif
+    message TEXT,                   -- Pesan motivasi / alasan bergabung
+    status TEXT NOT NULL DEFAULT 'PENDING', -- PENDING | INTERVIEW | ACCEPTED | REJECTED
+    notes TEXT,                     -- Catatan internal operator
+    date TEXT                       -- Tanggal submit (format ISO string)
+);
+
+-- 3. KONFIGURASI ROW LEVEL SECURITY (RLS) & POLICIES (BEBAS WARNING LINTER)
 -- Aktifkan RLS di setiap tabel
 ALTER TABLE public.mothra_cms ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.mothra_branding ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.mothra_users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.mothra_categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.mothra_roles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.mothra_lineup ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.mothra_schedule_matches ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.mothra_partnerships ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.mothra_records ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.mothra_gallery ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.clan_videos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.mothra_audit_log ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.mothra_recruitment ENABLE ROW LEVEL SECURITY;
 
--- Policies untuk tabel mothra_cms agar client GitHub Pages (role anon) dapat membaca & menulis data
-DROP POLICY IF EXISTS "Allow public read access on mothra_cms" ON public.mothra_cms;
-CREATE POLICY "Allow public read access on mothra_cms" ON public.mothra_cms FOR SELECT USING (true);
+-- Hapus seluruh policy lama secara dinamis untuk mencegah warning overlapping/duplicate permissive policies
+DO $$
+DECLARE
+    pol record;
+BEGIN
+    FOR pol IN 
+        SELECT policyname, tablename 
+        FROM pg_policies 
+        WHERE schemaname = 'public' AND tablename IN (
+            'mothra_cms', 'mothra_branding', 'mothra_users', 'mothra_categories',
+            'mothra_roles', 'mothra_lineup', 'mothra_schedule_matches',
+            'mothra_partnerships', 'mothra_records', 'mothra_gallery', 'clan_videos',
+            'mothra_audit_log', 'mothra_recruitment'
+        )
+    LOOP
+        EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', pol.policyname, pol.tablename);
+    END LOOP;
+END
+$$;
 
-DROP POLICY IF EXISTS "Allow public insert access on mothra_cms" ON public.mothra_cms;
-CREATE POLICY "Allow public insert access on mothra_cms" ON public.mothra_cms FOR INSERT WITH CHECK (true);
+-- Table: mothra_cms
+CREATE POLICY "mothra_cms_select" ON public.mothra_cms FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "mothra_cms_insert" ON public.mothra_cms FOR INSERT TO anon, authenticated WITH CHECK (true);
+CREATE POLICY "mothra_cms_update" ON public.mothra_cms FOR UPDATE TO anon, authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "mothra_cms_delete" ON public.mothra_cms FOR DELETE TO anon, authenticated USING (true);
 
-DROP POLICY IF EXISTS "Allow public update access on mothra_cms" ON public.mothra_cms;
-CREATE POLICY "Allow public update access on mothra_cms" ON public.mothra_cms FOR UPDATE USING (true) WITH CHECK (true);
+-- Table: mothra_audit_log (Audit Trail)
+CREATE POLICY "mothra_audit_log_select" ON public.mothra_audit_log FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "mothra_audit_log_write" ON public.mothra_audit_log FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
 
-DROP POLICY IF EXISTS "Allow public delete access on mothra_cms" ON public.mothra_cms;
-CREATE POLICY "Allow public delete access on mothra_cms" ON public.mothra_cms FOR DELETE USING (true);
+-- Table: mothra_recruitment (CRM Lamaran Publik)
+-- INSERT: anon bisa submit lamaran (form publik di halaman utama)
+-- SELECT/UPDATE/DELETE: hanya authenticated (admin panel)
+CREATE POLICY "mothra_recruitment_insert" ON public.mothra_recruitment
+  FOR INSERT TO anon, authenticated WITH CHECK (true);
+CREATE POLICY "mothra_recruitment_select" ON public.mothra_recruitment
+  FOR SELECT TO authenticated USING (true);
+CREATE POLICY "mothra_recruitment_update" ON public.mothra_recruitment
+  FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "mothra_recruitment_delete" ON public.mothra_recruitment
+  FOR DELETE TO authenticated USING (true);
 
--- Policies untuk tabel relasional & branding
-DROP POLICY IF EXISTS "Allow public all on mothra_branding" ON public.mothra_branding;
-CREATE POLICY "Allow public all on mothra_branding" ON public.mothra_branding FOR ALL USING (true) WITH CHECK (true);
+-- Table: clan_videos
+CREATE POLICY "clan_videos_select" ON public.clan_videos FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "clan_videos_insert" ON public.clan_videos FOR INSERT TO anon, authenticated WITH CHECK (true);
+CREATE POLICY "clan_videos_update" ON public.clan_videos FOR UPDATE TO anon, authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "clan_videos_delete" ON public.clan_videos FOR DELETE TO anon, authenticated USING (true);
 
-DROP POLICY IF EXISTS "Allow public all on mothra_categories" ON public.mothra_categories;
-CREATE POLICY "Allow public all on mothra_categories" ON public.mothra_categories FOR ALL USING (true) WITH CHECK (true);
+-- Table: mothra_branding
+CREATE POLICY "mothra_branding_select" ON public.mothra_branding FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "mothra_branding_write" ON public.mothra_branding FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
 
-DROP POLICY IF EXISTS "Allow public all on mothra_lineup" ON public.mothra_lineup;
-CREATE POLICY "Allow public all on mothra_lineup" ON public.mothra_lineup FOR ALL USING (true) WITH CHECK (true);
+-- Table: mothra_categories
+CREATE POLICY "mothra_categories_select" ON public.mothra_categories FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "mothra_categories_write" ON public.mothra_categories FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
 
-DROP POLICY IF EXISTS "Allow public all on mothra_schedule_matches" ON public.mothra_schedule_matches;
-CREATE POLICY "Allow public all on mothra_schedule_matches" ON public.mothra_schedule_matches FOR ALL USING (true) WITH CHECK (true);
+-- Table: mothra_roles
+CREATE POLICY "mothra_roles_select" ON public.mothra_roles FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "mothra_roles_write" ON public.mothra_roles FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
 
-DROP POLICY IF EXISTS "Allow public all on mothra_partnerships" ON public.mothra_partnerships;
-CREATE POLICY "Allow public all on mothra_partnerships" ON public.mothra_partnerships FOR ALL USING (true) WITH CHECK (true);
+-- Table: mothra_lineup
+CREATE POLICY "mothra_lineup_select" ON public.mothra_lineup FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "mothra_lineup_write" ON public.mothra_lineup FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
 
-DROP POLICY IF EXISTS "Allow public all on mothra_records" ON public.mothra_records;
-CREATE POLICY "Allow public all on mothra_records" ON public.mothra_records FOR ALL USING (true) WITH CHECK (true);
+-- Table: mothra_schedule_matches
+CREATE POLICY "mothra_schedule_select" ON public.mothra_schedule_matches FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "mothra_schedule_write" ON public.mothra_schedule_matches FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
 
-DROP POLICY IF EXISTS "Allow public all on mothra_gallery" ON public.mothra_gallery;
-CREATE POLICY "Allow public all on mothra_gallery" ON public.mothra_gallery FOR ALL USING (true) WITH CHECK (true);
+-- Table: mothra_partnerships
+CREATE POLICY "mothra_partnerships_select" ON public.mothra_partnerships FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "mothra_partnerships_write" ON public.mothra_partnerships FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
 
--- Policies untuk tabel mothra_roles
-DROP POLICY IF EXISTS "Allow public all on mothra_roles" ON public.mothra_roles;
-CREATE POLICY "Allow public all on mothra_roles" ON public.mothra_roles FOR ALL USING (true) WITH CHECK (true);
+-- Table: mothra_records
+CREATE POLICY "mothra_records_select" ON public.mothra_records FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "mothra_records_write" ON public.mothra_records FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
 
--- Policies untuk tabel mothra_users
-DROP POLICY IF EXISTS "Allow public all on mothra_users" ON public.mothra_users;
-CREATE POLICY "Allow public all on mothra_users" ON public.mothra_users FOR ALL USING (true) WITH CHECK (true);
+-- Table: mothra_gallery
+CREATE POLICY "mothra_gallery_select" ON public.mothra_gallery FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "mothra_gallery_write" ON public.mothra_gallery FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+
+-- Table: mothra_users
+CREATE POLICY "mothra_users_select" ON public.mothra_users FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "mothra_users_write" ON public.mothra_users FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
 
 -- 4. AKTIFKAN SUPABASE REALTIME REPLICATION
--- Menambahkan tabel mothra_cms dan mothra_branding ke publication supabase_realtime
+-- Menambahkan tabel mothra_cms, clan_videos dan tabel lainnya ke publication supabase_realtime
 DO $$
 BEGIN
     IF NOT EXISTS (
@@ -202,6 +301,12 @@ BEGIN
         WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'mothra_cms'
     ) THEN
         ALTER PUBLICATION supabase_realtime ADD TABLE public.mothra_cms;
+    END IF;
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables 
+        WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'clan_videos'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.clan_videos;
     END IF;
     IF NOT EXISTS (
         SELECT 1 FROM pg_publication_tables 
@@ -492,10 +597,82 @@ VALUES (
       "img": "assets/bootcamp.jpg",
       "large": false
     }
+  ],
+  "videos": [
+    {
+      "id": "vid_1",
+      "title": "MOTHRA ESPORTS vs RRQ PB — GRAND FINAL PBNC 2024 (MAP 3 DECIDER)",
+      "slug": "mothra-vs-rrq-grand-final-pbnc-2024",
+      "description": "Pertandingan sengit map penentu Grand Final PBNC 2024 di Map Luxville. Simak rotasi taktis dan clutch ronde ke-9 dari Clan MOTHRA.",
+      "category": "live",
+      "video_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "video_id": "dQw4w9WgXcQ",
+      "thumbnail_url": "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+      "published": true,
+      "featured": true,
+      "sort_order": 1,
+      "created_at": "2026-08-20T10:00:00.000Z",
+      "updated_at": "2026-08-20T10:00:00.000Z"
+    },
+    {
+      "id": "vid_2",
+      "title": "1v4 CLUTCH RETAKE BOMBSITE A LUXVILLE — MOTHRA•RAVEN",
+      "slug": "1v4-clutch-retake-luxville-raven",
+      "description": "Aksi clutch dramatis sang IGL Raka Pratama membalikkan keadaan dalam situasi krusial turnamen nasional PB.",
+      "category": "gameplay",
+      "video_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "video_id": "dQw4w9WgXcQ",
+      "thumbnail_url": "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+      "published": true,
+      "featured": false,
+      "sort_order": 2,
+      "created_at": "2026-08-18T14:30:00.000Z",
+      "updated_at": "2026-08-18T14:30:00.000Z"
+    },
+    {
+      "id": "vid_3",
+      "title": "🔴 LIVE SCRIM 5v5 BOMB MISSION — MOTHRA vs EVOS ECLIPSE",
+      "slug": "live-scrim-mothra-vs-evos-eclipse",
+      "description": "Latihan tanding resmi (Friendly Scrim) clan war 5v5 best of 3 jelang kualifikasi PBIC.",
+      "category": "live",
+      "video_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "video_id": "dQw4w9WgXcQ",
+      "thumbnail_url": "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+      "published": true,
+      "featured": false,
+      "sort_order": 3,
+      "created_at": "2026-08-15T19:00:00.000Z",
+      "updated_at": "2026-08-15T19:00:00.000Z"
+    },
+    {
+      "id": "vid_4",
+      "title": "CHEYTAC M200 QUICKSCOPE & NO-SCOPE MONTAGE — MOTHRA•NOVA",
+      "slug": "cheytac-quickscope-montage-nova",
+      "description": "Kumpulan sniper highlight terbaik dengan akurasi 82% headshot rate di kompetisi Point Blank.",
+      "category": "gameplay",
+      "video_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "video_id": "dQw4w9WgXcQ",
+      "thumbnail_url": "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+      "published": true,
+      "featured": false,
+      "sort_order": 4,
+      "created_at": "2026-08-10T12:00:00.000Z",
+      "updated_at": "2026-08-10T12:00:00.000Z"
+    }
   ]
 }'::jsonb,
     1787240130085,
     now()
+)
+ON CONFLICT (id) DO NOTHING;
+
+-- Seed Relational clan_videos
+INSERT INTO public.clan_videos (id, title, slug, description, category, video_url, video_id, thumbnail_url, published, featured, sort_order, created_at, updated_at)
+VALUES 
+('vid_1', 'MOTHRA ESPORTS vs RRQ PB — GRAND FINAL PBNC 2024 (MAP 3 DECIDER)', 'mothra-vs-rrq-grand-final-pbnc-2024', 'Pertandingan sengit map penentu Grand Final PBNC 2024 di Map Luxville. Simak rotasi taktis dan clutch ronde ke-9 dari Clan MOTHRA.', 'live', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'dQw4w9WgXcQ', 'https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg', true, true, 1, now(), now()),
+('vid_2', '1v4 CLUTCH RETAKE BOMBSITE A LUXVILLE — MOTHRA•RAVEN', '1v4-clutch-retake-luxville-raven', 'Aksi clutch dramatis sang IGL Raka Pratama membalikkan keadaan dalam situasi krusial turnamen nasional PB.', 'gameplay', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'dQw4w9WgXcQ', 'https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg', true, false, 2, now(), now()),
+('vid_3', '🔴 LIVE SCRIM 5v5 BOMB MISSION — MOTHRA vs EVOS ECLIPSE', 'live-scrim-mothra-vs-evos-eclipse', 'Latihan tanding resmi (Friendly Scrim) clan war 5v5 best of 3 jelang kualifikasi PBIC.', 'live', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'dQw4w9WgXcQ', 'https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg', true, false, 3, now(), now()),
+('vid_4', 'CHEYTAC M200 QUICKSCOPE & NO-SCOPE MONTAGE — MOTHRA•NOVA', 'cheytac-quickscope-montage-nova', 'Kumpulan sniper highlight terbaik dengan akurasi 82% headshot rate di kompetisi Point Blank.', 'gameplay', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'dQw4w9WgXcQ', 'https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg', true, false, 4, now(), now())
 ON CONFLICT (id) DO NOTHING;
 
 -- Selesai! Database siap digunakan oleh website Clan MOTHRA.

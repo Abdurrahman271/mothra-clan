@@ -140,6 +140,45 @@
     </div>
   </div>
 
+  <!-- ===================== LIVE MATCH DAY REALTIME BAR ===================== -->
+  <div class="live-match-bar" id="liveMatchBar" style="display:none;" role="region" aria-label="Live Match Day Scoreboard">
+    <div class="live-match-container">
+      <div class="live-badge-wrap">
+        <div class="live-badge-pulse" id="liveBadgeStatus">
+          <span class="live-dot-blink"></span>
+          <span id="liveStatusText">LIVE MATCH</span>
+        </div>
+        <div class="live-match-meta">
+          <span class="live-tourney-name" id="liveTourneyName">PBNC 2026 QUALIFIER</span>
+          <span class="live-tourney-sub" id="liveTourneySub">MAP: DOWNTOWN • ROUND 1</span>
+        </div>
+      </div>
+
+      <div class="live-scoreboard" id="liveScoreboardWrap">
+        <div class="live-team-block">
+          <span class="live-team-name live-team-name--mothra" id="liveTeamMothra">MOTHRA</span>
+          <span class="live-score-digits live-score-digits--gold" id="liveScoreMothra">7</span>
+        </div>
+        <span class="live-vs-sep">VS</span>
+        <div class="live-team-block">
+          <span class="live-score-digits" id="liveScoreOpponent">5</span>
+          <span class="live-team-name" id="liveTeamOpponent">OPFOR</span>
+        </div>
+      </div>
+
+      <div class="live-actions-wrap">
+        <a href="https://youtube.com" target="_blank" rel="noopener" class="btn-live-stream" id="liveStreamBtn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <span>TONTON LIVE</span>
+        </a>
+        <button type="button" class="btn-remind-cal" id="liveRemindBtn" style="display:none;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span>INGATKAN SAYA</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- NAVIGATION -->
   <nav class="nav" id="nav">
     <div class="nav-container">
@@ -155,12 +194,35 @@
         <li role="none"><a href="#partnership" role="menuitem" class="nav-link">Partnership</a></li>
         <li role="none"><a href="#record" role="menuitem" class="nav-link">The Record</a></li>
         <li role="none"><a href="#gallery" role="menuitem" class="nav-link">Field Notes</a></li>
+        <li role="none"><a href="#media" role="menuitem" class="nav-link">Media</a></li>
+        <li role="none"><a href="#store" role="menuitem" class="nav-link">Store</a></li>
         <li role="none"><a href="#join" role="menuitem" class="nav-link nav-cta">Join Us</a></li>
       </ul>
 
-      <button class="hamburger" id="navHamburger" aria-label="Buka menu navigasi" aria-expanded="false">
-        <span></span><span></span><span></span>
-      </button>
+      <div style="display:flex;align-items:center;gap:0.5rem;">
+        <button class="sound-toggle-btn" id="soundToggleBtn" aria-label="Toggle Sound Effects" title="Toggle Sound FX (Point Blank Audio)">
+          <svg class="sound-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+          </svg>
+        </button>
+
+        <button class="btn-aim-launch" id="openAimTrainerBtn" style="background:rgba(212,175,55,0.15);border:1px solid var(--border);color:var(--gold);font-family:var(--font-display);font-weight:800;font-size:0.82rem;padding:0.45rem 0.75rem;border-radius:3px;cursor:pointer;display:inline-flex;align-items:center;gap:0.35rem;" title="Latihan Reaksi Aim Point Blank">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="22" y1="12" x2="18" y2="12"/>
+            <line x1="6" y1="12" x2="2" y2="12"/>
+            <line x1="12" y1="6" x2="12" y2="2"/>
+            <line x1="12" y1="22" x2="12" y2="18"/>
+          </svg>
+          <span>AIM TRAINER</span>
+        </button>
+
+        <button class="hamburger" id="navHamburger" aria-label="Buka menu navigasi" aria-expanded="false">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
     </div>
   </nav>
 
@@ -187,7 +249,8 @@
       <a href="#partnership" class="mobile-link">04 / PARTNERSHIP &amp; SCRIM</a>
       <a href="#record" class="mobile-link">05 / THE RECORD</a>
       <a href="#gallery" class="mobile-link">06 / FIELD NOTES</a>
-      <a href="#join" class="mobile-link mobile-link--cta">07 / JOIN THE HUNT</a>
+      <a href="#media" class="mobile-link">07 / MOTHRA MEDIA</a>
+      <a href="#join" class="mobile-link mobile-link--cta">08 / JOIN THE HUNT</a>
 
       <div class="mobile-socials">
         <a href="https://www.instagram.com/mothra.officiall" target="_blank" rel="noopener"
@@ -409,8 +472,7 @@
             </div>
           </div>
 
-          <!-- Squad Side Cards -->
-          <div class="players-grid-side">
+          <!-- Squad Roster Cards -->
             <!-- 2. Rusher -->
             <div class="player-card reveal-fade" data-category="main" data-delay="100" data-player="vex"
               data-name="MOTHRA•VEX" data-realname="Vex Ardi" data-role="RUSHER" data-num="07"
@@ -950,14 +1012,79 @@
       </div>
     </section>
 
-    <!-- ===================== 07 / JOIN / RECRUITMENT ===================== -->
+    <!-- ===================== 07 / MOTHRA MEDIA (VIDEOS & LIVE STREAMING) ===================== -->
+    <section class="section media-section" id="media" aria-labelledby="mediaHeading">
+      <div class="section-container">
+        <div class="section-tag reveal-fade">07 / MOTHRA MEDIA</div>
+        <div class="media-header">
+          <div>
+            <h2 id="mediaHeading" class="section-heading reveal-left">
+              BROADCAST &amp; <span class="text-gold">MEDIA.</span>
+            </h2>
+            <span class="media-hint">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              Tonton live streaming turnamen PB, match highlight, dan gameplay taktis Clan MOTHRA
+            </span>
+          </div>
+          <p class="media-sub reveal-right">Arsip siaran langsung kompetisi Point Blank nasional, clutch gameplay, dan video dokumentasi skuad.</p>
+        </div>
+
+        <!-- Video Filter Tabs -->
+        <div class="media-filters reveal-fade">
+          <button type="button" class="media-filter-btn active" data-media-filter="all">SEMUA VIDEO</button>
+          <button type="button" class="media-filter-btn" data-media-filter="live"><span class="live-dot-pulse"></span> 🔴 LIVE STREAMING</button>
+          <button type="button" class="media-filter-btn" data-media-filter="gameplay">🎮 GAMEPLAY</button>
+        </div>
+
+        <!-- Featured Video (Hero Highlight) Container -->
+        <div class="media-featured-wrap reveal-fade" id="mediaFeaturedWrap">
+          <!-- Populated by JS dynamic sync -->
+        </div>
+
+        <!-- Video Grid Container (Newest first) -->
+        <div class="media-grid reveal-fade" id="mediaGrid">
+          <!-- Populated by JS dynamic sync -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== 08 / TACTICAL ARMORY & CLAN STORE ===================== -->
+    <section class="section armory-section" id="store" aria-labelledby="storeHeading">
+      <div class="section-container">
+        <div class="section-tag reveal-fade">08 / TACTICAL ARMORY &amp; MERCH</div>
+        <div class="gallery-header">
+          <div>
+            <h2 id="storeHeading" class="section-heading reveal-left">
+              OFFICIAL <span class="text-gold">ARMORY &amp; GEAR.</span>
+            </h2>
+            <span class="media-hint">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="9" cy="21" r="1"></circle>
+                <circle cx="20" cy="21" r="1"></circle>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+              </svg>
+              Official Jersey, Gaming Gear, dan Voucher PB Cash resmi Clan MOTHRA
+            </span>
+          </div>
+          <p class="gallery-sub reveal-right" id="storeDesc">Dapatkan Official Custom Jersey, Gaming Gear PB, dan Layanan PB Cash resmi dengan harga spesial untuk troopers Clan MOTHRA.</p>
+        </div>
+
+        <div class="armory-grid reveal-fade" id="storeGrid">
+          <!-- Populated dynamically by main.js from CMS data -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== 09 / JOIN / RECRUITMENT & STATUS TRACKER ===================== -->
     <section class="section join" id="join" aria-labelledby="joinHeading">
       <div class="join-bg">
         <div class="join-bg-img"></div>
         <div class="join-overlay"></div>
       </div>
       <div class="section-container">
-        <div class="section-tag reveal-fade">07 / OPEN RECRUITMENT</div>
+        <div class="section-tag reveal-fade">09 / OPEN RECRUITMENT</div>
         <div class="join-content">
           <div class="join-left reveal-left">
             <h2 id="joinHeading" class="section-heading join-heading">
@@ -979,8 +1106,26 @@
               </div>
             </div>
 
+            <!-- Recruitment Status Tracker Box -->
+            <div class="rec-tracker-wrapper reveal-fade">
+              <div style="display:flex;align-items:center;gap:0.4rem;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <span style="font-family:var(--font-display);font-weight:800;font-size:0.95rem;color:var(--gold);letter-spacing:0.05em;">CEK STATUS PENDAFTARAN ANGGOTA</span>
+              </div>
+              <p style="font-size:0.82rem;color:var(--text-muted);margin-top:0.35rem;">
+                Sudah pernah mendaftar? Masukkan In-Game Nickname PB atau Nomor WhatsApp Anda untuk mengecek hasil seleksi operator:
+              </p>
+              <div class="rec-search-row">
+                <input type="text" id="recSearchQuery" class="rec-search-input" placeholder="Masukkan Nickname PB atau No. WA..." />
+                <button type="button" id="recSearchBtn" class="rec-search-btn">CEK STATUS</button>
+              </div>
+              <div class="rec-result-card" id="recResultCard">
+                <!-- Populated dynamically by JS -->
+              </div>
+            </div>
+
             <!-- Direct Channel Connect Buttons -->
-            <div class="join-direct-channels">
+            <div class="join-direct-channels" style="margin-top:1.5rem;">
               <span class="direct-label">ATAU HUBUNGI KAMI LANGSUNG:</span>
               <div class="direct-buttons">
                 <a href="https://discord.gg/fxfMBWSzW" target="_blank" rel="noopener"
@@ -1134,7 +1279,44 @@
             <p class="player-modal-bio" id="modalPlayerBio">Bio pemain...</p>
           </div>
 
-          <div class="player-modal-actions">
+          <!-- Tactical Radar Chart & Weapon Loadout Grid -->
+          <div class="dossier-tactical-grid">
+            <div class="radar-chart-container">
+              <div class="radar-chart-title">📊 STAT ATTRIBUTES RADAR</div>
+              <canvas id="modalRadarCanvas" width="260" height="220" class="tactical-radar-canvas"></canvas>
+            </div>
+
+            <div class="loadout-container">
+              <div class="loadout-title">
+                <span>🎯 POINT BLANK LOADOUT</span>
+                <span style="font-family:var(--font-mono);font-size:0.7rem;color:var(--gold);">PBNC READY</span>
+              </div>
+              <div class="loadout-slots">
+                <div class="weapon-slot-card">
+                  <div class="weapon-slot-type">PRIMARY WEAPON</div>
+                  <div class="weapon-slot-name" id="modalPrimaryWeapon">AUG A3 Silence</div>
+                </div>
+                <div class="weapon-slot-card">
+                  <div class="weapon-slot-type">SECONDARY / PISTOL</div>
+                  <div class="weapon-slot-name" id="modalSecondaryWeapon">R.B 454 SS8M+S</div>
+                </div>
+                <div class="weapon-slot-card">
+                  <div class="weapon-slot-type">MELEE / KNIFE</div>
+                  <div class="weapon-slot-name" id="modalMeleeWeapon">Fang Blade PBNC</div>
+                </div>
+                <div class="weapon-slot-card">
+                  <div class="weapon-slot-type">SPECIAL / BERET</div>
+                  <div class="weapon-slot-name" id="modalSpecialGear">Beret PBNC</div>
+                </div>
+              </div>
+              <button type="button" class="dossier-clutch-btn" id="modalClutchBtn">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                <span>PUTAR VIDEO CLUTCH HIGHLIGHT</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="player-modal-actions" style="margin-top:1.5rem;">
             <a href="#join" class="btn btn--primary btn--sm" id="modalJoinBtn">
               <span>GABUNG DENGAN SQUAD</span>
               <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
@@ -1404,6 +1586,7 @@
           <a href="#partnership" class="footer-link">Partnership &amp; Scrim</a>
           <a href="#record" class="footer-link">The Record</a>
           <a href="#gallery" class="footer-link">Field Notes</a>
+          <a href="#media" class="footer-link">Mothra Media</a>
           <a href="#join" class="footer-link">Join Recruitment</a>
         </div>
 
@@ -1455,10 +1638,95 @@
     <img class="lightbox-img" id="lightboxImg" src="" alt="" />
   </div>
 
+  <!-- ===================== MODAL: RESPONSIVE YOUTUBE VIDEO PLAYER ===================== -->
+  <div class="video-modal" id="videoModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="videoModalTitle">
+    <div class="video-modal-backdrop" id="videoModalBackdrop"></div>
+    <div class="video-modal-dialog">
+      <div class="video-modal-header">
+        <div class="video-modal-badge" id="videoModalBadge">🔴 LIVE STREAMING</div>
+        <button class="video-modal-close" id="videoModalClose" aria-label="Tutup Video Player">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="video-player-frame-wrap">
+        <iframe id="videoModalIframe" src="" title="Mothra Media YouTube Player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+      </div>
+      <div class="video-modal-info">
+        <h3 class="video-modal-title" id="videoModalTitle">Judul Video</h3>
+        <div class="video-modal-meta">
+          <span class="video-modal-date" id="videoModalDate">2026-08-20</span>
+          <span class="video-modal-category" id="videoModalCategory">LIVE STREAMING</span>
+        </div>
+        <p class="video-modal-desc" id="videoModalDesc">Deskripsi video...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== MOTHRA AIM REFLEX TRAINER MODAL ===================== -->
+  <div class="aim-modal-overlay" id="aimTrainerModal" role="dialog" aria-modal="true" aria-hidden="true" aria-label="MOTHRA Aim Reflex Trainer">
+    <div class="aim-game-card">
+      <div class="aim-game-header">
+        <div class="aim-game-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.5">
+            <circle cx="12" cy="12" r="10"/><line x1="22" y1="12" x2="18" y2="12"/><line x1="6" y1="12" x2="2" y2="12"/><line x1="12" y1="6" x2="12" y2="2"/><line x1="12" y1="22" x2="12" y2="18"/>
+          </svg>
+          <span>MOTHRA AIM REFLEX TRAINER</span>
+        </div>
+        <button type="button" class="player-modal-close" id="closeAimTrainerBtn" aria-label="Tutup Game">&#10005;</button>
+      </div>
+
+      <div class="aim-game-hud">
+        <div class="hud-stat-box">
+          <div class="hud-stat-label">SISA WAKTU</div>
+          <div class="hud-stat-val" id="aimTimerDisplay">30s</div>
+        </div>
+        <div class="hud-stat-box">
+          <div class="hud-stat-label">SKOR TEMBAKAN</div>
+          <div class="hud-stat-val" id="aimScoreDisplay">0</div>
+        </div>
+        <div class="hud-stat-box">
+          <div class="hud-stat-label">AKURASI</div>
+          <div class="hud-stat-val" id="aimAccDisplay">100%</div>
+        </div>
+        <div class="hud-stat-box">
+          <div class="hud-stat-label">RATA-RATA REAKSI</div>
+          <div class="hud-stat-val" id="aimSpeedDisplay">0 ms</div>
+        </div>
+      </div>
+
+      <div class="aim-arena" id="aimArena">
+        <div class="aim-arena-grid"></div>
+
+        <!-- Start Screen -->
+        <div class="aim-start-screen" id="aimStartScreen">
+          <h3 style="font-family:var(--font-display);font-size:1.8rem;color:#fff;margin-bottom:0.5rem;">UJI KECEPATAN REAKSI AIM POINT BLANK</h3>
+          <p style="color:var(--text-muted);font-size:0.9rem;max-width:480px;line-height:1.5;margin-bottom:1.5rem;">
+            Tembak sasaran merah secepat mungkin dalam 30 detik! Uji insting dan kecepatan refleks milidetik kamu sebelum ikut seleksi Clan MOTHRA.
+          </p>
+          <button type="button" class="btn-play-aim" id="startAimGameBtn">🎯 MULAI LATIHAN (30s)</button>
+        </div>
+
+        <!-- Result Screen -->
+        <div class="aim-result-screen" id="aimResultScreen" style="display:none;">
+          <div style="font-family:var(--font-mono);font-size:0.85rem;color:var(--gold);letter-spacing:0.1em;">EVALUASI TEMPUR SELESAI</div>
+          <div class="aim-rank-tag" id="aimRankTitle">TACTICAL LEGEND</div>
+          <p style="color:#fff;font-size:1rem;margin-bottom:1.25rem;" id="aimResultSummary">Skor: 1,850 • Akurasi: 94% • Reaksi: 245 ms</p>
+          <div style="display:flex;gap:0.75rem;flex-wrap:wrap;justify-content:center;">
+            <button type="button" class="btn-play-aim" id="retryAimGameBtn">🔄 MAIN LAGI</button>
+            <a href="#join" class="btn btn--primary" id="aimClaimRecruitBtn" style="font-family:var(--font-display);font-size:1.1rem;font-weight:900;padding:0.75rem 1.5rem;text-decoration:none;">GABUNG ROSTER MOTHRA</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Supabase Cloud Database & Realtime SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="data.js?v=3.8"></script>
-  <script src="main.js?v=3.8"></script>
+  <script src="data.js?v=4.0"></script>
+  <script src="main.js?v=4.0"></script>
 </body>
 
 </html>

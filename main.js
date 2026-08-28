@@ -366,57 +366,26 @@ function syncCmsData() {
         const readMoreWrap = document.getElementById('lineupReadMoreWrap');
         if (readMoreWrap) readMoreWrap.style.display = 'none';
       } else {
-        const featuredPlayer = db.lineup.find((p) => p.featured) || db.lineup[0];
-        const sidePlayers = db.lineup.filter((p) => p.id !== featuredPlayer.id);
-
         const getCategoryBadge = (catId) => {
           const catObj = (db.categories || []).find((c) => c.id === catId);
           return catObj ? catObj.badge || catObj.label : (catId || 'PBNC').toUpperCase();
         };
 
-        // Render Featured Player Card
-        let featuredHtml = `
-          <div class="player-card player-card--featured reveal-fade visible revealed"
-               data-category="${featuredPlayer.category || 'pbnc'}"
-               data-delay="0"
-               data-player="${featuredPlayer.id}"
-               data-name="${featuredPlayer.name}"
-               data-realname="${featuredPlayer.realname || ''}"
-               data-role="${featuredPlayer.role}"
-               data-num="${featuredPlayer.num || '01'}"
-               data-img="${featuredPlayer.img}"
-               data-weapon="${featuredPlayer.weapon || 'AUG A3 / Kriss S.V'}"
-               data-kd="${featuredPlayer.kd || '2.00'}"
-               data-hs="${featuredPlayer.hs || '60%'}"
-               data-experience="${featuredPlayer.experience || '3+ Tahun'}"
-               data-bio="${(featuredPlayer.bio || '').replace(/"/g, '&quot;')}"
-               tabindex="0"
-               role="button"
-               aria-label="Lihat profil ${featuredPlayer.name}">
-            <div class="player-img-wrap">
-              <img src="${featuredPlayer.img}" alt="${featuredPlayer.name}" loading="lazy" width="400" height="533" onerror="this.src='assets/player-captain.jpg'" />
-              <div class="player-num">${featuredPlayer.num || '01'}</div>
-              <div class="player-status"><span class="dot dot--green"></span> ${getCategoryBadge(featuredPlayer.category)}</div>
-              <div class="player-hover-action">
-                <span>VIEW DOSSIER <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17l9.2-9.2M17 17V8H8"/></svg></span>
-              </div>
-            </div>
-            <div class="player-info">
-              <span class="player-role">${featuredPlayer.role}</span>
-              <div class="player-name">${featuredPlayer.name}</div>
-              <div class="player-realname">${featuredPlayer.realname || ''}</div>
-            </div>
-          </div>
-        `;
+        // Sort: featured players first, then keep list order
+        const sortedLineup = [...db.lineup].sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
 
-        // Render Side Players Cards
-        let sideHtml = `<div class="players-grid-side">`;
-        sidePlayers.forEach((p, idx) => {
-          const dotClass = p.category === 'ba' ? 'dot--gold' : 'dot--green';
-          sideHtml += `
-            <div class="player-card reveal-fade visible revealed"
+        let playersHtml = '';
+        sortedLineup.forEach((p, idx) => {
+          const isFeatured = !!p.featured;
+          const dotClass = isFeatured ? 'dot--gold' : (p.category === 'ba' ? 'dot--gold' : 'dot--green');
+          const badgeText = isFeatured ? `⭐ ${getCategoryBadge(p.category)}` : getCategoryBadge(p.category);
+          const featuredClass = isFeatured ? 'player-card--featured' : '';
+
+          playersHtml += `
+            <div class="player-card ${featuredClass} reveal-fade visible revealed"
                  data-category="${p.category || 'pbnc'}"
-                 data-delay="${(idx + 1) * 100}"
+                 data-featured="${isFeatured ? 'true' : 'false'}"
+                 data-delay="${idx * 60}"
                  data-player="${p.id}"
                  data-name="${p.name}"
                  data-realname="${p.realname || ''}"
@@ -432,24 +401,23 @@ function syncCmsData() {
                  role="button"
                  aria-label="Lihat profil ${p.name}">
               <div class="player-img-wrap">
-                <img src="${p.img}" alt="${p.name}" loading="lazy" width="300" height="400" onerror="this.src='assets/player2.jpg'" />
+                <img src="${p.img}" alt="${p.name}" loading="lazy" width="300" height="400" onerror="this.src='assets/player-captain.jpg'" />
                 <div class="player-num">${p.num || '00'}</div>
-                <div class="player-status"><span class="dot ${dotClass}"></span> ${getCategoryBadge(p.category)}</div>
+                <div class="player-status"><span class="dot ${dotClass}"></span> ${badgeText}</div>
                 <div class="player-hover-action">
                   <span>VIEW DOSSIER <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17l9.2-9.2M17 17V8H8"/></svg></span>
                 </div>
               </div>
               <div class="player-info">
-                <span class="player-role ${p.category === 'ba' ? 'text-gold' : ''}">${p.role}</span>
+                <span class="player-role ${isFeatured || p.category === 'ba' ? 'text-gold' : ''}">${p.role}</span>
                 <div class="player-name">${p.name}</div>
                 <div class="player-realname">${p.realname || ''}</div>
               </div>
             </div>
           `;
         });
-        sideHtml += `</div>`;
 
-        playersGrid.innerHTML = featuredHtml + sideHtml;
+        playersGrid.innerHTML = playersHtml;
 
         ensureLineupReadMoreElement();
         bindPlayerCardClickEvents();
@@ -508,7 +476,7 @@ function syncCmsData() {
     }
   }
 
-  // 5. Sync The Record (Prestasi)
+  // 5. Sync The Record (Prestasi & 3D Trophy Room)
   if (Array.isArray(db.records)) {
     const timelineList = document.querySelector('.timeline-list, .achievements-list');
     if (timelineList) {
@@ -521,12 +489,19 @@ function syncCmsData() {
       } else {
         let recordsHtml = '';
         db.records.forEach((r, idx) => {
+          const squadChips = Array.isArray(r.squad) ? r.squad.map(sq => {
+            const isMvp = r.mvp && r.mvp === sq;
+            return `<span class="squad-chip ${isMvp ? 'squad-chip--mvp' : ''}">${sq}${isMvp ? ' ★ MVP' : ''}</span>`;
+          }).join('') : '';
+
           recordsHtml += `
-            <div class="achievement-item reveal-fade visible revealed" data-delay="${idx * 100}">
+            <div class="achievement-item record-card-enhanced reveal-fade visible revealed" data-delay="${idx * 100}">
+              <div class="record-trophy-sheen"></div>
               <div class="achievement-year">${r.year}</div>
               <div class="achievement-info">
                 <div class="achievement-title">${r.title}</div>
                 <div class="achievement-sub">${r.subtitle}</div>
+                ${squadChips ? `<div class="record-squad-chips">${squadChips}</div>` : ''}
               </div>
               <div class="achievement-trophy" aria-hidden="true">
                 <svg width="32" height="32" viewBox="0 0 28 28" fill="none">
@@ -570,7 +545,374 @@ function syncCmsData() {
       }
     }
   }
+
+  // 7. Sync Mothra Media (Videos & Live Streaming)
+  syncMothraMedia(db);
+
+  // 8. Sync Live Match Day Realtime Banner
+  const liveBar = document.getElementById('liveMatchBar');
+  if (liveBar && db.liveMatch) {
+    const lm = db.liveMatch;
+    if (lm.enabled && lm.status !== 'OFF') {
+      const statusText = document.getElementById('liveStatusText');
+      const badgeStatus = document.getElementById('liveBadgeStatus');
+      const tourneyName = document.getElementById('liveTourneyName');
+      const tourneySub = document.getElementById('liveTourneySub');
+      const teamMothra = document.getElementById('liveTeamMothra');
+      const scoreMothra = document.getElementById('liveScoreMothra');
+      const scoreOpponent = document.getElementById('liveScoreOpponent');
+      const teamOpponent = document.getElementById('liveTeamOpponent');
+      const streamBtn = document.getElementById('liveStreamBtn');
+      const remindBtn = document.getElementById('liveRemindBtn');
+
+      if (tourneyName) tourneyName.textContent = lm.tournament || 'PBNC MATCH DAY';
+      if (tourneySub) tourneySub.textContent = `MAP: ${(lm.map || 'Downtown').toUpperCase()} • ${lm.roundInfo || 'ROUND 1'}`;
+      if (teamMothra) teamMothra.textContent = (db.branding && db.branding.clanName) || 'MOTHRA';
+      if (scoreMothra) scoreMothra.textContent = lm.mothraScore !== undefined ? lm.mothraScore : 0;
+      if (scoreOpponent) scoreOpponent.textContent = lm.opponentScore !== undefined ? lm.opponentScore : 0;
+      if (teamOpponent) teamOpponent.textContent = lm.opponentName || 'OPFOR';
+
+      if (lm.status === 'LIVE') {
+        if (statusText) statusText.textContent = '🔴 LIVE MATCH';
+        if (badgeStatus) {
+          badgeStatus.className = 'live-badge-pulse';
+        }
+        if (streamBtn) {
+          streamBtn.style.display = '';
+          streamBtn.href = lm.streamUrl || 'https://youtube.com';
+        }
+        if (remindBtn) remindBtn.style.display = 'none';
+      } else if (lm.status === 'UPCOMING') {
+        if (statusText) statusText.textContent = '⏳ UPCOMING MATCH';
+        if (badgeStatus) {
+          badgeStatus.className = 'live-badge-pulse live-badge-pulse--upcoming';
+        }
+        if (streamBtn) streamBtn.style.display = 'none';
+        if (remindBtn) {
+          remindBtn.style.display = '';
+          remindBtn.onclick = function() {
+            const calUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=PBNC+Match:+MOTHRA+vs+${encodeURIComponent(lm.opponentName || 'OPFOR')}&details=Official+Point+Blank+Tournament+Match.+Watch+live+at+MOTHRA+Esports+HQ.&location=Point+Blank+Indonesia`;
+            window.open(calUrl, '_blank');
+          };
+        }
+      } else if (lm.status === 'VICTORY') {
+        if (statusText) statusText.textContent = '🏆 VICTORY (WIN)';
+        if (badgeStatus) badgeStatus.className = 'live-badge-pulse live-badge-pulse--upcoming';
+        if (streamBtn) streamBtn.style.display = 'none';
+      } else if (lm.status === 'DEFEAT') {
+        if (statusText) statusText.textContent = '💀 MATCH ENDED';
+        if (badgeStatus) badgeStatus.className = 'live-badge-pulse';
+        if (streamBtn) streamBtn.style.display = 'none';
+      }
+
+      liveBar.style.display = '';
+    } else {
+      liveBar.style.display = 'none';
+    }
+  }
+
+  // 9. Sync Tactical Armory & Merch Store
+  const storeGrid = document.getElementById('storeGrid');
+  const storeSection = document.getElementById('store');
+  const storeDesc = document.getElementById('storeDesc');
+  if (storeGrid && db.store) {
+    if (db.store.enabled === false) {
+      if (storeSection) storeSection.style.display = 'none';
+    } else {
+      if (storeSection) storeSection.style.display = '';
+      if (storeDesc && db.store.description) storeDesc.textContent = db.store.description;
+      const items = Array.isArray(db.store.items) ? db.store.items : [];
+      if (items.length === 0) {
+        storeGrid.innerHTML = `
+          <div class="no-filter-match" style="grid-column: 1 / -1; padding: 2.5rem 1rem; opacity: 0.75; text-align: center;">
+            <span class="text-gold" style="font-family: var(--font-mono); font-size: 0.85rem; letter-spacing: 0.15em;">KATALOG ARMORY SEDANG DALAM PEMBARUAN STOK.</span>
+          </div>
+        `;
+      } else {
+        let storeHtml = '';
+        items.forEach((it) => {
+          storeHtml += `
+            <div class="armory-card reveal-fade visible revealed">
+              <div class="armory-img-wrap">
+                <img src="${it.img || 'assets/pb-bg-squad.jpg'}" alt="${it.name}" class="armory-img" loading="lazy" onerror="this.src='assets/pb-bg-squad.jpg'" />
+                ${it.badge ? `<span class="armory-badge-tag">${it.badge}</span>` : ''}
+              </div>
+              <div class="armory-body">
+                <span class="armory-cat">${it.category || 'GEAR'}</span>
+                <h3 class="armory-name">${it.name}</h3>
+                <p class="armory-desc">${it.description || ''}</p>
+                <div class="armory-price-row">
+                  <span class="armory-price-current">${it.price}</span>
+                  ${it.originalPrice ? `<span class="armory-price-strike">${it.originalPrice}</span>` : ''}
+                </div>
+                <a href="${it.orderUrl || 'https://discord.gg/fxfMBWSzW'}" target="_blank" rel="noopener" class="btn-armory-order">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                  <span>ORDER VIA WHATSAPP</span>
+                </a>
+              </div>
+            </div>
+          `;
+        });
+        storeGrid.innerHTML = storeHtml;
+      }
+    }
+  }
 }
+
+/* ============================================================
+   MOTHRA MEDIA (VIDEOS & LIVE STREAMING CONTROLLER)
+   ============================================================ */
+let currentMediaFilter = 'all';
+
+function syncMothraMedia(db) {
+  const featuredWrap = document.getElementById('mediaFeaturedWrap');
+  const mediaGrid = document.getElementById('mediaGrid');
+  if (!featuredWrap && !mediaGrid) return;
+
+  const rawVideos = Array.isArray(db && db.videos) ? db.videos : [];
+  // Public viewers only see published = true
+  const videos = rawVideos.filter(v => v.published !== false);
+
+  if (videos.length === 0) {
+    if (featuredWrap) featuredWrap.innerHTML = '';
+    if (mediaGrid) {
+      mediaGrid.innerHTML = `
+        <div class="no-filter-match" style="grid-column: 1 / -1; padding: 3rem 1rem; opacity: 0.75; text-align: center;">
+          <span class="text-gold" style="font-family: var(--font-mono); font-size: 0.85rem; letter-spacing: 0.15em;">BELUM ADA VIDEO / LIVE STREAMING YANG DIPUBLIKASIKAN.</span>
+        </div>
+      `;
+    }
+    return;
+  }
+
+  // Sort videos: sort_order ascending, then created_at descending
+  const sortedVideos = [...videos].sort((a, b) => {
+    const orderA = a.sort_order !== undefined && a.sort_order !== null ? Number(a.sort_order) : 999;
+    const orderB = b.sort_order !== undefined && b.sort_order !== null ? Number(b.sort_order) : 999;
+    if (orderA !== orderB) return orderA - orderB;
+    return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+  });
+
+  // Featured video: either with featured = true, or first item
+  const featuredVideo = sortedVideos.find(v => v.featured) || sortedVideos[0];
+  const gridVideos = sortedVideos.filter(v => v.id !== featuredVideo.id);
+
+  // Render Featured Video Hero
+  if (featuredWrap) {
+    const isMatchFilter = currentMediaFilter === 'all' || featuredVideo.category === currentMediaFilter;
+    if (!isMatchFilter && currentMediaFilter !== 'all') {
+      featuredWrap.style.display = 'none';
+      featuredWrap.innerHTML = '';
+    } else {
+      featuredWrap.style.display = '';
+      const isLive = featuredVideo.category === 'live';
+      const catBadge = isLive 
+        ? `<span class="category-badge-pill category-live"><span class="live-dot-pulse"></span> 🔴 LIVE STREAMING</span>` 
+        : `<span class="category-badge-pill category-gameplay">🎮 GAMEPLAY</span>`;
+      
+      const thumb = featuredVideo.thumbnail_url || (featuredVideo.video_id ? `https://img.youtube.com/vi/${featuredVideo.video_id}/maxresdefault.jpg` : 'assets/pb-bg-squad.jpg');
+      const dateFormatted = featuredVideo.created_at ? new Date(featuredVideo.created_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' }) : '';
+
+      featuredWrap.innerHTML = `
+        <div class="featured-video-card" data-video-id="${featuredVideo.video_id || ''}">
+          <div class="featured-video-thumb-wrap" role="button" tabindex="0" aria-label="Putar ${featuredVideo.title}">
+            <img src="${thumb}" alt="${featuredVideo.title}" loading="lazy" onerror="this.src='https://img.youtube.com/vi/${featuredVideo.video_id}/hqdefault.jpg'" />
+            <div class="video-play-btn-overlay">
+              <div class="video-play-btn-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+              </div>
+            </div>
+          </div>
+          <div class="featured-video-content">
+            <div class="featured-video-tag-row">
+              <span class="featured-badge-pill">⭐ FEATURED BROADCAST</span>
+              ${catBadge}
+            </div>
+            <h3 class="featured-video-title">${featuredVideo.title}</h3>
+            <p class="featured-video-desc">${featuredVideo.description || 'Saksikan pertandingan dan highlight gameplay Clan MOTHRA Point Blank Indonesia.'}</p>
+            <div class="featured-video-footer">
+              <span class="featured-video-date">📅 ${dateFormatted || 'OFFICIAL MATCH'}</span>
+              <button type="button" class="btn btn--primary btn--sm open-video-btn" data-video-obj="${encodeURIComponent(JSON.stringify(featuredVideo))}">
+                <span>TONTON SEKARANG ▶</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  // Render Grid Videos
+  if (mediaGrid) {
+    const matchingGrid = gridVideos.filter(v => currentMediaFilter === 'all' || v.category === currentMediaFilter);
+    if (matchingGrid.length === 0 && (!featuredWrap || featuredWrap.style.display === 'none')) {
+      mediaGrid.innerHTML = `
+        <div class="no-filter-match" style="grid-column: 1 / -1; padding: 3rem 1rem; opacity: 0.75; text-align: center;">
+          <span class="text-gold" style="font-family: var(--font-mono); font-size: 0.85rem; letter-spacing: 0.15em;">TIDAK ADA VIDEO DI KATEGORI INI.</span>
+        </div>
+      `;
+    } else {
+      let gridHtml = '';
+      matchingGrid.forEach(v => {
+        const isLive = v.category === 'live';
+        const catBadge = isLive 
+          ? `<span class="category-badge-pill category-live"><span class="live-dot-pulse"></span> 🔴 LIVE</span>` 
+          : `<span class="category-badge-pill category-gameplay">🎮 GAMEPLAY</span>`;
+        const thumb = v.thumbnail_url || (v.video_id ? `https://img.youtube.com/vi/${v.video_id}/hqdefault.jpg` : 'assets/pb-bg-squad.jpg');
+        const dateFormatted = v.created_at ? new Date(v.created_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' }) : '';
+
+        gridHtml += `
+          <div class="video-card" data-category="${v.category}" tabindex="0" role="button" aria-label="Putar ${v.title}" data-video-obj="${encodeURIComponent(JSON.stringify(v))}">
+            <div class="video-card-thumb-wrap">
+              <img src="${thumb}" alt="${v.title}" loading="lazy" onerror="this.src='https://img.youtube.com/vi/${v.video_id}/hqdefault.jpg'" />
+              <div class="video-card-play-overlay">
+                <div class="video-card-play-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+                </div>
+              </div>
+            </div>
+            <div class="video-card-body">
+              <div class="video-card-top-row">
+                ${catBadge}
+                <span class="video-card-date">${dateFormatted}</span>
+              </div>
+              <h4 class="video-card-title">${v.title}</h4>
+              <p class="video-card-desc">${v.description || 'Video gameplay Point Blank resmi Clan MOTHRA.'}</p>
+              <div class="video-card-footer">
+                <span class="video-card-btn-action">PUTAR VIDEO <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></span>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      mediaGrid.innerHTML = gridHtml;
+    }
+  }
+
+  bindVideoPlayTriggers();
+  bindMediaFilterEvents();
+}
+
+function initVideoModal() {
+  const modal = document.getElementById('videoModal');
+  const backdrop = document.getElementById('videoModalBackdrop');
+  const closeBtn = document.getElementById('videoModalClose');
+  const iframe = document.getElementById('videoModalIframe');
+  const titleEl = document.getElementById('videoModalTitle');
+  const badgeEl = document.getElementById('videoModalBadge');
+  const dateEl = document.getElementById('videoModalDate');
+  const descEl = document.getElementById('videoModalDesc');
+
+  if (!modal) return;
+
+  function closeModal() {
+    modal.classList.remove('open');
+    modal.setAttribute('aria-hidden', 'true');
+    if (iframe) iframe.src = '';
+    document.body.style.overflow = '';
+  }
+
+  if (closeBtn) closeBtn.addEventListener('click', closeModal);
+  if (backdrop) backdrop.addEventListener('click', closeModal);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.classList.contains('open')) {
+      closeModal();
+    }
+  });
+
+  window.playMothraVideo = function(videoObj) {
+    if (!videoObj || !videoObj.video_id) return;
+    if (titleEl) titleEl.textContent = videoObj.title || 'MOTHRA MEDIA';
+    if (descEl) descEl.textContent = videoObj.description || '';
+    if (badgeEl) {
+      badgeEl.innerHTML = videoObj.category === 'live' 
+        ? '<span class="live-dot-pulse"></span> 🔴 LIVE STREAMING' 
+        : '🎮 GAMEPLAY HIGHLIGHT';
+    }
+    if (dateEl) {
+      dateEl.textContent = videoObj.created_at ? new Date(videoObj.created_at).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' }) : '';
+    }
+    if (iframe) {
+      iframe.src = `https://www.youtube-nocookie.com/embed/${videoObj.video_id}?autoplay=1&rel=0&modestbranding=1`;
+    }
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  };
+}
+
+function bindVideoPlayTriggers() {
+  // Featured video triggers
+  const featuredCard = document.querySelector('.featured-video-card');
+  if (featuredCard) {
+    const thumbWrap = featuredCard.querySelector('.featured-video-thumb-wrap');
+    const openBtn = featuredCard.querySelector('.open-video-btn');
+    const clickHandler = (e) => {
+      e.stopPropagation();
+      const btn = openBtn || e.currentTarget;
+      const raw = btn ? btn.dataset.videoObj : null;
+      if (raw && window.playMothraVideo) {
+        try {
+          const obj = JSON.parse(decodeURIComponent(raw));
+          window.playMothraVideo(obj);
+        } catch (err) {}
+      }
+    };
+    if (thumbWrap && !thumbWrap._hasClick) {
+      thumbWrap._hasClick = true;
+      thumbWrap.addEventListener('click', () => {
+        if (openBtn) openBtn.click();
+      });
+      thumbWrap.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (openBtn) openBtn.click(); }
+      });
+    }
+    if (openBtn && !openBtn._hasClick) {
+      openBtn._hasClick = true;
+      openBtn.addEventListener('click', clickHandler);
+    }
+  }
+
+  // Video Grid triggers
+  document.querySelectorAll('.media-grid .video-card').forEach(card => {
+    if (card._hasClick) return;
+    card._hasClick = true;
+    const play = () => {
+      const raw = card.dataset.videoObj;
+      if (raw && window.playMothraVideo) {
+        try {
+          const obj = JSON.parse(decodeURIComponent(raw));
+          window.playMothraVideo(obj);
+        } catch (err) {}
+      }
+    };
+    card.addEventListener('click', play);
+    card.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); play(); }
+    });
+  });
+}
+
+function bindMediaFilterEvents() {
+  document.querySelectorAll('.media-filter-btn').forEach(btn => {
+    if (btn._hasMediaListener) return;
+    btn._hasMediaListener = true;
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.media-filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentMediaFilter = btn.dataset.mediaFilter || 'all';
+      if (typeof getMothraData === 'function') {
+        const db = getMothraData();
+        if (db) syncMothraMedia(db);
+      }
+    });
+  });
+}
+
+// Initialize video modal on script load
+initVideoModal();
+bindMediaFilterEvents();
 
 // Global Listeners for Realtime Sync
 window.addEventListener('storage', (e) => {
@@ -588,12 +930,13 @@ window.addEventListener('focus', () => {
   syncCmsData();
 });
 
-// Periodic Auto-Sync Background Poll (Jaminan Realtime di HP / Mobile)
+// Periodic Auto-Sync Background Poll (Hemat Egress: Interval 60s & hanya jika tab aktif)
+// Catatan: Pembaruan data instan sudah ditangani oleh Supabase Realtime WebSocket & visibility listener.
 setInterval(() => {
-  if (typeof fetchMothraDataOnline === 'function') {
+  if (document.visibilityState === 'visible' && typeof fetchMothraDataOnline === 'function') {
     fetchMothraDataOnline();
   }
-}, 3000);
+}, 60000);
 
 // Initial run
 syncCmsData();
@@ -607,7 +950,13 @@ syncCmsData();
 // Tactical Web Audio API sound synthesizer
 const TacticalAudio = (function() {
   let audioCtx = null;
+  let isMuted = false;
+  try {
+    isMuted = localStorage.getItem('mothra_sound_muted') === 'true';
+  } catch (e) {}
+
   function getCtx() {
+    if (isMuted) return null;
     if (!audioCtx && (window.AudioContext || window.webkitAudioContext)) {
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
@@ -617,8 +966,40 @@ const TacticalAudio = (function() {
     return audioCtx;
   }
 
+  function updateMuteButton() {
+    const btn = document.getElementById('soundToggleBtn');
+    if (!btn) return;
+    if (isMuted) {
+      btn.classList.add('muted');
+      btn.title = 'Suara Audio: NONAKTIF (Klik untuk menyalakan)';
+    } else {
+      btn.classList.remove('muted');
+      btn.title = 'Suara Audio: AKTIF (Klik untuk membisukan)';
+    }
+  }
+
+  // Initialize button when DOM is ready
+  if (typeof document !== 'undefined') {
+    document.addEventListener('DOMContentLoaded', () => {
+      updateMuteButton();
+      const btn = document.getElementById('soundToggleBtn');
+      if (btn) {
+        btn.addEventListener('click', () => {
+          isMuted = !isMuted;
+          try {
+            localStorage.setItem('mothra_sound_muted', isMuted.toString());
+          } catch (e) {}
+          updateMuteButton();
+          if (!isMuted) TacticalAudio.playHeadshot();
+        });
+      }
+    });
+  }
+
   return {
+    isMuted() { return isMuted; },
     playBlip(freq = 880, type = 'sine', duration = 0.05, vol = 0.05) {
+      if (isMuted) return;
       try {
         const ctx = getCtx();
         if (!ctx) return;
@@ -640,7 +1021,48 @@ const TacticalAudio = (function() {
     playTab() {
       this.playBlip(950, 'sine', 0.06, 0.06);
     },
+    playGunClick() {
+      if (isMuted) return;
+      try {
+        const ctx = getCtx();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(300, now);
+        osc.frequency.exponentialRampToValueAtTime(60, now + 0.04);
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.05);
+      } catch (e) {}
+    },
+    playHeadshot() {
+      if (isMuted) return;
+      try {
+        const ctx = getCtx();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        // Dual metallic ding sting
+        [1760, 2637.02].forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now + i * 0.03);
+          gain.gain.setValueAtTime(0.09, now + i * 0.03);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.03 + 0.25);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + i * 0.03);
+          osc.stop(now + i * 0.03 + 0.28);
+        });
+      } catch (e) {}
+    },
     playSuccess() {
+      if (isMuted) return;
       try {
         const ctx = getCtx();
         if (!ctx) return;
@@ -1032,86 +1454,45 @@ function applyRosterFilter(filter) {
     btn.classList.toggle('active', btn.dataset.filter === currentRosterFilter);
   });
 
-  const featuredCard = document.querySelector('.player-card--featured');
-  const sideCards    = document.querySelectorAll('.players-grid-side .player-card');
-  const sideWrapper  = document.querySelector('.players-grid-side');
-  const playersGrid  = document.querySelector('.players-grid');
+  const allCards = document.querySelectorAll('.players-grid .player-card');
+  const playersGrid = document.querySelector('.players-grid');
   const readMoreWrap = document.getElementById('lineupReadMoreWrap');
   const readMoreBtn  = document.getElementById('lineupReadMoreBtn');
 
   // 2. Determine which cards match category filter
-  const featuredMatch = !featuredCard ? false :
-    currentRosterFilter === 'all' || (featuredCard.dataset.category || '').trim().toLowerCase() === currentRosterFilter.toLowerCase();
-
-  const matchingSide = [];
-  sideCards.forEach((card) => {
+  const matchingCards = [];
+  allCards.forEach((card) => {
     const cat = (card.dataset.category || '').trim().toLowerCase();
     const match = currentRosterFilter === 'all' || cat === currentRosterFilter.toLowerCase();
-    if (match) matchingSide.push(card);
-  });
-
-  // 3. Show / hide featured card
-  if (featuredCard) {
-    if (featuredMatch) {
-      featuredCard.style.display = '';
-      featuredCard.classList.remove('hidden');
-      featuredCard.classList.add('visible', 'revealed');
+    if (match) {
+      matchingCards.push(card);
     } else {
-      featuredCard.style.display = 'none';
-      featuredCard.classList.add('hidden');
-    }
-  }
-
-  // 4. If featured is hidden but side cards match, promote first side card to featured slot
-  const shouldPromote = !featuredMatch && matchingSide.length > 0;
-  let promotedCard = null;
-  if (shouldPromote) {
-    promotedCard = matchingSide[0];
-  }
-
-  // Remove any previously promoted cards
-  document.querySelectorAll('.player-card--promoted').forEach((c) => {
-    c.classList.remove('player-card--promoted');
-  });
-
-  if (promotedCard) {
-    promotedCard.classList.add('player-card--promoted');
-    promotedCard.style.display = '';
-    promotedCard.classList.remove('hidden');
-    promotedCard.classList.add('visible', 'revealed');
-  }
-
-  // 5. Manage side cards display + Read More limit
-  const sideCardsToConsider = shouldPromote ? matchingSide.slice(1) : matchingSide;
-  const totalMatchingSide = sideCardsToConsider.length;
-  const maxInitial = MAX_SIDE_ROSTER_COLLAPSED; // 4 cards
-
-  // First hide all side cards
-  sideCards.forEach((card) => {
-    if (card !== promotedCard) {
       card.style.display = 'none';
       card.classList.add('hidden');
+      card.classList.remove('visible', 'revealed');
     }
   });
 
-  // Show matching cards up to maxInitial or all if expanded
-  sideCardsToConsider.forEach((card, idx) => {
+  // 3. Limit cards if not expanded
+  const maxInitial = MAX_SIDE_ROSTER_COLLAPSED; // 4 cards
+  const totalMatching = matchingCards.length;
+
+  matchingCards.forEach((card, idx) => {
     if (isRosterExpanded || idx < maxInitial) {
       card.style.display = '';
       card.classList.remove('hidden');
       card.classList.add('visible', 'revealed');
+    } else {
+      card.style.display = 'none';
+      card.classList.add('hidden');
+      card.classList.remove('visible', 'revealed');
     }
   });
 
-  // 6. Show/hide side wrapper
-  if (sideWrapper) {
-    sideWrapper.style.display = matchingSide.length > 0 ? '' : 'none';
-  }
-
-  // 7. Manage Read More Button state & text
+  // 4. Manage Read More Button state & text
   if (readMoreWrap && readMoreBtn) {
-    if (totalMatchingSide > maxInitial) {
-      readMoreWrap.style.display = 'block';
+    if (totalMatching > maxInitial) {
+      readMoreWrap.style.display = 'flex';
       if (isRosterExpanded) {
         readMoreBtn.classList.add('is-expanded');
         readMoreBtn.innerHTML = `
@@ -1120,7 +1501,7 @@ function applyRosterFilter(filter) {
         `;
       } else {
         readMoreBtn.classList.remove('is-expanded');
-        const remaining = totalMatchingSide - maxInitial;
+        const remaining = totalMatching - maxInitial;
         readMoreBtn.innerHTML = `
           <span>READ MORE ROSTER (+${remaining} UNIT)</span>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
@@ -1131,15 +1512,16 @@ function applyRosterFilter(filter) {
     }
   }
 
-  // 8. If NO cards match at all, show empty message
-  const noMatch = !featuredMatch && matchingSide.length === 0;
+  // 5. If NO cards match at all, show empty message
   let emptyEl = playersGrid ? playersGrid.querySelector('.no-filter-match') : null;
-  if (noMatch && playersGrid && !emptyEl) {
-    emptyEl = document.createElement('div');
-    emptyEl.className = 'no-filter-match';
-    emptyEl.textContent = 'Tidak ada pemain di kategori ini.';
-    playersGrid.appendChild(emptyEl);
-  } else if (!noMatch && emptyEl) {
+  if (totalMatching === 0 && playersGrid) {
+    if (!emptyEl) {
+      emptyEl = document.createElement('div');
+      emptyEl.className = 'no-filter-match';
+      emptyEl.textContent = 'Tidak ada pemain di kategori ini.';
+      playersGrid.appendChild(emptyEl);
+    }
+  } else if (emptyEl) {
     emptyEl.remove();
   }
 }
@@ -1206,8 +1588,111 @@ function bindLightboxEvents() {
 bindLightboxEvents();
 
 /* ============================================================
-   11. INTERACTIVE PLAYER DOSSIER MODAL
+   11. INTERACTIVE PLAYER DOSSIER MODAL & TACTICAL RADAR CANVAS
    ============================================================ */
+function drawTacticalRadar(canvas, stats) {
+  if (!canvas || !canvas.getContext) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width;
+  const h = canvas.height;
+  const cx = w / 2;
+  const cy = h / 2 + 6;
+  const radius = Math.min(cx, cy) - 34;
+
+  ctx.clearRect(0, 0, w, h);
+
+  const axes = [
+    { label: 'AIM', val: stats && stats.aim ? stats.aim : 90 },
+    { label: 'REFLEX', val: stats && stats.reflex ? stats.reflex : 88 },
+    { label: 'CLUTCH', val: stats && stats.clutch ? stats.clutch : 92 },
+    { label: 'TACTICAL IQ', val: stats && stats.tactical ? stats.tactical : 85 },
+    { label: 'COMMS', val: stats && stats.comms ? stats.comms : 87 }
+  ];
+
+  const count = axes.length;
+  const angleStep = (Math.PI * 2) / count;
+  const startAngle = -Math.PI / 2;
+
+  // 1. Draw web grid levels
+  const levels = 4;
+  for (let l = 1; l <= levels; l++) {
+    const r = (radius / levels) * l;
+    ctx.beginPath();
+    for (let i = 0; i < count; i++) {
+      const angle = startAngle + i * angleStep;
+      const x = cx + Math.cos(angle) * r;
+      const y = cy + Math.sin(angle) * r;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.strokeStyle = l === levels ? 'rgba(212, 175, 55, 0.45)' : 'rgba(255, 255, 255, 0.08)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // 2. Draw axis spoke lines & labels
+  ctx.font = 'bold 9.5px "Share Tech Mono", monospace';
+  ctx.fillStyle = '#A1A1AA';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  for (let i = 0; i < count; i++) {
+    const angle = startAngle + i * angleStep;
+    const x = cx + Math.cos(angle) * radius;
+    const y = cy + Math.sin(angle) * radius;
+
+    // Line
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(x, y);
+    ctx.strokeStyle = 'rgba(212, 175, 55, 0.2)';
+    ctx.stroke();
+
+    // Label
+    const labelX = cx + Math.cos(angle) * (radius + 16);
+    const labelY = cy + Math.sin(angle) * (radius + 16);
+    ctx.fillStyle = '#D4AF37';
+    ctx.fillText(`${axes[i].label} (${axes[i].val})`, labelX, labelY);
+  }
+
+  // 3. Draw Polygon Stat Fill
+  ctx.beginPath();
+  for (let i = 0; i < count; i++) {
+    const angle = startAngle + i * angleStep;
+    const valRatio = Math.max(0, Math.min(100, axes[i].val)) / 100;
+    const r = radius * valRatio;
+    const x = cx + Math.cos(angle) * r;
+    const y = cy + Math.sin(angle) * r;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+
+  ctx.fillStyle = 'rgba(212, 175, 55, 0.35)';
+  ctx.fill();
+  ctx.strokeStyle = '#D4AF37';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // 4. Draw vertex dots
+  for (let i = 0; i < count; i++) {
+    const angle = startAngle + i * angleStep;
+    const valRatio = Math.max(0, Math.min(100, axes[i].val)) / 100;
+    const r = radius * valRatio;
+    const x = cx + Math.cos(angle) * r;
+    const y = cy + Math.sin(angle) * r;
+
+    ctx.beginPath();
+    ctx.arc(x, y, 3, 0, Math.PI * 2);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fill();
+    ctx.strokeStyle = '#D4AF37';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  }
+}
+
 function bindPlayerCardClickEvents() {
   const modal = document.getElementById('playerModal');
   const modalBackdrop = document.getElementById('playerModalBackdrop');
@@ -1226,6 +1711,13 @@ function bindPlayerCardClickEvents() {
   const mExp = document.getElementById('modalPlayerExp');
   const mBio = document.getElementById('modalPlayerBio');
 
+  const mPrimary = document.getElementById('modalPrimaryWeapon');
+  const mSecondary = document.getElementById('modalSecondaryWeapon');
+  const mMelee = document.getElementById('modalMeleeWeapon');
+  const mSpecial = document.getElementById('modalSpecialGear');
+  const mRadarCanvas = document.getElementById('modalRadarCanvas');
+  const mClutchBtn = document.getElementById('modalClutchBtn');
+
   if (!modal) return;
 
   const playerCards = document.querySelectorAll('.player-card');
@@ -1234,6 +1726,8 @@ function bindPlayerCardClickEvents() {
     function openModal() {
       const d = card.dataset;
       if (!d.name) return;
+
+      TacticalAudio.playGunClick();
 
       if (mImg) { mImg.src = d.img || 'assets/player-captain.jpg'; mImg.alt = d.name; }
       if (mNum) mNum.textContent = d.num || '01';
@@ -1245,6 +1739,56 @@ function bindPlayerCardClickEvents() {
       if (mHS) mHS.textContent = d.hs || '60%';
       if (mExp) mExp.textContent = d.experience || '3+ Tahun';
       if (mBio) mBio.textContent = d.bio || 'Player resmi Clan MOTHRA Point Blank Indonesia.';
+
+      // Parse or look up full player object from CMS for radar & weapons
+      let playerObj = null;
+      try {
+        const db = typeof getMothraData === 'function' ? getMothraData() : null;
+        if (db && Array.isArray(db.lineup)) {
+          playerObj = db.lineup.find(p => p.name === d.name || p.id === d.id);
+        }
+      } catch (e) {}
+
+      const radarStats = (playerObj && playerObj.radarStats) || {
+        aim: parseInt(d.aim) || 90,
+        reflex: parseInt(d.reflex) || 88,
+        clutch: parseInt(d.clutch) || 92,
+        tactical: parseInt(d.tactical) || 85,
+        comms: parseInt(d.comms) || 87
+      };
+
+      const weapons = (playerObj && playerObj.weapons) || {
+        primary: d.weapon || 'AUG A3 Silence',
+        secondary: 'R.B 454 SS8M+S',
+        melee: 'Fang Blade PBNC',
+        special: 'Beret PBNC'
+      };
+
+      if (mPrimary) mPrimary.textContent = weapons.primary || 'AUG A3 Silence';
+      if (mSecondary) mSecondary.textContent = weapons.secondary || 'R.B 454 SS8M+S';
+      if (mMelee) mMelee.textContent = weapons.melee || 'Fang Blade PBNC';
+      if (mSpecial) mSpecial.textContent = weapons.special || 'Beret PBNC';
+
+      if (mRadarCanvas) {
+        drawTacticalRadar(mRadarCanvas, radarStats);
+      }
+
+      if (mClutchBtn) {
+        const highlightUrl = (playerObj && playerObj.highlightUrl) || 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
+        mClutchBtn.onclick = function() {
+          if (typeof openVideoModal === 'function') {
+            openVideoModal({
+              title: `MOTHRA HIGHLIGHT: ${d.name}`,
+              videoUrl: highlightUrl,
+              category: 'CLUTCH PLAY',
+              publishedAt: '2026-08-28',
+              description: `Aksi clutch dan tembakan headshot akurat oleh ${d.name} (${d.role}) dalam kompetisi resmi Point Blank.`
+            });
+          } else {
+            window.open(highlightUrl, '_blank');
+          }
+        };
+      }
 
       modal.classList.add('open');
       modal.setAttribute('aria-hidden', 'false');
@@ -1626,18 +2170,20 @@ if (document.readyState === 'loading') {
 }
 
 /* ============================================================
-   13. RECRUITMENT PORTAL FORM CONTROLLER
+   13. RECRUITMENT PORTAL & STATUS TRACKER CRM CONTROLLER
    ============================================================ */
-(function initRecruitmentPortal() {
+(function initRecruitmentPortalAndTracker() {
   const form = document.getElementById('joinForm');
   const successMsg = document.getElementById('formSuccess');
   const warningMsg = document.getElementById('formWarning');
   const submitBtn = document.getElementById('submitBtn');
 
-  if (!form) return;
+  const recSearchQuery = document.getElementById('recSearchQuery');
+  const recSearchBtn = document.getElementById('recSearchBtn');
+  const recResultCard = document.getElementById('recResultCard');
 
   const TARGET_EMAIL = 'abdurrrahman09@gmail.com';
-  const COOLDOWN_MINUTES = 15;
+  const COOLDOWN_MINUTES = 5;
   const COOLDOWN_MS = COOLDOWN_MINUTES * 60 * 1000;
   const STORAGE_KEY = 'mothra_last_apply_timestamp';
   const PAGE_START_TIME = Date.now();
@@ -1655,121 +2201,460 @@ if (document.readyState === 'loading') {
     if (typeof window.sanitizeSecurityInput === 'function') {
       return window.sanitizeSecurityInput(str);
     }
-    return str.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/(\b(UNION|SELECT|INSERT|UPDATE|DELETE|DROP)\b)/gi, '').trim();
+    return str.replace(/</g, '&lt;').replace(/>/g, '&gt;').trim();
   }
 
-  const inputs = form.querySelectorAll('.form-input[required]');
-  inputs.forEach((input) => {
-    input.addEventListener('blur', () => validateField(input));
-    input.addEventListener('input', () => {
-      if (input.classList.contains('error')) validateField(input);
+  if (form) {
+    const inputs = form.querySelectorAll('.form-input[required]');
+    inputs.forEach((input) => {
+      input.addEventListener('blur', () => validateField(input));
+      input.addEventListener('input', () => {
+        if (input.classList.contains('error')) validateField(input);
+      });
     });
-  });
 
-  function validateField(field) {
-    const isEmpty = !field.value.trim();
-    field.style.borderColor = isEmpty ? 'var(--red-bright)' : 'var(--border)';
-    field.style.boxShadow = isEmpty ? '0 0 10px rgba(239, 68, 68, 0.3)' : 'none';
-    if (isEmpty) field.classList.add('error');
-    else field.classList.remove('error');
-    return !isEmpty;
-  }
-
-  function resetField(field) {
-    field.style.borderColor = '';
-    field.style.boxShadow = '';
-    field.classList.remove('error');
-  }
-
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const hpField = document.getElementById('honeypotField');
-    if (hpField && hpField.value.trim() !== '') {
-      console.warn('Bot blocked by honeypot');
-      form.reset();
-      successMsg.classList.add('visible');
-      return;
+    function validateField(field) {
+      const isEmpty = !field.value.trim();
+      field.style.borderColor = isEmpty ? 'var(--red-bright)' : 'var(--border)';
+      field.style.boxShadow = isEmpty ? '0 0 10px rgba(239, 68, 68, 0.3)' : 'none';
+      if (isEmpty) field.classList.add('error');
+      else field.classList.remove('error');
+      return !isEmpty;
     }
 
-    const elapsedSec = (Date.now() - PAGE_START_TIME) / 1000;
-    if (elapsedSec < 2.5) {
-      showWarning('Formulir diisi terlalu cepat. Mohon periksa kembali data pendaftaran kamu.');
-      return;
+    function resetField(field) {
+      field.style.borderColor = '';
+      field.style.boxShadow = '';
+      field.classList.remove('error');
     }
 
-    const lastApply = localStorage.getItem(STORAGE_KEY);
-    if (lastApply) {
-      const diff = Date.now() - parseInt(lastApply, 10);
-      if (diff < COOLDOWN_MS) {
-        const remainingMin = Math.ceil((COOLDOWN_MS - diff) / 60000);
-        showWarning(`Lamaran kamu sudah tercatat. Harap tunggu ${remainingMin} menit sebelum mengirim ulang, atau langsung DM Instagram @mothra.officiall.`);
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const hpField = document.getElementById('honeypotField');
+      if (hpField && hpField.value.trim() !== '') {
+        console.warn('Bot blocked by honeypot');
+        form.reset();
+        successMsg.classList.add('visible');
         return;
+      }
+
+      const elapsedSec = (Date.now() - PAGE_START_TIME) / 1000;
+      if (elapsedSec < 2.5) {
+        showWarning('Formulir diisi terlalu cepat. Mohon periksa kembali data pendaftaran kamu.');
+        return;
+      }
+
+      const lastApply = localStorage.getItem(STORAGE_KEY);
+      if (lastApply) {
+        const diff = Date.now() - parseInt(lastApply, 10);
+        if (diff < COOLDOWN_MS) {
+          const remainingMin = Math.ceil((COOLDOWN_MS - diff) / 60000);
+          showWarning(`Lamaran kamu sudah tercatat. Harap tunggu ${remainingMin} menit sebelum mengirim ulang, atau langsung hubungi kami.`);
+          return;
+        }
+      }
+
+      let valid = true;
+      inputs.forEach((input) => {
+        if (!validateField(input)) valid = false;
+      });
+      if (!valid) {
+        showWarning('Harap isi semua kolom bertanda bintang (*) dengan lengkap.');
+        return;
+      }
+
+      const pName = sanitizeInput(document.getElementById('playerName').value);
+      const gId = sanitizeInput(document.getElementById('gameId').value);
+      const pRole = document.getElementById('role').value;
+      const pContact = sanitizeInput(document.getElementById('contact').value);
+      const pMessage = sanitizeInput(document.getElementById('message').value);
+
+      const originalBtn = submitBtn.innerHTML;
+      submitBtn.innerHTML = `<span>MENGIRIMKAN LAMARAN...</span>`;
+      submitBtn.disabled = true;
+      submitBtn.style.opacity = '0.75';
+
+      // 1. Simpan ke database terpusat via helper data.js
+      const applicantObj = {
+        name: pName,
+        ign: gId,
+        role: pRole,
+        contact: pContact,
+        notes: pMessage || 'Pendaftaran online melalui website resmi Clan MOTHRA',
+        kd: '2.00',
+        hs: '60%'
+      };
+
+      if (typeof submitRecruitmentApplication === 'function') {
+        try {
+          await submitRecruitmentApplication(applicantObj);
+        } catch (err) {
+          console.warn('Recruitment local/cloud save notice:', err);
+        }
+      }
+
+      // 2. Kirim notifikasi email
+      try {
+        await fetch(`https://formsubmit.co/ajax/${TARGET_EMAIL}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({
+            _subject: `[MOTHRA RECRUITMENT] Lamaran Baru: ${pName} (${gId})`,
+            _template: 'table',
+            _captcha: 'false',
+            'Nama Panggilan': pName,
+            'In-Game Nick & Rank': gId,
+            'Role Pilihan': pRole,
+            'Kontak': pContact,
+            'Motivasi & Pengalaman': pMessage || 'Tidak diisi',
+            'Waktu Kirim': new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })
+          })
+        });
+      } catch (err) {
+        console.warn('Form email dispatch notice:', err);
+      }
+
+      localStorage.setItem(STORAGE_KEY, Date.now().toString());
+
+      submitBtn.innerHTML = originalBtn;
+      submitBtn.disabled = false;
+      submitBtn.style.opacity = '';
+      form.reset();
+      inputs.forEach(resetField);
+
+      successMsg.classList.add('visible');
+      successMsg.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      TacticalAudio.playSuccess();
+    });
+  }
+
+  // --- Realtime Status Checker Handler ---
+  if (recSearchBtn && recSearchQuery && recResultCard) {
+    async function performSearch() {
+      const query = recSearchQuery.value.trim();
+      if (!query) {
+        recResultCard.innerHTML = `<div style="color:var(--gold);font-family:var(--font-mono);font-size:0.85rem;">MASUKKAN IN-GAME NICK ATAU NOMOR WA / KONTAK UNTUK CEK STATUS.</div>`;
+        recResultCard.style.display = 'block';
+        return;
+      }
+
+      recResultCard.innerHTML = `<div style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.85rem;">MENCARI DATA PENDAFTARAN...</div>`;
+      recResultCard.style.display = 'block';
+      TacticalAudio.playClick();
+
+      let result = null;
+      if (typeof checkRecruitmentStatus === 'function') {
+        result = await checkRecruitmentStatus(query);
+      }
+
+      if (result) {
+        let statusBadgeClass = 'rec-status-pending';
+        let statusLabel = 'DALAM PENINJAUAN (PENDING)';
+        let statusNotes = result.notes || 'Berkas lamaran sedang ditinjau oleh Clan Leader & Operator.';
+
+        if (result.status === 'ACCEPTED') {
+          statusBadgeClass = 'rec-status-accepted';
+          statusLabel = 'DITERIMA (ACCEPTED)';
+          statusNotes = result.notes || 'Selamat! Kamu dinyatakan lolos seleksi Clan MOTHRA. Silakan hubungi admin di Discord.';
+        } else if (result.status === 'INTERVIEW') {
+          statusBadgeClass = 'rec-status-interview';
+          statusLabel = 'TAHAP SCRIM / TRYOUT';
+          statusNotes = result.notes || 'Kamu dijadwalkan mengikuti sesi Sparring / Tryout Scrim malam ini.';
+        } else if (result.status === 'REJECTED') {
+          statusBadgeClass = 'rec-status-rejected';
+          statusLabel = 'BELUM LOLOS (REJECTED)';
+          statusNotes = result.notes || 'Mohon maaf kualifikasi belum sesuai kuota roster saat ini. Tetap semangat!';
+        }
+
+        recResultCard.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.75rem;">
+            <div>
+              <div style="font-family:var(--font-display);font-weight:900;font-size:1.15rem;color:#FFF;">${result.ign || result.name}</div>
+              <div style="font-size:0.8rem;color:var(--text-muted);">Nama: ${result.name} • Role: <span style="color:var(--gold);">${result.role}</span></div>
+            </div>
+            <span class="rec-badge-status ${statusBadgeClass}">${statusLabel}</span>
+          </div>
+          <div style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.06);padding:0.75rem;border-radius:4px;font-size:0.85rem;color:#E4E4E7;line-height:1.5;">
+            <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--gold);margin-bottom:0.25rem;">CATATAN OPERATOR HQ:</div>
+            ${statusNotes}
+          </div>
+          <div style="margin-top:0.75rem;font-size:0.75rem;color:var(--text-muted);font-family:var(--font-mono);">
+            Terdaftar: ${result.date || 'Baru Saja'} • Kontak: ${result.contact || '-'}
+          </div>
+        `;
+        TacticalAudio.playSuccess();
+      } else {
+        recResultCard.innerHTML = `
+          <div style="color:#EF4444;font-family:var(--font-mono);font-size:0.85rem;margin-bottom:0.5rem;">[TIDAK DITEMUKAN] Data dengan kata kunci "${query}" tidak tercatat.</div>
+          <div style="font-size:0.8rem;color:var(--text-muted);">Pastikan Nickname Point Blank atau Nomor Kontak yang kamu masukkan persis sama seperti saat mengisi form pendaftaran di atas.</div>
+        `;
+        TacticalAudio.playBlip(300, 'sawtooth', 0.1, 0.08);
       }
     }
 
-    let valid = true;
-    inputs.forEach((input) => {
-      if (!validateField(input)) valid = false;
+    recSearchBtn.addEventListener('click', performSearch);
+    recSearchQuery.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        performSearch();
+      }
     });
-    if (!valid) {
-      showWarning('Harap isi semua kolom bertanda bintang (*) dengan lengkap.');
-      return;
-    }
-
-    const pName = sanitizeInput(document.getElementById('playerName').value);
-    const gId = sanitizeInput(document.getElementById('gameId').value);
-    const pRole = document.getElementById('role').value;
-    const pContact = sanitizeInput(document.getElementById('contact').value);
-    const pMessage = sanitizeInput(document.getElementById('message').value);
-
-    const originalBtn = submitBtn.innerHTML;
-    submitBtn.innerHTML = `<span>MENGIRIMKAN LAMARAN...</span>`;
-    submitBtn.disabled = true;
-    submitBtn.style.opacity = '0.75';
-
-    try {
-      await fetch(`https://formsubmit.co/ajax/${TARGET_EMAIL}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          _subject: `[MOTHRA RECRUITMENT] Lamaran Baru: ${pName} (${gId})`,
-          _template: 'table',
-          _captcha: 'false',
-          'Nama Panggilan': pName,
-          'In-Game Nick & Rank': gId,
-          'Role Pilihan': pRole,
-          'Kontak': pContact,
-          'Motivasi & Pengalaman': pMessage || 'Tidak diisi',
-          'Waktu Kirim': new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })
-        })
-      });
-    } catch (err) {
-      console.warn('Form submission notice:', err);
-    }
-
-    localStorage.setItem(STORAGE_KEY, Date.now().toString());
-
-    submitBtn.innerHTML = originalBtn;
-    submitBtn.disabled = false;
-    submitBtn.style.opacity = '';
-    form.reset();
-    inputs.forEach(resetField);
-
-    successMsg.classList.add('visible');
-    successMsg.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  });
+  }
 })();
 
 /* ============================================================
-   14. SMOOTH ANCHOR SCROLL
+   14. MOTHRA AIM REFLEX TRAINER MINI-GAME ENGINE
+   ============================================================ */
+(function initAimReflexTrainer() {
+  const openBtn = document.getElementById('openAimTrainerBtn');
+  const modal = document.getElementById('aimTrainerModal');
+  const closeBtn = document.getElementById('closeAimTrainerBtn');
+  const arena = document.getElementById('aimArena');
+  const startScreen = document.getElementById('aimStartScreen');
+  const resultScreen = document.getElementById('aimResultScreen');
+  const startBtn = document.getElementById('startAimGameBtn');
+  const retryBtn = document.getElementById('retryAimGameBtn');
+  const claimRecruitBtn = document.getElementById('aimClaimRecruitBtn');
+
+  const timerDisplay = document.getElementById('aimTimerDisplay');
+  const scoreDisplay = document.getElementById('aimScoreDisplay');
+  const accDisplay = document.getElementById('aimAccDisplay');
+  const speedDisplay = document.getElementById('aimSpeedDisplay');
+  const rankTitle = document.getElementById('aimRankTitle');
+  const resultSummary = document.getElementById('aimResultSummary');
+
+  if (!modal || !arena) return;
+
+  let isPlaying = false;
+  let timeLeft = 30;
+  let timerInterval = null;
+  let targetTimeout = null;
+  let score = 0;
+  let hits = 0;
+  let totalClicks = 0;
+  let reactionTimes = [];
+  let currentTargetSpawnTime = 0;
+  let currentTargetEl = null;
+
+  function openGame() {
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    resetGameToStart();
+    TacticalAudio.playGunClick();
+  }
+
+  function closeGame() {
+    modal.classList.remove('open');
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+    stopGame();
+  }
+
+  if (openBtn) openBtn.addEventListener('click', openGame);
+  if (closeBtn) closeBtn.addEventListener('click', closeGame);
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeGame();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.classList.contains('open')) closeGame();
+  });
+
+  if (claimRecruitBtn) {
+    claimRecruitBtn.addEventListener('click', () => {
+      closeGame();
+    });
+  }
+
+  function resetGameToStart() {
+    stopGame();
+    if (startScreen) startScreen.style.display = 'flex';
+    if (resultScreen) resultScreen.style.display = 'none';
+    if (timerDisplay) timerDisplay.textContent = '30s';
+    if (scoreDisplay) scoreDisplay.textContent = '0';
+    if (accDisplay) accDisplay.textContent = '100%';
+    if (speedDisplay) speedDisplay.textContent = '0 ms';
+  }
+
+  function startGame() {
+    resetGameToStart();
+    if (startScreen) startScreen.style.display = 'none';
+    if (resultScreen) resultScreen.style.display = 'none';
+
+    isPlaying = true;
+    timeLeft = 30;
+    score = 0;
+    hits = 0;
+    totalClicks = 0;
+    reactionTimes = [];
+
+    updateHud();
+    TacticalAudio.playHeadshot();
+
+    timerInterval = setInterval(() => {
+      timeLeft--;
+      if (timerDisplay) timerDisplay.textContent = `${timeLeft}s`;
+      if (timeLeft <= 5) {
+        TacticalAudio.playBlip(1200, 'sine', 0.05, 0.04);
+      }
+      if (timeLeft <= 0) {
+        endGame();
+      }
+    }, 1000);
+
+    spawnNextTarget();
+  }
+
+  function stopGame() {
+    isPlaying = false;
+    if (timerInterval) clearInterval(timerInterval);
+    if (targetTimeout) clearTimeout(targetTimeout);
+    if (currentTargetEl && currentTargetEl.parentNode) {
+      currentTargetEl.parentNode.removeChild(currentTargetEl);
+      currentTargetEl = null;
+    }
+  }
+
+  function spawnNextTarget() {
+    if (!isPlaying) return;
+
+    if (currentTargetEl && currentTargetEl.parentNode) {
+      currentTargetEl.parentNode.removeChild(currentTargetEl);
+      currentTargetEl = null;
+    }
+
+    const arenaRect = arena.getBoundingClientRect();
+    const targetSize = 56;
+    const padding = 20;
+
+    const maxX = Math.max(20, arenaRect.width - targetSize - padding * 2);
+    const maxY = Math.max(20, arenaRect.height - targetSize - padding * 2);
+
+    const randX = padding + Math.random() * maxX;
+    const randY = padding + Math.random() * maxY;
+
+    const disc = document.createElement('div');
+    disc.className = 'aim-target-disc';
+    disc.style.left = `${randX}px`;
+    disc.style.top = `${randY}px`;
+    disc.innerHTML = `
+      <div class="aim-target-bullseye"></div>
+      <div class="aim-target-crosshair"></div>
+    `;
+
+    currentTargetSpawnTime = performance.now();
+    currentTargetEl = disc;
+
+    disc.addEventListener('mousedown', (e) => {
+      e.stopPropagation();
+      onHitTarget(disc);
+    });
+
+    arena.appendChild(disc);
+
+    // Target disappears if not hit within 950ms
+    targetTimeout = setTimeout(() => {
+      if (isPlaying && currentTargetEl === disc) {
+        spawnNextTarget();
+      }
+    }, 950);
+  }
+
+  function onHitTarget(disc) {
+    if (!isPlaying) return;
+
+    const reactionTime = Math.round(performance.now() - currentTargetSpawnTime);
+    reactionTimes.push(reactionTime);
+    hits++;
+    totalClicks++;
+
+    // Speed bonus calculation
+    let earnedScore = 100;
+    if (reactionTime < 300) earnedScore = 150;
+    else if (reactionTime < 450) earnedScore = 120;
+    else if (reactionTime < 650) earnedScore = 100;
+    else earnedScore = 75;
+
+    score += earnedScore;
+
+    TacticalAudio.playHeadshot();
+
+    // Create hit ripple effect
+    if (disc && disc.parentNode) {
+      disc.style.transform = 'scale(1.35)';
+      disc.style.opacity = '0';
+      setTimeout(() => {
+        if (disc.parentNode) disc.parentNode.removeChild(disc);
+      }, 120);
+    }
+
+    updateHud();
+    if (targetTimeout) clearTimeout(targetTimeout);
+    spawnNextTarget();
+  }
+
+  // Missed click inside arena
+  arena.addEventListener('mousedown', (e) => {
+    if (!isPlaying) return;
+    if (e.target.closest('.aim-target-disc') || e.target.closest('.aim-start-screen') || e.target.closest('.aim-result-screen')) {
+      return;
+    }
+    totalClicks++;
+    TacticalAudio.playGunClick();
+    updateHud();
+  });
+
+  function updateHud() {
+    if (scoreDisplay) scoreDisplay.textContent = score.toLocaleString();
+    const acc = totalClicks > 0 ? Math.round((hits / totalClicks) * 100) : 100;
+    if (accDisplay) accDisplay.textContent = `${acc}%`;
+
+    const avgSpeed = reactionTimes.length > 0
+      ? Math.round(reactionTimes.reduce((a, b) => a + b, 0) / reactionTimes.length)
+      : 0;
+    if (speedDisplay) speedDisplay.textContent = `${avgSpeed} ms`;
+  }
+
+  function endGame() {
+    stopGame();
+    TacticalAudio.playSuccess();
+
+    const acc = totalClicks > 0 ? Math.round((hits / totalClicks) * 100) : 100;
+    const avgSpeed = reactionTimes.length > 0
+      ? Math.round(reactionTimes.reduce((a, b) => a + b, 0) / reactionTimes.length)
+      : 0;
+
+    let rank = 'TACTICAL RECRUIT';
+    if (score >= 2400 && acc >= 85) rank = '🏆 PBIC PRO LEVEL';
+    else if (score >= 1800 && acc >= 75) rank = '👑 TACTICAL LEGEND';
+    else if (score >= 1300) rank = '⭐ BRIGADIER SHARPSHOOTER';
+    else if (score >= 800) rank = '🎯 SPECIAL OPS RUSHER';
+    else rank = '🛡️ COMBAT RECRUIT';
+
+    if (rankTitle) rankTitle.textContent = rank;
+    if (resultSummary) {
+      resultSummary.innerHTML = `Skor Akhir: <strong style="color:var(--gold);">${score.toLocaleString()}</strong> • Hit: <strong>${hits}</strong> • Akurasi: <strong>${acc}%</strong> • Reaksi Rata-Rata: <strong>${avgSpeed} ms</strong>`;
+    }
+
+    if (resultScreen) resultScreen.style.display = 'flex';
+  }
+
+  if (startBtn) startBtn.addEventListener('click', startGame);
+  if (retryBtn) retryBtn.addEventListener('click', startGame);
+})();
+
+/* ============================================================
+   15. SMOOTH ANCHOR SCROLL
    ============================================================ */
 document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
   anchor.addEventListener('click', (e) => {
-    const target = document.querySelector(anchor.getAttribute('href'));
+    const href = anchor.getAttribute('href');
+    if (!href || href === '#') return;
+    const target = document.querySelector(href);
     if (!target) return;
     e.preventDefault();
     const offset = 76;

@@ -17,7 +17,24 @@ const DEFAULT_MOTHRA_DATA = {
     "loginLogo": "assets/mothra-logo.png",
     "loadingLogo": "assets/mothra-logo.png",
     "loadingName": "MOTHRA",
-    "loadingText": "ESTABLISHING TACTICAL UPLINK..."
+    "loadingText": "ESTABLISHING TACTICAL UPLINK...",
+    "themeColor": "gold",
+    "discordWebhook": ""
+  },
+  "liveMatch": {
+    "enabled": true,
+    "status": "LIVE",
+    "tournament": "POINT BLANK NATIONAL CHAMPIONSHIP 2026",
+    "stage": "GRAND FINAL — CLAN BATTLE",
+    "map": "Downtown",
+    "roundInfo": "ROUND 1 • CT-FORCE ATTACK",
+    "mothraScore": 7,
+    "opponentScore": 5,
+    "opponentName": "OPFOR ESPORTS",
+    "opponentLogo": "assets/mothra-logo.png",
+    "streamUrl": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    "streamPlatform": "YouTube Gaming",
+    "nextMatchTime": "2026-08-30T20:00:00+07:00"
   },
   "hero": {
     "badge": "POINT BLANK INDONESIA • OFFICIAL SQUAD",
@@ -323,27 +340,140 @@ const DEFAULT_MOTHRA_DATA = {
       "id": "r1",
       "year": "2024",
       "title": "JUARA 1 — PBNC REGIONAL JAWA BARAT",
-      "subtitle": "Grand Final 2—0 Clean Sweep vs. VORTEX"
+      "subtitle": "Grand Final 2—0 Clean Sweep vs. VORTEX",
+      "tier": "gold",
+      "squad": ["MTR~Ahli", "MTR~Nova", "MTR~Viper", "MTR~Ghost", "MTR~Kaiser"],
+      "mvp": "MTR~Ahli"
     },
     {
       "id": "r2",
       "year": "2023",
       "title": "TOP 4 — POINT BLANK NATIONAL CUP",
-      "subtitle": "Jakarta Convention Hall • Main Stage"
+      "subtitle": "Jakarta Convention Hall • Main Stage",
+      "tier": "silver",
+      "squad": ["MTR~Ahli", "MTR~Ghost", "MTR~Viper", "MTR~Rex", "MTR~Zeus"],
+      "mvp": "MTR~Ghost"
     },
     {
       "id": "r3",
       "year": "2022",
       "title": "JUARA 1 — MOTHRA OPEN INVITATIONAL",
-      "subtitle": "16 Tim Kompetitif / Bracket Tournament"
+      "subtitle": "16 Tim Kompetitif / Bracket Tournament",
+      "tier": "gold",
+      "squad": ["MTR~Ahli", "MTR~Nova", "MTR~Shadow", "MTR~Rex", "MTR~Viper"],
+      "mvp": "MTR~Nova"
     },
     {
       "id": "r4",
       "year": "2021",
       "title": "TOP 8 — PBNC REGIONAL QUALIFIER",
-      "subtitle": "Debut Season Resmi MOTHRA Point Blank"
+      "subtitle": "Debut Season Resmi MOTHRA Point Blank",
+      "tier": "bronze",
+      "squad": ["MTR~Ahli", "MTR~Ghost", "MTR~Shadow", "MTR~Kaiser", "MTR~Zeus"],
+      "mvp": "MTR~Ahli"
     }
   ],
+  "recruitment": [
+    {
+      "id": "rec_1",
+      "createdAt": "2026-08-26T14:20:00.000Z",
+      "fullname": "Dimas Pratama",
+      "nick": "MTR~DimasX",
+      "whatsapp": "081234567890",
+      "discord": "dimas_pb#1234",
+      "role": "rusher",
+      "kd": "68.5",
+      "hs": "74.2",
+      "rankPb": "Brigadier (Bintang 1)",
+      "clipUrl": "https://youtube.com",
+      "motivation": "Ingin berkembang dan membawa nama MOTHRA di kancah PBNC 2026!",
+      "status": "TESTING",
+      "notes": "Jadwal sparring hari Jumat jam 20:00 WIB"
+    },
+    {
+      "id": "rec_2",
+      "createdAt": "2026-08-27T09:15:00.000Z",
+      "fullname": "Farhan Alamsyah",
+      "nick": "SniperBoyz99",
+      "whatsapp": "085712345678",
+      "discord": "farhan_pb#5678",
+      "role": "sniper",
+      "kd": "72.1",
+      "hs": "81.0",
+      "rankPb": "Major Grade 5",
+      "clipUrl": "https://tiktok.com",
+      "motivation": "Fast aim CheyTac & Tactilite siap turnamen",
+      "status": "PENDING",
+      "notes": "Menunggu konfirmasi jadwal tes aim"
+    },
+    {
+      "id": "rec_3",
+      "createdAt": "2026-08-25T11:00:00.000Z",
+      "fullname": "Reza Rahardian",
+      "nick": "MTR~Valkyrie",
+      "whatsapp": "087812345678",
+      "discord": "reza_valk#9999",
+      "role": "pointman",
+      "kd": "69.8",
+      "hs": "70.5",
+      "rankPb": "Colonel Grade 4",
+      "clipUrl": "https://youtube.com",
+      "motivation": "Sudah berpengalaman main di PBSC 2024",
+      "status": "ACCEPTED",
+      "notes": "Lolos seleksi tahap 2, sudah masuk Discord squad"
+    }
+  ],
+  "store": {
+    "enabled": true,
+    "tagline": "TACTICAL ARMORY & OFFICIAL MERCH",
+    "description": "Dapatkan Official Custom Jersey, Gaming Gear PB, dan Layanan PB Cash resmi dengan harga spesial untuk troopers Clan MOTHRA.",
+    "items": [
+      {
+        "id": "store_1",
+        "name": "MOTHRA Official Pro Jersey 2026",
+        "category": "APPAREL",
+        "badge": "BESTSELLER",
+        "price": "Rp 185.000",
+        "originalPrice": "Rp 230.000",
+        "img": "assets/pb-bg-squad.jpg",
+        "description": "Dry-Fit Premium Militer Anti-Bakteri dengan Custom Nickname In-Game & Logo Gold Foil MOTHRA.",
+        "orderUrl": "https://wa.me/6281234567890?text=Halo%20Admin%20MOTHRA,%20saya%20ingin%20memesan%20Official%20Jersey%202026"
+      },
+      {
+        "id": "store_2",
+        "name": "MOTHRA Tactical Speed Gaming Mousepad (900x400mm)",
+        "category": "GAMING GEAR",
+        "badge": "LIMITED",
+        "price": "Rp 149.000",
+        "originalPrice": "Rp 190.000",
+        "img": "assets/pb-bg-elite.jpg",
+        "description": "Speed surface texture untuk akurasi aim point blank maksimal, anti-fray stitched border & non-slip rubber base.",
+        "orderUrl": "https://wa.me/6281234567890?text=Halo%20Admin%20MOTHRA,%20saya%20ingin%20memesan%20Gaming%20Mousepad%20MOTHRA"
+      },
+      {
+        "id": "store_3",
+        "name": "Voucher PB Cash Fast Direct Top-Up",
+        "category": "PB CASH",
+        "badge": "INSTANT",
+        "price": "Mulai Rp 10.000",
+        "originalPrice": "",
+        "img": "assets/mothra-gold-logo.png",
+        "description": "Top-up PB Cash Zepetto Resmi 24 Jam Nonstop dengan rate spesial khusus member & fans MOTHRA.",
+        "orderUrl": "https://wa.me/6281234567890?text=Halo%20Admin%20MOTHRA,%20saya%20ingin%20order%20PB%20Cash"
+      },
+      {
+        "id": "store_4",
+        "name": "MOTHRA Tactical Hoodie Special Ops Black",
+        "category": "APPAREL",
+        "badge": "PRE-ORDER",
+        "price": "Rp 275.000",
+        "originalPrice": "Rp 320.000",
+        "img": "assets/pb-bg-duo.jpg",
+        "description": "Heavyweight Cotton Fleece dengan sablon reflektif HUD tactical & patch velcro clan.",
+        "orderUrl": "https://wa.me/6281234567890?text=Halo%20Admin%20MOTHRA,%20saya%20ingin%20pre-order%20Hoodie%20Special%20Ops"
+      }
+    ]
+  },
   "gallery": [
     {
       "id": "g1",
@@ -368,6 +498,68 @@ const DEFAULT_MOTHRA_DATA = {
       "title": "BOOTCAMP / 04",
       "img": "assets/bootcamp.jpg",
       "large": false
+    }
+  ],
+  "videos": [
+    {
+      "id": "vid_1",
+      "title": "MOTHRA ESPORTS vs RRQ PB — GRAND FINAL PBNC 2024 (MAP 3 DECIDER)",
+      "slug": "mothra-vs-rrq-grand-final-pbnc-2024",
+      "description": "Pertandingan sengit map penentu Grand Final PBNC 2024 di Map Luxville. Simak rotasi taktis dan clutch ronde ke-9 dari Clan MOTHRA.",
+      "category": "live",
+      "video_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "video_id": "dQw4w9WgXcQ",
+      "thumbnail_url": "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+      "published": true,
+      "featured": true,
+      "sort_order": 1,
+      "created_at": "2026-08-20T10:00:00.000Z",
+      "updated_at": "2026-08-20T10:00:00.000Z"
+    },
+    {
+      "id": "vid_2",
+      "title": "1v4 CLUTCH RETAKE BOMBSITE A LUXVILLE — MOTHRA•RAVEN",
+      "slug": "1v4-clutch-retake-luxville-raven",
+      "description": "Aksi clutch dramatis sang IGL Raka Pratama membalikkan keadaan dalam situasi krusial turnamen nasional PB.",
+      "category": "gameplay",
+      "video_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "video_id": "dQw4w9WgXcQ",
+      "thumbnail_url": "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+      "published": true,
+      "featured": false,
+      "sort_order": 2,
+      "created_at": "2026-08-18T14:30:00.000Z",
+      "updated_at": "2026-08-18T14:30:00.000Z"
+    },
+    {
+      "id": "vid_3",
+      "title": "🔴 LIVE SCRIM 5v5 BOMB MISSION — MOTHRA vs EVOS ECLIPSE",
+      "slug": "live-scrim-mothra-vs-evos-eclipse",
+      "description": "Latihan tanding resmi (Friendly Scrim) clan war 5v5 best of 3 jelang kualifikasi PBIC.",
+      "category": "live",
+      "video_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "video_id": "dQw4w9WgXcQ",
+      "thumbnail_url": "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+      "published": true,
+      "featured": false,
+      "sort_order": 3,
+      "created_at": "2026-08-15T19:00:00.000Z",
+      "updated_at": "2026-08-15T19:00:00.000Z"
+    },
+    {
+      "id": "vid_4",
+      "title": "CHEYTAC M200 QUICKSCOPE & NO-SCOPE MONTAGE — MOTHRA•NOVA",
+      "slug": "cheytac-quickscope-montage-nova",
+      "description": "Kumpulan sniper highlight terbaik dengan akurasi 82% headshot rate di kompetisi Point Blank.",
+      "category": "gameplay",
+      "video_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      "video_id": "dQw4w9WgXcQ",
+      "thumbnail_url": "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+      "published": true,
+      "featured": false,
+      "sort_order": 4,
+      "created_at": "2026-08-10T12:00:00.000Z",
+      "updated_at": "2026-08-10T12:00:00.000Z"
     }
   ]
 };
@@ -485,21 +677,42 @@ function subscribeSupabaseRealtime() {
 }
 
 // Tarik data online dari Supabase (SDK + Direct REST API dengan Anti-Cache)
+// Tarik data online dari Supabase dengan Smart Egress Caching (Hemat 99.9% Bandwidth)
 async function fetchMothraDataOnline() {
   const config = getSupabaseConfig();
   if (!config.isConfigured) return getMothraData();
 
+  const localData = getMothraData();
+  const localVersion = (localData && localData.dataVersion) ? Number(localData.dataVersion) : 0;
+
   // 1. Coba via Supabase JS SDK jika tersedia
   if (_supabaseClient) {
     try {
+      // Step A: Cek hanya versi data (Query ringan ~50 bytes, hemat egress)
+      const { data: verRow, error: verErr } = await _supabaseClient
+        .from(config.tableName)
+        .select('data_version, updated_at')
+        .eq('id', config.docId)
+        .single();
+
+      if (!verErr && verRow) {
+        const remoteVersion = Number(verRow.data_version || 0);
+        // Jika data di browser sudah sama atau lebih baru, jangan download ulang seluruh JSON
+        if (remoteVersion > 0 && remoteVersion <= localVersion && localData) {
+          console.log('⚡ [SUPABASE SMART CACHE] Data lokal sudah mutakhir (v' + localVersion + '). Menghemat bandwidth Supabase!');
+          return localData;
+        }
+      }
+
+      // Step B: Hanya unduh payload lengkap jika ada versi data baru
       const { data, error } = await _supabaseClient
         .from(config.tableName)
-        .select('*')
+        .select('data')
         .eq('id', config.docId)
         .single();
 
       if (!error && data && data.data) {
-        console.log('📥 [MOTHRA CMS] Berhasil mengambil data online via Supabase SDK!');
+        console.log('📥 [MOTHRA CMS] Berhasil memperbarui data online via Supabase SDK!');
         return applyIncomingOnlineData(data.data);
       }
     } catch (e) {
@@ -507,9 +720,9 @@ async function fetchMothraDataOnline() {
     }
   }
 
-  // 2. Fallback Direct HTTPS REST API (Anti-Cache untuk Mobile/HP)
+  // 2. Fallback Direct HTTPS REST API jika SDK tidak aktif
   try {
-    const res = await fetch(`${config.url}/rest/v1/${config.tableName}?id=eq.${config.docId}&select=*&_t=${Date.now()}`, {
+    const res = await fetch(`${config.url}/rest/v1/${config.tableName}?id=eq.${config.docId}&select=data_version,data&_t=${Date.now()}`, {
       headers: {
         'apikey': config.anonKey,
         'Authorization': 'Bearer ' + config.anonKey,
@@ -521,6 +734,10 @@ async function fetchMothraDataOnline() {
     if (res.ok) {
       const rows = await res.json();
       if (Array.isArray(rows) && rows.length > 0 && rows[0].data) {
+        const remoteVer = Number(rows[0].data_version || 0);
+        if (remoteVer > 0 && remoteVer <= localVersion && localData) {
+          return localData;
+        }
         console.log('📥 [MOTHRA CMS] Berhasil mengambil data online via Direct REST API!');
         return applyIncomingOnlineData(rows[0].data);
       }
@@ -693,8 +910,41 @@ function sanitizeMothraData(data) {
   if (!data.branding) {
     data.branding = JSON.parse(JSON.stringify(DEFAULT_MOTHRA_DATA.branding));
   }
+  if (!data.branding.themeColor) {
+    data.branding.themeColor = 'gold';
+  }
+  if (data.branding.discordWebhook === undefined) {
+    data.branding.discordWebhook = '';
+  }
+  if (!data.liveMatch) {
+    data.liveMatch = JSON.parse(JSON.stringify(DEFAULT_MOTHRA_DATA.liveMatch));
+  }
+  if (!data.recruitment || !Array.isArray(data.recruitment)) {
+    data.recruitment = JSON.parse(JSON.stringify(DEFAULT_MOTHRA_DATA.recruitment));
+  }
+  if (!data.store) {
+    data.store = JSON.parse(JSON.stringify(DEFAULT_MOTHRA_DATA.store));
+  }
   if (!data.users || !Array.isArray(data.users) || data.users.length === 0) {
     data.users = JSON.parse(JSON.stringify(DEFAULT_MOTHRA_DATA.users));
+  }
+  if (!data.videos || !Array.isArray(data.videos)) {
+    data.videos = JSON.parse(JSON.stringify(DEFAULT_MOTHRA_DATA.videos));
+  }
+
+  // Sanitize and ensure lineup has radarStats and weapons
+  if (Array.isArray(data.lineup)) {
+    data.lineup.forEach(p => {
+      if (!p.radarStats) {
+        p.radarStats = { aim: 92, reflex: 90, clutch: 94, tactical: 88, comms: 86 };
+      }
+      if (!p.weapons) {
+        p.weapons = { primary: p.weapon || 'AUG A3 Silence', secondary: 'R.B 454 SS8M+S', melee: 'Fang Blade', special: 'Beret PBNC' };
+      }
+      if (!p.highlightUrl) {
+        p.highlightUrl = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
+      }
+    });
   }
 
   // Terapkan deep security sanitization
@@ -726,9 +976,49 @@ function getMothraData() {
   }
 }
 
-// Fungsi simpan data: Menyimpan ke memory, LocalStorage, Supabase Online (Dual Sync), dan server lokal
+let _supabaseSaveTimeout = null;
+
+// Fungsi helper simpan data via REST API jika SDK tidak tersedia / gagal
+function fallbackRestSave(config, data) {
+  if (typeof fetch === 'undefined') return;
+  const directPayload = [{
+    id: config.docId,
+    data: data,
+    data_version: data.dataVersion,
+    updated_at: data.updatedAt
+  }];
+  fetch(`${config.url}/rest/v1/${config.tableName}?on_conflict=id`, {
+    method: 'POST',
+    headers: {
+      'apikey': config.anonKey,
+      'Authorization': 'Bearer ' + config.anonKey,
+      'Content-Type': 'application/json',
+      'Prefer': 'resolution=merge-duplicates,return=minimal'
+    },
+    body: JSON.stringify(directPayload)
+  }).then((res) => {
+    if (res.ok) console.log('☁️ [SUPABASE REST] Data tersimpan di Supabase via REST API fallback!');
+  }).catch(() => {});
+}
+
+// Fungsi simpan data: Menyimpan ke memory & LocalStorage secara instan, dan sync ke Supabase secara debounced & hemat egress
 function saveMothraData(data) {
   try {
+    // Verifikasi izin penulisan (Write Permission) jika login di Admin Panel
+    if (typeof getCurrentUser === 'function' && typeof getUserEffectivePermissions === 'function') {
+      const curUser = getCurrentUser();
+      if (curUser) {
+        const freshUser = (data && data.users ? data.users.find(u => u.id === curUser.id || u.email.toLowerCase() === curUser.email.toLowerCase()) : null) || curUser;
+        const perms = getUserEffectivePermissions(freshUser);
+        if (!perms.canWrite) {
+          if (typeof showToast === 'function') {
+            showToast('🔒 [AKSES DITOLAK] Akun dengan role ' + (freshUser.role || 'VIEWER') + ' tidak memiliki izin untuk menyimpan perubahan data.');
+          }
+          return false;
+        }
+      }
+    }
+
     // Sanitasi data menyeluruh sebelum disimpan
     sanitizeDataDeep(data);
 
@@ -740,58 +1030,80 @@ function saveMothraData(data) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     }
 
-    // Trigger local UI update immediately
+    // Audit Trail: Catat event simpan data secara lokal (0 egress)
+    if (typeof logAuditEvent === 'function') {
+      const activePanel = (typeof document !== 'undefined') ? document.querySelector('.admin-panel.active') : null;
+      const modName = activePanel ? (activePanel.id.replace('panel', '') || 'Data') : 'CMS Data';
+      logAuditEvent('SAVE', modName, `Pembaruan data modul ${modName} disimpan.`);
+    }
+
+    // Trigger local UI update immediately (0 latency)
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('mothra_data_updated', { detail: data }));
 
-      const config = getSupabaseConfig();
-      if (config.isConfigured) {
-        if (!_supabaseClient) initSupabase();
-
-        // 1. Simpan via Supabase JS SDK
-        if (_supabaseClient) {
-          _supabaseClient
-            .from(config.tableName)
-            .upsert({
-              id: config.docId,
-              data: data,
-              data_version: data.dataVersion,
-              updated_at: data.updatedAt
-            })
-            .then(({ error }) => {
-              if (error) {
-                console.error('❌ [SUPABASE SAVE ERROR]', error.message);
-              } else {
-                console.log('☁️ [SUPABASE SAVED] Perubahan tersimpan di database online via SDK!');
-              }
-            })
-            .catch((err) => console.error('❌ [SUPABASE NETWORK ERROR]', err));
-        }
-
-        // 2. Dual Sync via Direct HTTPS REST API (Jaminan 100% terkirim)
-        if (typeof fetch !== 'undefined') {
-          const directPayload = [{
-            id: config.docId,
-            data: data,
-            data_version: data.dataVersion,
-            updated_at: data.updatedAt
-          }];
-          fetch(`${config.url}/rest/v1/${config.tableName}?on_conflict=id`, {
-            method: 'POST',
-            headers: {
-              'apikey': config.anonKey,
-              'Authorization': 'Bearer ' + config.anonKey,
-              'Content-Type': 'application/json',
-              'Prefer': 'resolution=merge-duplicates,return=minimal'
-            },
-            body: JSON.stringify(directPayload)
-          }).then((res) => {
-            if (res.ok) console.log('☁️ [SUPABASE REST] Data tersimpan di Supabase via REST API!');
-          }).catch(() => {});
-        }
+      // Debounce Cloud Sync (350ms) untuk mencegah spam save dan broadcast berlebihan ke pengunjung
+      if (_supabaseSaveTimeout) {
+        clearTimeout(_supabaseSaveTimeout);
       }
 
-      // 3. Simpan ke Server lokal disk via server.js jika sedang dijalankan
+      _supabaseSaveTimeout = setTimeout(() => {
+        const config = getSupabaseConfig();
+        if (config.isConfigured) {
+          if (!_supabaseClient) initSupabase();
+
+          // 1. Simpan via Supabase JS SDK (Prioritas Utama)
+          if (_supabaseClient) {
+            _supabaseClient
+              .from(config.tableName)
+              .upsert({
+                id: config.docId,
+                data: data,
+                data_version: data.dataVersion,
+                updated_at: data.updatedAt
+              })
+              .then(({ error }) => {
+                if (error) {
+                  console.error('❌ [SUPABASE SAVE ERROR]', error.message);
+                  fallbackRestSave(config, data);
+                } else {
+                  console.log('☁️ [SUPABASE SAVED] Perubahan tersimpan di database online via SDK!');
+                }
+              })
+              .catch((err) => {
+                console.error('❌ [SUPABASE NETWORK ERROR]', err);
+                fallbackRestSave(config, data);
+              });
+
+            // Sync to clan_videos relational table if available
+            if (Array.isArray(data.videos) && data.videos.length > 0) {
+              _supabaseClient
+                .from('clan_videos')
+                .upsert(data.videos.map(v => ({
+                  id: v.id,
+                  title: v.title,
+                  slug: v.slug || '',
+                  description: v.description || '',
+                  category: v.category || 'gameplay',
+                  video_url: v.video_url || '',
+                  video_id: v.video_id || '',
+                  thumbnail_url: v.thumbnail_url || '',
+                  published: v.published !== false,
+                  featured: !!v.featured,
+                  sort_order: Number(v.sort_order || 1),
+                  updated_at: new Date().toISOString()
+                })))
+                .then(({ error }) => {
+                  if (error) console.warn('clan_videos relational sync notice:', error.message);
+                })
+                .catch(() => {});
+            }
+          } else {
+            fallbackRestSave(config, data);
+          }
+        }
+      }, 350);
+
+      // Simpan ke Server lokal disk via server.js jika sedang dijalankan
       try {
         fetch('/api/data', {
           method: 'POST',
@@ -809,6 +1121,149 @@ function saveMothraData(data) {
   }
 }
 
+// ============================================================
+// 🎨 THEME PRESET & DYNAMIC ACCENT COLOR ENGINE
+// ============================================================
+const CLAN_THEME_PRESETS = {
+  gold: {
+    name: 'Tactical Gold (Default)',
+    primary: '#D4AF37',
+    hover: '#F59E0B',
+    glow: 'rgba(212, 175, 55, 0.4)',
+    border: 'rgba(212, 175, 55, 0.3)',
+    rgb: '212, 175, 55'
+  },
+  crimson: {
+    name: 'Spec-Ops Crimson Red',
+    primary: '#EF4444',
+    hover: '#DC2626',
+    glow: 'rgba(239, 68, 68, 0.4)',
+    border: 'rgba(239, 68, 68, 0.3)',
+    rgb: '239, 68, 68'
+  },
+  green: {
+    name: 'Cyber Military Green',
+    primary: '#10B981',
+    hover: '#059669',
+    glow: 'rgba(16, 185, 129, 0.4)',
+    border: 'rgba(16, 185, 129, 0.3)',
+    rgb: '16, 185, 129'
+  },
+  blue: {
+    name: 'Stealth Navy Blue',
+    primary: '#3B82F6',
+    hover: '#2563EB',
+    glow: 'rgba(59, 130, 246, 0.4)',
+    border: 'rgba(59, 130, 246, 0.3)',
+    rgb: '59, 130, 246'
+  },
+  purple: {
+    name: 'Neon Cyberpunk Purple',
+    primary: '#8B5CF6',
+    hover: '#7C3AED',
+    glow: 'rgba(139, 92, 246, 0.4)',
+    border: 'rgba(139, 92, 246, 0.3)',
+    rgb: '139, 92, 246'
+  }
+};
+
+function getClanThemePresets() {
+  return CLAN_THEME_PRESETS;
+}
+
+function applyClanTheme(themeKey) {
+  if (typeof document === 'undefined') return;
+  const theme = CLAN_THEME_PRESETS[themeKey] || CLAN_THEME_PRESETS.gold;
+  const root = document.documentElement;
+  root.style.setProperty('--gold', theme.primary);
+  root.style.setProperty('--gold-hover', theme.hover);
+  root.style.setProperty('--gold-glow', theme.glow);
+  root.style.setProperty('--gold-border', theme.border);
+  root.style.setProperty('--gold-rgb', theme.rgb);
+  root.setAttribute('data-theme', themeKey || 'gold');
+}
+
+// ============================================================
+// 📥 RECRUITMENT CRM & APPLICANT MANAGEMENT HELPERS
+// ============================================================
+async function submitRecruitmentApplication(appData) {
+  const db = getMothraData();
+  if (!db.recruitment) db.recruitment = [];
+
+  const newApp = {
+    id: 'rec_' + Date.now(),
+    createdAt: new Date().toISOString(),
+    fullname: sanitizeSecurityInput(appData.fullname || ''),
+    nick: sanitizeSecurityInput(appData.nick || ''),
+    whatsapp: sanitizeSecurityInput(appData.whatsapp || ''),
+    discord: sanitizeSecurityInput(appData.discord || ''),
+    role: sanitizeSecurityInput(appData.role || 'rusher'),
+    kd: sanitizeSecurityInput(String(appData.kd || '0')),
+    hs: sanitizeSecurityInput(String(appData.hs || '0')),
+    rankPb: sanitizeSecurityInput(appData.rankPb || 'Trooper'),
+    clipUrl: sanitizeSecurityInput(appData.clipUrl || ''),
+    motivation: sanitizeSecurityInput(appData.motivation || ''),
+    status: 'PENDING',
+    notes: 'Menunggu review operator'
+  };
+
+  db.recruitment.unshift(newApp);
+  saveMothraData(db);
+
+  // Optional: Kirim notifikasi Discord Webhook jika dikonfigurasi
+  if (db.branding && db.branding.discordWebhook && typeof fetch !== 'undefined') {
+    try {
+      fetch(db.branding.discordWebhook, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          embeds: [{
+            title: `🎯 PENDAFTARAN ANGGOTA BARU — ${newApp.nick}`,
+            description: `**Nama:** ${newApp.fullname}\n**Role:** ${newApp.role.toUpperCase()}\n**KD / HS:** ${newApp.kd}% / ${newApp.hs}%\n**Rank:** ${newApp.rankPb}\n**WhatsApp:** ${newApp.whatsapp}\n**Discord:** ${newApp.discord}\n\n*Motivasi:* ${newApp.motivation}`,
+            color: 13938487,
+            timestamp: new Date().toISOString()
+          }]
+        })
+      }).catch(() => {});
+    } catch (e) {}
+  }
+
+  return newApp;
+}
+
+function checkRecruitmentStatus(query) {
+  if (!query) return null;
+  const q = String(query).trim().toLowerCase();
+  const db = getMothraData();
+  if (!db.recruitment || !Array.isArray(db.recruitment)) return null;
+
+  return db.recruitment.find(app => {
+    const nickMatch = app.nick && app.nick.toLowerCase() === q;
+    const waMatch = app.whatsapp && app.whatsapp.replace(/\D/g, '').includes(q.replace(/\D/g, ''));
+    return nickMatch || waMatch;
+  }) || null;
+}
+
+function updateRecruitmentStatus(id, newStatus, notes = '') {
+  const db = getMothraData();
+  if (!db.recruitment || !Array.isArray(db.recruitment)) return false;
+  const app = db.recruitment.find(a => a.id === id);
+  if (app) {
+    app.status = newStatus;
+    if (notes) app.notes = sanitizeSecurityInput(notes);
+    app.updatedAt = new Date().toISOString();
+    return saveMothraData(db);
+  }
+  return false;
+}
+
+function deleteRecruitmentApplication(id) {
+  const db = getMothraData();
+  if (!db.recruitment || !Array.isArray(db.recruitment)) return false;
+  db.recruitment = db.recruitment.filter(a => a.id !== id);
+  return saveMothraData(db);
+}
+
 // Global Exports & Window Binding
 if (typeof window !== 'undefined') {
   window.getMothraData = getMothraData;
@@ -818,6 +1273,12 @@ if (typeof window !== 'undefined') {
   window.sanitizeDataDeep = sanitizeDataDeep;
   window.initSupabase = initSupabase;
   window.getSupabaseConfig = getSupabaseConfig;
+  window.getClanThemePresets = getClanThemePresets;
+  window.applyClanTheme = applyClanTheme;
+  window.submitRecruitmentApplication = submitRecruitmentApplication;
+  window.checkRecruitmentStatus = checkRecruitmentStatus;
+  window.updateRecruitmentStatus = updateRecruitmentStatus;
+  window.deleteRecruitmentApplication = deleteRecruitmentApplication;
   window.saveSupabaseConfig = function(url, key) {
     try {
       localStorage.setItem('mothra_supabase_url', (url || '').trim());
@@ -827,11 +1288,26 @@ if (typeof window !== 'undefined') {
     return fetchMothraDataOnline();
   };
 
+  // Auto-apply clan theme on load
+  const curDb = getMothraData();
+  if (curDb && curDb.branding && curDb.branding.themeColor) {
+    applyClanTheme(curDb.branding.themeColor);
+  }
+
   // Auto-init Supabase when DOM is ready or script loads
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => initSupabase());
+    document.addEventListener('DOMContentLoaded', () => {
+      initSupabase();
+      const d = getMothraData();
+      if (d && d.branding && d.branding.themeColor) applyClanTheme(d.branding.themeColor);
+    });
   } else {
-    setTimeout(() => initSupabase(), 50);
+    setTimeout(() => {
+      initSupabase();
+      const d = getMothraData();
+      if (d && d.branding && d.branding.themeColor) applyClanTheme(d.branding.themeColor);
+    }, 50);
   }
 }
+
 

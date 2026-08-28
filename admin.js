@@ -34,8 +34,25 @@ function showToast(msg) {
 }
 
 function updateOperatorBadge(user) {
-  const badge = document.querySelector('.top-bar [style*="OPERATOR"]');
-  if (badge && user) badge.textContent = `OPERATOR: ${user.email} [${user.role || 'ADMIN'}]`;
+  const badge = document.getElementById('operatorBadgeText');
+  if (!badge || !user) return;
+
+  // Ambil data terkini dari DB agar role/nama selalu sinkron
+  const freshUser = (db && db.users
+    ? db.users.find(u => u.id === user.id || u.email.toLowerCase() === user.email.toLowerCase())
+    : null) || user;
+
+  const roleName  = freshUser.role  || 'OPERATOR';
+  const nameText  = freshUser.name  || freshUser.email || '—';
+  const emailText = freshUser.email || '';
+  const roleColor = (typeof ROLE_COLORS !== 'undefined' && ROLE_COLORS[roleName])
+    ? ROLE_COLORS[roleName]
+    : '#D4AF37';
+
+  badge.innerHTML =
+    `OPERATOR: <span style="color:#93C5FD;font-weight:600;">${nameText}</span>` +
+    (emailText && emailText !== nameText ? ` <span style="color:#64748B;font-size:0.82em;">&lt;${emailText}&gt;</span>` : '') +
+    ` &bull; <span style="color:${roleColor};font-weight:700;letter-spacing:0.04em;">[${roleName}]</span>`;
 }
 
 function checkAuth() {
@@ -63,8 +80,10 @@ function checkAuth() {
   if (isAuth) {
     loginScreen.classList.add('hidden');
     dashboardWrap.classList.remove('hidden');
-    updateOperatorBadge(getCurrentUser());
+    const curUser = getCurrentUser();
+    updateOperatorBadge(curUser);
     initDashboard();
+    applyRolePermissions();
   } else {
     loginScreen.classList.remove('hidden');
     dashboardWrap.classList.add('hidden');
@@ -240,9 +259,131 @@ function initDashboard() {
   }
 }
 
+// ============================================================
+// PAGINATION CONTROLLER & ENGINE (9 PANELS)
+// ============================================================
+const adminPagination = {
+  categories:  { page: 1, perPage: 5 },
+  roles:       { page: 1, perPage: 5 },
+  lineup:      { page: 1, perPage: 6 },
+  schedule:    { page: 1, perPage: 5 },
+  partnership: { page: 1, perPage: 5 },
+  records:     { page: 1, perPage: 5 },
+  gallery:     { page: 1, perPage: 6 },
+  videos:      { page: 1, perPage: 5 },
+  users:       { page: 1, perPage: 5 }
+};
+
+function renderTablePagination(containerId, totalItems, panelKey, onRenderCallback) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  const state = adminPagination[panelKey];
+  if (!state) return;
+
+  if (totalItems <= 0) {
+    container.innerHTML = '';
+    return;
+  }
+
+  const totalPages = Math.max(1, Math.ceil(totalItems / state.perPage));
+  if (state.page > totalPages) state.page = totalPages;
+  if (state.page < 1) state.page = 1;
+
+  const startIdx = (state.page - 1) * state.perPage + 1;
+  const endIdx = Math.min(state.page * state.perPage, totalItems);
+
+  // Dynamic pagination numbers with ellipsis
+  let pageNumbersHtml = '';
+  const maxVisible = 5;
+  let startP = Math.max(1, state.page - Math.floor(maxVisible / 2));
+  let endP = Math.min(totalPages, startP + maxVisible - 1);
+  if (endP - startP + 1 < maxVisible) {
+    startP = Math.max(1, endP - maxVisible + 1);
+  }
+
+  if (startP > 1) {
+    pageNumbersHtml += `<button type="button" class="admin-page-btn" data-page="1">1</button>`;
+    if (startP > 2) {
+      pageNumbersHtml += `<span class="admin-page-ellipsis">…</span>`;
+    }
+  }
+
+  for (let p = startP; p <= endP; p++) {
+    const isActive = p === state.page;
+    pageNumbersHtml += `
+      <button type="button" class="admin-page-btn ${isActive ? 'active' : ''}" data-page="${p}" ${isActive ? 'aria-current="page"' : ''}>
+        ${p}
+      </button>
+    `;
+  }
+
+  if (endP < totalPages) {
+    if (endP < totalPages - 1) {
+      pageNumbersHtml += `<span class="admin-page-ellipsis">…</span>`;
+    }
+    pageNumbersHtml += `<button type="button" class="admin-page-btn" data-page="${totalPages}">${totalPages}</button>`;
+  }
+
+  const perPageOptions = [5, 10, 20, 50];
+  const perPageSelectHtml = perPageOptions.map(opt => 
+    `<option value="${opt}" ${state.perPage === opt ? 'selected' : ''}>${opt}</option>`
+  ).join('');
+
+  container.innerHTML = `
+    <div class="admin-pagination-wrap">
+      <div class="admin-pagination-left">
+        <div class="admin-pagination-info">
+          Menampilkan <strong>${startIdx}–${endIdx}</strong> dari <strong>${totalItems}</strong> data
+        </div>
+        <div class="admin-pagination-perpage-wrap">
+          <span>Baris:</span>
+          <select class="admin-pagination-perpage-select" aria-label="Jumlah baris per halaman">
+            ${perPageSelectHtml}
+          </select>
+        </div>
+      </div>
+      <div class="admin-pagination-controls">
+        <button type="button" class="admin-page-btn admin-page-nav-btn" data-page="${state.page - 1}" ${state.page <= 1 ? 'disabled' : ''} aria-label="Halaman Sebelumnya">
+          ◀ Prev
+        </button>
+        ${pageNumbersHtml}
+        <button type="button" class="admin-page-btn admin-page-nav-btn" data-page="${state.page + 1}" ${state.page >= totalPages ? 'disabled' : ''} aria-label="Halaman Selanjutnya">
+          Next ▶
+        </button>
+      </div>
+    </div>
+  `;
+
+  // Bind click on page buttons
+  const btns = container.querySelectorAll('.admin-page-btn[data-page]');
+  btns.forEach(btn => {
+    btn.onclick = (e) => {
+      e.preventDefault();
+      const target = Number(btn.dataset.page);
+      if (!isNaN(target) && target >= 1 && target <= totalPages && target !== state.page) {
+        state.page = target;
+        onRenderCallback();
+      }
+    };
+  });
+
+  // Bind change on perPage select
+  const select = container.querySelector('.admin-pagination-perpage-select');
+  if (select) {
+    select.onchange = (e) => {
+      const val = Number(e.target.value);
+      if (!isNaN(val) && val > 0) {
+        state.perPage = val;
+        state.page = 1;
+        onRenderCallback();
+      }
+    };
+  }
+}
+
 function renderAllPanels() {
   if (!db) db = getMothraData();
-  renderOverviewStats();
   renderBrandingForm();
   renderDossierForm();
   renderCategoriesTable();
@@ -254,6 +395,7 @@ function renderAllPanels() {
   renderPartnershipsTable();
   renderRecordsTable();
   renderGalleryTable();
+  renderVideosTable();
   renderSupabasePanel();
   renderUsersTable();
   renderAdsPanel();
@@ -279,6 +421,19 @@ const mobileLogoutBtn = document.getElementById('mobileLogoutBtn');
 
 function switchAdminPanel(panelId) {
   if (!panelId) return;
+
+  // Verifikasi izin akses modul pengguna aktif
+  const currentUser = getCurrentUser();
+  if (currentUser) {
+    const freshUser = (db && db.users ? db.users.find(u => u.id === currentUser.id || u.email.toLowerCase() === currentUser.email.toLowerCase()) : null) || currentUser;
+    if (typeof getUserEffectivePermissions === 'function') {
+      const perms = getUserEffectivePermissions(freshUser);
+      if (!perms.panels.includes(panelId)) {
+        showToast(`🚫 [AKSES DITOLAK] Role "${freshUser.role || 'OPERATOR'}" tidak memiliki izin untuk membuka modul ini.`);
+        return;
+      }
+    }
+  }
 
   // Update Sidebar Nav
   navItems.forEach((b) => b.classList.toggle('active', b.dataset.panel === panelId));
@@ -351,9 +506,34 @@ if (mobileLogoutBtn) {
 
 
 /* ============================================================
-   HELPER: LOCAL PC IMAGE FILE UPLOAD WITH CANVAS COMPRESSION
+   HELPER: DIRECT IMAGE URL CONVERTER & OPTIMIZER
+   (Mendukung Direct Embed Google Drive, Dropbox, Discord, ImgBB, dll)
    ============================================================ */
-function compressAndReadFile(file, maxWidth = 1000, maxHeight = 1000, quality = 0.85) {
+function convertDirectImageUrl(url) {
+  if (!url || typeof url !== 'string') return url;
+  let trimmed = url.trim();
+
+  // 1. Google Drive view/sharing link conversion
+  // Example: https://drive.google.com/file/d/FILE_ID/view?usp=sharing
+  // or https://drive.google.com/open?id=FILE_ID
+  const gDriveMatch = trimmed.match(/drive\.google\.com\/(?:file\/d\/|open\?id=)([a-zA-Z0-9_-]+)/);
+  if (gDriveMatch && gDriveMatch[1]) {
+    return `https://lh3.googleusercontent.com/d/${gDriveMatch[1]}`;
+  }
+
+  // 2. Dropbox share link conversion (dl=0 -> raw=1)
+  if (trimmed.includes('dropbox.com') && trimmed.includes('dl=0')) {
+    return trimmed.replace('dl=0', 'raw=1');
+  }
+
+  return trimmed;
+}
+
+/* ============================================================
+   HELPER: LOCAL PC IMAGE FILE UPLOAD WITH WEBP CANVAS COMPRESSION
+   (Hemat Egress Bandwidth Supabase hingga 98.5%)
+   ============================================================ */
+function compressAndReadFile(file, maxWidth = 800, maxHeight = 800, quality = 0.78) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -379,7 +559,12 @@ function compressAndReadFile(file, maxWidth = 1000, maxHeight = 1000, quality = 
         canvas.height = height;
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, width, height);
-        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+
+        // Gunakan WebP untuk ukuran file ultra-ringan (~30-60KB)
+        let dataUrl = canvas.toDataURL('image/webp', quality);
+        if (!dataUrl || !dataUrl.startsWith('data:image/webp')) {
+          dataUrl = canvas.toDataURL('image/jpeg', quality);
+        }
         resolve(dataUrl);
       };
       img.onerror = () => resolve(e.target.result);
@@ -390,7 +575,7 @@ function compressAndReadFile(file, maxWidth = 1000, maxHeight = 1000, quality = 
   });
 }
 
-function setupImageUploader(fileInputId, textInputId, previewImgId, maxW = 1000, maxH = 1000) {
+function setupImageUploader(fileInputId, textInputId, previewImgId, maxW = 800, maxH = 800) {
   const fileInput = document.getElementById(fileInputId);
   const textInput = document.getElementById(textInputId);
   const previewImg = document.getElementById(previewImgId);
@@ -407,36 +592,44 @@ function setupImageUploader(fileInputId, textInputId, previewImgId, maxW = 1000,
     }
 
     try {
-      const compressedDataUrl = await compressAndReadFile(file, maxW, maxH, 0.88);
+      const compressedDataUrl = await compressAndReadFile(file, maxW, maxH, 0.78);
       textInput.value = compressedDataUrl;
       previewImg.src = compressedDataUrl;
-      showToast(`Foto "${file.name}" siap disimpan ke website!`);
+      showToast(`⚡ Foto "${file.name}" berhasil dikompresi ke WebP & siap disimpan!`);
     } catch (err) {
       console.error('Error processing image upload', err);
       alert('Gagal memproses gambar: ' + err.message);
     }
   });
 
-  textInput.addEventListener('input', () => {
-    const val = textInput.value.trim();
-    if (val) {
-      previewImg.src = val;
+  const handleUrlInput = () => {
+    const rawVal = textInput.value.trim();
+    const converted = convertDirectImageUrl(rawVal);
+    if (converted !== rawVal) {
+      textInput.value = converted;
+      showToast('⚡ Link Google Drive / Cloud otomatis diubah ke Direct Image URL!');
     }
-  });
+    if (converted) {
+      previewImg.src = converted;
+    }
+  };
+
+  textInput.addEventListener('input', handleUrlInput);
+  textInput.addEventListener('change', handleUrlInput);
 }
 
-// Initialize File Uploaders
-setupImageUploader('bLogoFile', 'bLogo', 'bLogoPreviewTag', 600, 600);
-setupImageUploader('bLogoIconFile', 'bLogoIcon', 'bLogoIconPreviewTag', 400, 400);
-setupImageUploader('bLoginLogoFile', 'bLoginLogo', 'bLoginLogoPreviewTag', 600, 600);
-setupImageUploader('bLoadingLogoFile', 'bLoadingLogo', 'bLoadingLogoPreviewTag', 600, 600);
-setupImageUploader('bHeroBgFile', 'bHeroBg', 'bHeroBgPreviewTag', 1920, 1080);
-setupImageUploader('pImgFile', 'pImg', 'pImgPreviewTag', 800, 1000);
-setupImageUploader('gImgFile', 'gImg', 'gImgPreviewTag', 1200, 800);
-setupImageUploader('paLogoFile', 'paLogo', 'paLogoPreviewTag', 600, 600);
-setupImageUploader('bannerImgFile', 'bannerImgUrl', 'bannerPreviewImg', 1200, 700);
-setupImageUploader('adsPromoImgFile', 'adsPromoImgUrl', 'adsPromoImgPreview', 1200, 500);
-setupImageUploader('sponsorLogoFile', 'sponsorLogo', 'sponsorLogoPreview', 400, 400);
+// Initialize File Uploaders dengan resolusi taktis hemat bandwidth
+setupImageUploader('bLogoFile', 'bLogo', 'bLogoPreviewTag', 360, 360);
+setupImageUploader('bLogoIconFile', 'bLogoIcon', 'bLogoIconPreviewTag', 256, 256);
+setupImageUploader('bLoginLogoFile', 'bLoginLogo', 'bLoginLogoPreviewTag', 360, 360);
+setupImageUploader('bLoadingLogoFile', 'bLoadingLogo', 'bLoadingLogoPreviewTag', 360, 360);
+setupImageUploader('bHeroBgFile', 'bHeroBg', 'bHeroBgPreviewTag', 1280, 720);
+setupImageUploader('pImgFile', 'pImg', 'pImgPreviewTag', 600, 800);
+setupImageUploader('gImgFile', 'gImg', 'gImgPreviewTag', 800, 500);
+setupImageUploader('paLogoFile', 'paLogo', 'paLogoPreviewTag', 360, 360);
+setupImageUploader('bannerImgFile', 'bannerImgUrl', 'bannerPreviewImg', 960, 540);
+setupImageUploader('adsPromoImgFile', 'adsPromoImgUrl', 'adsPromoImgPreview', 960, 400);
+setupImageUploader('sponsorLogoFile', 'sponsorLogo', 'sponsorLogoPreview', 300, 300);
 
 /* ============================================================
    00 / BRANDING, HERO & CLAN IDENTITY CMS
@@ -454,7 +647,13 @@ function renderBrandingForm() {
   if (taglineEl) taglineEl.value = b.tagline || 'TACTICAL ESPORTS SQUAD • NO FEAR. NO EXCUSES.';
   const descEl = document.getElementById('bDesc');
   if (descEl) descEl.value = b.description || 'Clan Point Blank Indonesia kompetitif berbasis disiplin, loyalitas, dan insting tempur tingkat tinggi.';
-  
+
+  // Theme Accent Color & Discord Webhook
+  const themeColorEl = document.getElementById('bThemeColor');
+  if (themeColorEl) themeColorEl.value = b.themeColor || '#D4AF37';
+  const discordWebhookEl = document.getElementById('bDiscordWebhook');
+  if (discordWebhookEl) discordWebhookEl.value = b.discordWebhook || '';
+
   // Main Clan Logo
   const logoEl = document.getElementById('bLogo');
   if (logoEl) logoEl.value = b.logo || 'assets/mothra-logo.png';
@@ -527,6 +726,8 @@ if (brandingForm) {
       clanName: (document.getElementById('bClanName').value || 'MOTHRA').trim(),
       clanFullName: (document.getElementById('bClanFullName').value || 'MOTHRA ESPORTS').trim(),
       tagline: (document.getElementById('bTagline').value || '').trim(),
+      themeColor: document.getElementById('bThemeColor') ? document.getElementById('bThemeColor').value : '#D4AF37',
+      discordWebhook: document.getElementById('bDiscordWebhook') ? document.getElementById('bDiscordWebhook').value.trim() : '',
       description: (document.getElementById('bDesc').value || '').trim(),
       logo: (document.getElementById('bLogo').value || 'assets/mothra-logo.png').trim(),
       logoIcon: (document.getElementById('bLogoIcon').value || 'assets/Logo_Clan_MOTHRA_-_Transparan_NO_TEXT.png').trim(),
@@ -545,9 +746,13 @@ if (brandingForm) {
       bgImage: (document.getElementById('bHeroBg').value || 'assets/hero-bg.jpg').trim()
     };
 
+    if (typeof applyClanTheme === 'function') {
+      applyClanTheme(db.branding.themeColor);
+    }
+
     saveMothraData(db);
     renderBrandingForm();
-    showToast('🛡️ Identitas, Hero Section & Preloader berhasil disimpan ke Supabase!');
+    showToast('🛡️ Identitas, Tema Warna & Hero Section berhasil disimpan ke Supabase!');
   });
 }
 
@@ -993,8 +1198,18 @@ function renderCategoriesTable() {
     ];
   }
 
+  const rawList = db.categories || [];
+  const total = rawList.length;
+  const state = adminPagination.categories;
+  const totalPages = Math.max(1, Math.ceil(total / state.perPage));
+  if (state.page > totalPages) state.page = totalPages;
+  if (state.page < 1) state.page = 1;
+
+  const startIdx = (state.page - 1) * state.perPage;
+  const paginatedList = rawList.slice(startIdx, startIdx + state.perPage);
+
   categoriesTableBody.innerHTML = '';
-  db.categories.forEach((cat) => {
+  paginatedList.forEach((cat) => {
     const playerCount = (db.lineup || []).filter((p) => p.category === cat.id).length;
     const tr = document.createElement('tr');
     tr.innerHTML = `
@@ -1012,6 +1227,7 @@ function renderCategoriesTable() {
     `;
     categoriesTableBody.appendChild(tr);
   });
+  renderTablePagination('categoriesPagination', total, 'categories', renderCategoriesTable);
   renderOverviewStats();
   populateCategoryDropdown();
 }
@@ -1121,8 +1337,18 @@ function renderRolesTable() {
 
   ensureDefaultRoles();
 
+  const rawList = db.roles || [];
+  const total = rawList.length;
+  const state = adminPagination.roles;
+  const totalPages = Math.max(1, Math.ceil(total / state.perPage));
+  if (state.page > totalPages) state.page = totalPages;
+  if (state.page < 1) state.page = 1;
+
+  const startIdx = (state.page - 1) * state.perPage;
+  const paginatedList = rawList.slice(startIdx, startIdx + state.perPage);
+
   tbody.innerHTML = '';
-  db.roles.forEach((r) => {
+  paginatedList.forEach((r) => {
     const playerCount = (db.lineup || []).filter((p) => p.role && (p.role.toLowerCase() === r.label.toLowerCase() || p.role.toLowerCase() === r.id.toLowerCase())).length;
     const tr = document.createElement('tr');
     tr.innerHTML = `
@@ -1139,6 +1365,7 @@ function renderRolesTable() {
     `;
     tbody.appendChild(tr);
   });
+  renderTablePagination('rolesPagination', total, 'roles', renderRolesTable);
   populateRoleDropdown();
 }
 
@@ -1265,8 +1492,19 @@ let editingPlayerId = null;
 
 function renderLineupTable() {
   if (!lineupTableBody) return;
+
+  const rawList = db.lineup || [];
+  const total = rawList.length;
+  const state = adminPagination.lineup;
+  const totalPages = Math.max(1, Math.ceil(total / state.perPage));
+  if (state.page > totalPages) state.page = totalPages;
+  if (state.page < 1) state.page = 1;
+
+  const startIdx = (state.page - 1) * state.perPage;
+  const paginatedList = rawList.slice(startIdx, startIdx + state.perPage);
+
   lineupTableBody.innerHTML = '';
-  (db.lineup || []).forEach((p) => {
+  paginatedList.forEach((p) => {
     const catObj = (db.categories || []).find((c) => c.id === p.category);
     const catLabel = catObj ? catObj.badge || catObj.label : (p.category || 'PBNC').toUpperCase();
 
@@ -1288,6 +1526,7 @@ function renderLineupTable() {
     `;
     lineupTableBody.appendChild(tr);
   });
+  renderTablePagination('lineupPagination', total, 'lineup', renderLineupTable);
   renderOverviewStats();
 }
 
@@ -1303,6 +1542,19 @@ window.openAddPlayerModal = function() {
   if (pRole && pRole.options.length) pRole.selectedIndex = 0;
   document.getElementById('pImg').value = 'assets/player-captain.jpg';
   document.getElementById('pImgPreviewTag').src = 'assets/player-captain.jpg';
+
+  if (document.getElementById('pRadarAim')) document.getElementById('pRadarAim').value = '90';
+  if (document.getElementById('pRadarReflex')) document.getElementById('pRadarReflex').value = '88';
+  if (document.getElementById('pRadarClutch')) document.getElementById('pRadarClutch').value = '92';
+  if (document.getElementById('pRadarTactical')) document.getElementById('pRadarTactical').value = '85';
+  if (document.getElementById('pRadarComms')) document.getElementById('pRadarComms').value = '87';
+
+  if (document.getElementById('pWeaponPrimary')) document.getElementById('pWeaponPrimary').value = 'AUG A3 Silence';
+  if (document.getElementById('pWeaponSecondary')) document.getElementById('pWeaponSecondary').value = 'R.B 454 SS8M+S';
+  if (document.getElementById('pWeaponMelee')) document.getElementById('pWeaponMelee').value = 'Fang Blade PBNC';
+  if (document.getElementById('pWeaponSpecial')) document.getElementById('pWeaponSpecial').value = 'Beret PBNC';
+  if (document.getElementById('pHighlightUrl')) document.getElementById('pHighlightUrl').value = '';
+
   playerModal.classList.add('open');
 };
 
@@ -1337,6 +1589,23 @@ window.editPlayer = function(id) {
   document.getElementById('pHS').value = p.hs || '60%';
   document.getElementById('pExp').value = p.experience || '3 Tahun';
   document.getElementById('pBio').value = p.bio || '';
+
+  // Load Radar Stats
+  const rStats = p.radarStats || {};
+  if (document.getElementById('pRadarAim')) document.getElementById('pRadarAim').value = rStats.aim || 90;
+  if (document.getElementById('pRadarReflex')) document.getElementById('pRadarReflex').value = rStats.reflex || 88;
+  if (document.getElementById('pRadarClutch')) document.getElementById('pRadarClutch').value = rStats.clutch || 92;
+  if (document.getElementById('pRadarTactical')) document.getElementById('pRadarTactical').value = rStats.tactical || 85;
+  if (document.getElementById('pRadarComms')) document.getElementById('pRadarComms').value = rStats.comms || 87;
+
+  // Load Weapons
+  const weaps = p.weapons || {};
+  if (document.getElementById('pWeaponPrimary')) document.getElementById('pWeaponPrimary').value = weaps.primary || p.weapon || 'AUG A3 Silence';
+  if (document.getElementById('pWeaponSecondary')) document.getElementById('pWeaponSecondary').value = weaps.secondary || 'R.B 454 SS8M+S';
+  if (document.getElementById('pWeaponMelee')) document.getElementById('pWeaponMelee').value = weaps.melee || 'Fang Blade PBNC';
+  if (document.getElementById('pWeaponSpecial')) document.getElementById('pWeaponSpecial').value = weaps.special || 'Beret PBNC';
+  if (document.getElementById('pHighlightUrl')) document.getElementById('pHighlightUrl').value = p.highlightUrl || '';
+
   playerModal.classList.add('open');
 };
 
@@ -1360,11 +1629,25 @@ playerForm.addEventListener('submit', (e) => {
     category: document.getElementById('pCategory').value,
     num: document.getElementById('pNum').value.trim() || '00',
     img: document.getElementById('pImg').value.trim() || 'assets/player-captain.jpg',
-    weapon: document.getElementById('pWeapon').value.trim(),
+    weapon: document.getElementById('pWeapon').value.trim() || (document.getElementById('pWeaponPrimary') ? document.getElementById('pWeaponPrimary').value.trim() : 'AUG A3 Silence'),
     kd: document.getElementById('pKD').value.trim() || '2.00',
     hs: document.getElementById('pHS').value.trim() || '60%',
     experience: document.getElementById('pExp').value.trim() || '3 Tahun',
     bio: document.getElementById('pBio').value.trim(),
+    radarStats: {
+      aim: parseInt(document.getElementById('pRadarAim') ? document.getElementById('pRadarAim').value : 90) || 90,
+      reflex: parseInt(document.getElementById('pRadarReflex') ? document.getElementById('pRadarReflex').value : 88) || 88,
+      clutch: parseInt(document.getElementById('pRadarClutch') ? document.getElementById('pRadarClutch').value : 92) || 92,
+      tactical: parseInt(document.getElementById('pRadarTactical') ? document.getElementById('pRadarTactical').value : 85) || 85,
+      comms: parseInt(document.getElementById('pRadarComms') ? document.getElementById('pRadarComms').value : 87) || 87
+    },
+    weapons: {
+      primary: document.getElementById('pWeaponPrimary') ? document.getElementById('pWeaponPrimary').value.trim() : 'AUG A3 Silence',
+      secondary: document.getElementById('pWeaponSecondary') ? document.getElementById('pWeaponSecondary').value.trim() : 'R.B 454 SS8M+S',
+      melee: document.getElementById('pWeaponMelee') ? document.getElementById('pWeaponMelee').value.trim() : 'Fang Blade PBNC',
+      special: document.getElementById('pWeaponSpecial') ? document.getElementById('pWeaponSpecial').value.trim() : 'Beret PBNC'
+    },
+    highlightUrl: document.getElementById('pHighlightUrl') ? document.getElementById('pHighlightUrl').value.trim() : '',
     featured: editingPlayerId ? (db.lineup.find((x) => x.id === editingPlayerId)?.featured || false) : false
   };
 
@@ -1381,7 +1664,7 @@ playerForm.addEventListener('submit', (e) => {
   renderLineupTable();
   renderCategoriesTable();
   playerModal.classList.remove('open');
-  showToast(editingPlayerId ? 'Data pemain berhasil diperbarui!' : 'Pemain baru berhasil ditambahkan!');
+  showToast(editingPlayerId ? 'Data pemain & Tactical Radar berhasil diperbarui!' : 'Pemain baru berhasil ditambahkan!');
 });
 
 /* ============================================================
@@ -1402,7 +1685,16 @@ function renderScheduleTable() {
   scheduleTableBody.innerHTML = '';
 
   const matches = (db.schedule && db.schedule.matches) ? db.schedule.matches : [];
-  matches.forEach((m) => {
+  const total = matches.length;
+  const state = adminPagination.schedule;
+  const totalPages = Math.max(1, Math.ceil(total / state.perPage));
+  if (state.page > totalPages) state.page = totalPages;
+  if (state.page < 1) state.page = 1;
+
+  const startIdx = (state.page - 1) * state.perPage;
+  const paginatedList = matches.slice(startIdx, startIdx + state.perPage);
+
+  paginatedList.forEach((m) => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><strong>${m.stage}</strong></td>
@@ -1420,6 +1712,7 @@ function renderScheduleTable() {
     `;
     scheduleTableBody.appendChild(tr);
   });
+  renderTablePagination('schedulePagination', total, 'schedule', renderScheduleTable);
   renderOverviewStats();
 }
 
@@ -1499,7 +1792,7 @@ scheduleForm.addEventListener('submit', (e) => {
 });
 
 /* ============================================================
-   05 / THE ALLIANCE (PARTNERSHIP CRUD)
+   05 / THE ALLIANCE (PARTNERSHIP SYSTEM)
    ============================================================ */
 const partnershipTableBody = document.getElementById('partnershipTableBody');
 const partnershipModal = document.getElementById('partnershipCrudModal');
@@ -1507,32 +1800,29 @@ const partnershipForm = document.getElementById('partnershipCrudForm');
 let editingPartnershipId = null;
 let currentPartnerFilter = 'all';
 
-function getPartnerTypeBadge(type) {
-  switch (type) {
+function getPartnerTypeBadge(t) {
+  switch (t) {
     case 'scrim':
-      return '<span class="badge-type badge-type-scrim">⚔️ Scrim</span>';
+      return '<span class="badge-partner badge-partner-scrim">⚔️ SPARRING / SCRIM</span>';
     case 'sponsor':
-      return '<span class="badge-type badge-type-sponsor">🤝 Sponsorship</span>';
+      return '<span class="badge-partner badge-partner-sponsor">🤝 SPONSORSHIP</span>';
     case 'design':
-      return '<span class="badge-type badge-type-design">🎨 Design</span>';
+      return '<span class="badge-partner badge-partner-design">🎨 DESIGN PARTNER</span>';
     case 'ba':
-      return '<span class="badge-type badge-type-ba">👑 Brand Ambassador</span>';
+      return '<span class="badge-partner badge-partner-ba">👑 BRAND AMBASSADOR</span>';
     default:
-      return `<span class="badge-type badge-type-scrim">${type}</span>`;
+      return `<span class="badge-partner badge-partner-scrim">${(t || 'PARTNER').toUpperCase()}</span>`;
   }
 }
 
-function getPartnerStatusBadge(status) {
-  const s = (status || 'ACTIVE').toUpperCase();
+function getPartnerStatusBadge(s) {
   switch (s) {
     case 'ACTIVE':
-      return '<span class="badge-status-active">✅ ACTIVE</span>';
+      return '<span class="badge-status-active">● AKTIF</span>';
     case 'PENDING':
-      return '<span class="badge-status-pending">⏳ PENDING</span>';
-    case 'NEGOTIATION':
-      return '<span class="badge-status-negotiation">🔄 NEGOTIATION</span>';
-    case 'CLOSED':
-      return '<span class="badge-status-closed">❌ CLOSED</span>';
+      return '<span class="badge-status-pending">◐ REVIEW</span>';
+    case 'COMPLETED':
+      return '<span class="badge-status-completed">✓ SELESAI</span>';
     default:
       return `<span class="badge-status-active">${s}</span>`;
   }
@@ -1568,6 +1858,15 @@ function renderPartnershipsTable(filterType = currentPartnerFilter) {
     ? db.partnerships
     : db.partnerships.filter((p) => p.type === filterType);
 
+  const total = items.length;
+  const state = adminPagination.partnership;
+  const totalPages = Math.max(1, Math.ceil(total / state.perPage));
+  if (state.page > totalPages) state.page = totalPages;
+  if (state.page < 1) state.page = 1;
+
+  const startIdx = (state.page - 1) * state.perPage;
+  const paginatedList = items.slice(startIdx, startIdx + state.perPage);
+
   partnershipTableBody.innerHTML = '';
 
   if (items.length === 0) {
@@ -1578,10 +1877,11 @@ function renderPartnershipsTable(filterType = currentPartnerFilter) {
         </td>
       </tr>
     `;
+    renderTablePagination('partnershipPagination', 0, 'partnership', () => renderPartnershipsTable(currentPartnerFilter));
     return;
   }
 
-  items.forEach((p) => {
+  paginatedList.forEach((p) => {
     const logoSrc = p.logo || 'assets/mothra-logo.png';
     const cleanPhone = (p.contact || '').replace(/[^0-9]/g, '');
     const isPhone = cleanPhone.length >= 9;
@@ -1614,6 +1914,7 @@ function renderPartnershipsTable(filterType = currentPartnerFilter) {
     `;
     partnershipTableBody.appendChild(tr);
   });
+  renderTablePagination('partnershipPagination', total, 'partnership', () => renderPartnershipsTable(currentPartnerFilter));
 }
 
 // Partnership Filter Tabs
@@ -1622,6 +1923,7 @@ document.querySelectorAll('.pa-tab').forEach((tab) => {
     document.querySelectorAll('.pa-tab').forEach((t) => t.classList.remove('active'));
     tab.classList.add('active');
     currentPartnerFilter = tab.dataset.type || 'all';
+    adminPagination.partnership.page = 1;
     renderPartnershipsTable(currentPartnerFilter);
   });
 });
@@ -1717,8 +2019,17 @@ const recordForm = document.getElementById('recordCrudForm');
 let editingRecordId = null;
 
 function renderRecordsTable() {
+  const rawList = db.records || [];
+  const total = rawList.length;
+  const state = adminPagination.records;
+  const totalPages = Math.max(1, Math.ceil(total / state.perPage));
+  if (state.page > totalPages) state.page = totalPages;
+  if (state.page < 1) state.page = 1;
+  const startIdx = (state.page - 1) * state.perPage;
+  const paginatedList = rawList.slice(startIdx, startIdx + state.perPage);
+
   recordsTableBody.innerHTML = '';
-  (db.records || []).forEach((r) => {
+  paginatedList.forEach((r) => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><strong style="color:var(--red-bright);font-size:1.1rem;">${r.year}</strong></td>
@@ -1733,6 +2044,7 @@ function renderRecordsTable() {
     `;
     recordsTableBody.appendChild(tr);
   });
+  renderTablePagination('recordsPagination', total, 'records', renderRecordsTable);
   renderOverviewStats();
 }
 
@@ -1796,8 +2108,17 @@ const galleryForm = document.getElementById('galleryCrudForm');
 let editingGalleryId = null;
 
 function renderGalleryTable() {
+  const rawList = db.gallery || [];
+  const total = rawList.length;
+  const state = adminPagination.gallery;
+  const totalPages = Math.max(1, Math.ceil(total / state.perPage));
+  if (state.page > totalPages) state.page = totalPages;
+  if (state.page < 1) state.page = 1;
+  const startIdx = (state.page - 1) * state.perPage;
+  const paginatedList = rawList.slice(startIdx, startIdx + state.perPage);
+
   galleryTableBody.innerHTML = '';
-  (db.gallery || []).forEach((g) => {
+  paginatedList.forEach((g) => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><img src="${g.img}" alt="${g.title}" class="table-thumb" style="width:70px;height:45px;" onerror="this.src='assets/pb-bg-squad.jpg'" /></td>
@@ -1812,6 +2133,7 @@ function renderGalleryTable() {
     `;
     galleryTableBody.appendChild(tr);
   });
+  renderTablePagination('galleryPagination', total, 'gallery', renderGalleryTable);
   renderOverviewStats();
 }
 
@@ -2406,13 +2728,79 @@ document.querySelectorAll('.btn-cancel').forEach((btn) => {
 });
 
 /* ============================================================
-   USER MANAGEMENT CRUD
+   ROLE-BASED ACCESS CONTROL (RBAC) & USER MANAGEMENT ENGINE
+   (Hak Akses & Role Berfungsi Dinamis per Operator)
    ============================================================ */
+const ALL_ADMIN_PANELS = [
+  'panelOverview', 'panelBranding', 'panelLiveMatch', 'panelRecruitment',
+  'panelPosterGenerator', 'panelStore', 'panelPartnership', 'panelSchedule',
+  'panelCategories', 'panelRoles', 'panelLineup', 'panelDossier',
+  'panelRecord', 'panelGallery', 'panelVideos', 'panelAds',
+  'panelDatabase', 'panelBackup', 'panelUsers', 'panelAuditLog'
+];
+
+const ROLE_PERMISSIONS = {
+  'SUPER ADMIN': {
+    label: 'SUPER ADMIN (Full Access)',
+    color: '#D4AF37',
+    canWrite: true,
+    canManageUsers: true,
+    canManageSystem: true,
+    panels: [...ALL_ADMIN_PANELS]
+  },
+  'TACTICAL OPERATOR': {
+    label: 'TACTICAL OPERATOR (Read + Edit Operasional)',
+    color: '#60A5FA',
+    canWrite: true,
+    canManageUsers: false,
+    canManageSystem: false,
+    panels: [
+      'panelOverview', 'panelLiveMatch', 'panelRecruitment',
+      'panelPosterGenerator', 'panelStore', 'panelPartnership', 'panelSchedule',
+      'panelCategories', 'panelRoles', 'panelLineup', 'panelDossier',
+      'panelRecord', 'panelGallery', 'panelVideos', 'panelAds'
+    ]
+  },
+  'CONTENT WRITER': {
+    label: 'CONTENT WRITER (Konten & Media Saja)',
+    color: '#10B981',
+    canWrite: true,
+    canManageUsers: false,
+    canManageSystem: false,
+    panels: [
+      'panelOverview', 'panelPosterGenerator', 'panelGallery', 'panelVideos',
+      'panelSchedule', 'panelRecord', 'panelDossier'
+    ]
+  },
+  'VIEWER': {
+    label: 'VIEWER (Read Only / Hanya Lihat)',
+    color: '#94A3B8',
+    canWrite: false,
+    canManageUsers: false,
+    canManageSystem: false,
+    panels: [
+      'panelOverview', 'panelBranding', 'panelLiveMatch', 'panelRecruitment',
+      'panelPosterGenerator', 'panelStore', 'panelPartnership', 'panelSchedule',
+      'panelCategories', 'panelRoles', 'panelLineup', 'panelDossier',
+      'panelRecord', 'panelGallery', 'panelVideos', 'panelAds'
+    ]
+  },
+  'CUSTOM': {
+    label: 'CUSTOM (Hak Akses Mandiri)',
+    color: '#F59E0B',
+    canWrite: true,
+    canManageUsers: false,
+    canManageSystem: false,
+    panels: []
+  }
+};
+
 const ROLE_COLORS = {
   'SUPER ADMIN': '#D4AF37',
   'TACTICAL OPERATOR': '#60A5FA',
   'CONTENT WRITER': '#10B981',
-  'VIEWER': '#94A3B8'
+  'VIEWER': '#94A3B8',
+  'CUSTOM': '#F59E0B'
 };
 
 function generateUserId() {
@@ -2422,6 +2810,126 @@ function generateUserId() {
 function maskPassword(pwd) {
   if (!pwd) return '—';
   return pwd.slice(0, 2) + '•'.repeat(Math.max(4, pwd.length - 2));
+}
+
+// Menghitung hak akses efektif dari user (Preset / Custom Matrix)
+function getUserEffectivePermissions(user) {
+  if (!user) {
+    return { canWrite: false, canManageUsers: false, canManageSystem: false, panels: [] };
+  }
+
+  // 1. Super Admin Utama (u_1) selalu Full Access
+  if (user.id === 'u_1' || user.role === 'SUPER ADMIN') {
+    return {
+      canWrite: true,
+      canManageUsers: true,
+      canManageSystem: true,
+      panels: [...ALL_ADMIN_PANELS]
+    };
+  }
+
+  // 2. Custom Role / Array Custom Panels
+  if (user.role === 'CUSTOM' || Array.isArray(user.customPanels)) {
+    const panels = Array.isArray(user.customPanels) ? user.customPanels : [];
+    return {
+      canWrite: user.canWrite !== false,
+      canManageUsers: panels.includes('panelUsers'),
+      canManageSystem: panels.includes('panelDatabase') || panels.includes('panelBackup'),
+      panels: panels.length > 0 ? panels : ['panelOverview']
+    };
+  }
+
+  // 3. Preset Roles Standar
+  const preset = ROLE_PERMISSIONS[user.role] || ROLE_PERMISSIONS['VIEWER'];
+  return {
+    canWrite: user.canWrite !== undefined ? user.canWrite : preset.canWrite,
+    canManageUsers: preset.canManageUsers,
+    canManageSystem: preset.canManageSystem,
+    panels: preset.panels
+  };
+}
+
+// Terapkan izin hak akses role ke seluruh antarmuka admin
+function applyRolePermissions() {
+  const currentUser = getCurrentUser();
+  if (!currentUser) return;
+
+  const freshUser = (db && db.users ? db.users.find(u => u.id === currentUser.id || u.email.toLowerCase() === currentUser.email.toLowerCase()) : null) || currentUser;
+  const perms = getUserEffectivePermissions(freshUser);
+
+  // 1. Filter Sidebar Nav items
+  let firstAllowedPanel = null;
+  document.querySelectorAll('.nav-item').forEach((btn) => {
+    const pId = btn.dataset.panel;
+    const allowed = perms.panels.includes(pId);
+    btn.style.display = allowed ? '' : 'none';
+    if (allowed && !firstAllowedPanel) firstAllowedPanel = pId;
+  });
+
+  // 2. Filter Mobile Quick-Nav items
+  document.querySelectorAll('.mobile-quick-item').forEach((btn) => {
+    const pId = btn.dataset.panel;
+    const allowed = perms.panels.includes(pId);
+    btn.style.display = allowed ? '' : 'none';
+  });
+
+  // 3. Sembunyikan header section di sidebar jika semua child di bawahnya tersembunyi
+  document.querySelectorAll('.sidebar-nav-section').forEach((sec) => {
+    let nextEl = sec.nextElementSibling;
+    let hasVisible = false;
+    while (nextEl && !nextEl.classList.contains('sidebar-nav-section')) {
+      if (nextEl.classList.contains('nav-item') && nextEl.style.display !== 'none') {
+        hasVisible = true;
+        break;
+      }
+      nextEl = nextEl.nextElementSibling;
+    }
+    sec.style.display = hasVisible ? '' : 'none';
+  });
+
+  // 4. Pastikan panel yang sedang aktif diizinkan
+  const activePanel = document.querySelector('.admin-panel.active');
+  if (activePanel && !perms.panels.includes(activePanel.id)) {
+    switchAdminPanel(firstAllowedPanel || 'panelOverview');
+  }
+
+  // 5. Terapkan Pembatasan Read-Only (Hanya Lihat) jika canWrite === false
+  let readOnlyNotice = document.getElementById('roleReadOnlyNotice');
+  if (!perms.canWrite) {
+    if (!readOnlyNotice) {
+      readOnlyNotice = document.createElement('div');
+      readOnlyNotice.id = 'roleReadOnlyNotice';
+      readOnlyNotice.style.cssText = 'background:rgba(239,68,68,0.14);border:1px solid #EF4444;color:#FCA5A5;padding:0.75rem 1.25rem;border-radius:6px;margin-bottom:1.5rem;font-family:var(--font-mono);font-size:0.82rem;display:flex;align-items:center;gap:0.75rem;box-shadow:0 0 15px rgba(239,68,68,0.15);';
+      readOnlyNotice.innerHTML = `<span>🔒 <strong>MODE READ-ONLY AKTIF</strong>: Akun Anda memiliki role <strong>${freshUser.role || 'VIEWER'}</strong> (Hak Akses Hanya Lihat). Tombol Simpan, Tambah, Edit, dan Hapus dinonaktifkan demi keamanan.</span>`;
+      const topBar = document.querySelector('.top-bar');
+      if (topBar && topBar.parentNode) {
+        topBar.parentNode.insertBefore(readOnlyNotice, topBar.nextSibling);
+      }
+    } else {
+      readOnlyNotice.style.display = 'flex';
+      readOnlyNotice.innerHTML = `<span>🔒 <strong>MODE READ-ONLY AKTIF</strong>: Akun Anda memiliki role <strong>${freshUser.role || 'VIEWER'}</strong> (Hak Akses Hanya Lihat). Tombol Simpan, Tambah, Edit, dan Hapus dinonaktifkan demi keamanan.</span>`;
+    }
+
+    // Nonaktifkan tombol aksi tambah/edit/hapus dan input file
+    document.querySelectorAll('.btn-add, .btn-primary, button[type="submit"], input[type="file"], .btn-action-del, .btn-action-edit').forEach((el) => {
+      if (el.id !== 'logoutBtn' && el.id !== 'mobileLogoutBtn' && !el.closest('#loginForm') && el.id !== 'userModalCancelBtn') {
+        el.disabled = true;
+        el.style.opacity = '0.4';
+        el.style.cursor = 'not-allowed';
+        el.title = 'Aksi dinonaktifkan untuk role Read-Only (Hanya Lihat).';
+      }
+    });
+  } else {
+    if (readOnlyNotice) readOnlyNotice.style.display = 'none';
+    document.querySelectorAll('.btn-add, .btn-primary, button[type="submit"], input[type="file"], .btn-action-del, .btn-action-edit').forEach((el) => {
+      if (el.id !== 'logoutBtn' && el.id !== 'mobileLogoutBtn') {
+        el.disabled = false;
+        el.style.opacity = '1';
+        el.style.cursor = 'pointer';
+        el.removeAttribute('title');
+      }
+    });
+  }
 }
 
 function renderUsersTable() {
@@ -2447,16 +2955,28 @@ function renderUsersTable() {
 
   if (users.length === 0) {
     tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--gray-light);padding:2rem;">Belum ada data pengguna. Klik <strong>+ TAMBAH ADMIN BARU</strong> untuk memulai.</td></tr>`;
+    renderTablePagination('usersPagination', 0, 'users', renderUsersTable);
     return;
   }
 
-  tbody.innerHTML = users.map((u, i) => {
+  const usersState = adminPagination.users;
+  const usersTotalPages = Math.max(1, Math.ceil(users.length / usersState.perPage));
+  if (usersState.page > usersTotalPages) usersState.page = usersTotalPages;
+  if (usersState.page < 1) usersState.page = 1;
+  const usersStartIdx = (usersState.page - 1) * usersState.perPage;
+  const paginatedUsers = users.slice(usersStartIdx, usersStartIdx + usersState.perPage);
+
+  tbody.innerHTML = paginatedUsers.map((u, i) => {
+    const globalIdx = usersStartIdx + i;
     const roleColor = ROLE_COLORS[u.role] || '#94A3B8';
     const statusColor = u.status === 'ACTIVE' ? '#10B981' : '#EF4444';
     const statusBg = u.status === 'ACTIVE' ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)';
+    const writeBadge = u.canWrite === false ? '<span style="color:#EF4444;font-size:0.65rem;margin-left:0.3rem;">[READ-ONLY]</span>' : '';
+    const panelCount = (u.customPanels && Array.isArray(u.customPanels)) ? u.customPanels.length : (ROLE_PERMISSIONS[u.role] ? ROLE_PERMISSIONS[u.role].panels.length : 0);
+
     return `
       <tr>
-        <td style="color:var(--gray-light);font-size:0.8rem;">${i + 1}</td>
+        <td style="color:var(--gray-light);font-size:0.8rem;">${globalIdx + 1}</td>
         <td>
           <div style="display:flex;align-items:center;gap:0.6rem;">
             <div style="width:32px;height:32px;border-radius:50%;background:rgba(212,175,55,0.15);border:1px solid var(--gold-dark);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:900;font-size:0.85rem;color:var(--gold);flex-shrink:0;">${(u.name || '?').charAt(0).toUpperCase()}</div>
@@ -2468,7 +2988,10 @@ function renderUsersTable() {
         </td>
         <td style="font-family:var(--font-mono);font-size:0.8rem;color:#93C5FD;">${u.email || '—'}</td>
         <td>
-          <span style="background:${roleColor}22;color:${roleColor};border:1px solid ${roleColor}55;padding:0.2rem 0.6rem;border-radius:4px;font-family:var(--font-mono);font-size:0.7rem;font-weight:700;white-space:nowrap;">${u.role || 'VIEWER'}</span>
+          <div style="display:flex;align-items:center;gap:0.3rem;flex-wrap:wrap;">
+            <span style="background:${roleColor}22;color:${roleColor};border:1px solid ${roleColor}55;padding:0.2rem 0.6rem;border-radius:4px;font-family:var(--font-mono);font-size:0.7rem;font-weight:700;white-space:nowrap;">${u.role || 'VIEWER'}${writeBadge}</span>
+            <span style="font-size:0.68rem;color:var(--gray-light);font-family:var(--font-mono);">(${panelCount} Modul)</span>
+          </div>
         </td>
         <td>
           <span style="background:${statusBg};color:${statusColor};border:1px solid ${statusColor}55;padding:0.2rem 0.6rem;border-radius:4px;font-family:var(--font-mono);font-size:0.7rem;font-weight:700;">${u.status || 'ACTIVE'}</span>
@@ -2483,9 +3006,97 @@ function renderUsersTable() {
       </tr>
     `;
   }).join('');
+  renderTablePagination('usersPagination', users.length, 'users', renderUsersTable);
+}
+
+// Sinkronisasi Preset Role ke Checkbox Matriks di Modal
+function applyRolePresetToModal(roleKey, customWrite, customPanels) {
+  const writeCheckbox = document.getElementById('perm_can_write');
+  const panelCheckboxes = document.querySelectorAll('.perm-panel-checkbox');
+  const hintEl = document.getElementById('roleBadgeHint');
+
+  if (roleKey === 'CUSTOM' || Array.isArray(customPanels)) {
+    if (hintEl) hintEl.textContent = 'MODE: CUSTOM (Disesuaikan)';
+    if (writeCheckbox) writeCheckbox.checked = customWrite !== false;
+    const selected = Array.isArray(customPanels) ? customPanels : [];
+    panelCheckboxes.forEach((cb) => {
+      cb.checked = selected.includes(cb.dataset.panel);
+    });
+    return;
+  }
+
+  const preset = ROLE_PERMISSIONS[roleKey] || ROLE_PERMISSIONS['VIEWER'];
+  if (hintEl) hintEl.textContent = 'PRESET: ' + roleKey;
+  if (writeCheckbox) writeCheckbox.checked = customWrite !== undefined ? customWrite : preset.canWrite;
+
+  panelCheckboxes.forEach((cb) => {
+    cb.checked = preset.panels.includes(cb.dataset.panel);
+  });
+}
+
+// Cek apakah kombinasi checkbox saat ini cocok dengan preset tertentu
+function checkMatchingRolePreset() {
+  const writeCheckbox = document.getElementById('perm_can_write');
+  const roleSelect = document.getElementById('userRole');
+  const hintEl = document.getElementById('roleBadgeHint');
+  const checkedPanels = Array.from(document.querySelectorAll('.perm-panel-checkbox:checked')).map(cb => cb.dataset.panel);
+  const canWrite = writeCheckbox ? writeCheckbox.checked : true;
+
+  // Cek preset yang cocok
+  for (const [key, preset] of Object.entries(ROLE_PERMISSIONS)) {
+    if (key === 'CUSTOM') continue;
+    if (preset.canWrite === canWrite &&
+        preset.panels.length === checkedPanels.length &&
+        preset.panels.every(p => checkedPanels.includes(p))) {
+      if (roleSelect) roleSelect.value = key;
+      if (hintEl) hintEl.textContent = 'PRESET: ' + key;
+      return key;
+    }
+  }
+
+  // Jika tidak cocok dengan preset manapun, ubah ke CUSTOM
+  if (roleSelect) roleSelect.value = 'CUSTOM';
+  if (hintEl) hintEl.textContent = 'MODE: CUSTOM (Disesuaikan)';
+  return 'CUSTOM';
+}
+
+// Pasang event listener pada dropdown Role dan Checkbox Matriks
+function setupRoleMatrixEventListeners() {
+  const roleSelect = document.getElementById('userRole');
+  const writeCheckbox = document.getElementById('perm_can_write');
+  const panelCheckboxes = document.querySelectorAll('.perm-panel-checkbox');
+
+  if (roleSelect) {
+    roleSelect.addEventListener('change', (e) => {
+      applyRolePresetToModal(e.target.value);
+    });
+  }
+
+  if (writeCheckbox) {
+    writeCheckbox.addEventListener('change', () => {
+      checkMatchingRolePreset();
+    });
+  }
+
+  panelCheckboxes.forEach((cb) => {
+    cb.addEventListener('change', () => {
+      checkMatchingRolePreset();
+    });
+  });
 }
 
 function openUserModal(mode, userId) {
+  // Verifikasi izin Super Admin / Manage Users
+  const currentUser = getCurrentUser();
+  if (currentUser) {
+    const freshUser = (db && db.users ? db.users.find(u => u.id === currentUser.id || u.email.toLowerCase() === currentUser.email.toLowerCase()) : null) || currentUser;
+    const perms = getUserEffectivePermissions(freshUser);
+    if (!perms.canManageUsers) {
+      showToast('🚫 [AKSES DITOLAK] Hanya SUPER ADMIN yang memiliki wewenang mengelola akun operator.');
+      return;
+    }
+  }
+
   const modal = document.getElementById('userCrudModal');
   const title = document.getElementById('userModalTitle');
   const formAlert = document.getElementById('userFormAlert');
@@ -2509,10 +3120,16 @@ function openUserModal(mode, userId) {
     document.getElementById('userRole').value = user.role || 'TACTICAL OPERATOR';
     document.getElementById('userStatus').value = user.status || 'ACTIVE';
     document.getElementById('userNotes').value = user.notes || '';
+    
+    // Terapkan izin modul yang tersimpan
+    applyRolePresetToModal(user.role || 'TACTICAL OPERATOR', user.canWrite, user.customPanels);
+
     const submitBtn = document.getElementById('userModalSubmitBtn');
     if (submitBtn) submitBtn.textContent = '💾 SIMPAN PERUBAHAN';
   } else {
     if (title) title.textContent = 'TAMBAH ADMIN BARU';
+    document.getElementById('userRole').value = 'TACTICAL OPERATOR';
+    applyRolePresetToModal('TACTICAL OPERATOR');
     const submitBtn = document.getElementById('userModalSubmitBtn');
     if (submitBtn) submitBtn.textContent = '💾 TAMBAH SEKARANG';
   }
@@ -2521,6 +3138,21 @@ function openUserModal(mode, userId) {
 }
 
 function deleteUser(userId) {
+  const currentUser = getCurrentUser();
+  if (currentUser) {
+    const freshUser = (db && db.users ? db.users.find(u => u.id === currentUser.id || u.email.toLowerCase() === currentUser.email.toLowerCase()) : null) || currentUser;
+    const perms = getUserEffectivePermissions(freshUser);
+    if (!perms.canManageUsers) {
+      showToast('🚫 [AKSES DITOLAK] Hanya SUPER ADMIN yang memiliki wewenang menghapus akun operator.');
+      return;
+    }
+  }
+
+  if (userId === 'u_1') {
+    showToast('⚠️ Akun Super Admin Utama (u_1) dilindungi dan tidak dapat dihapus.');
+    return;
+  }
+
   if (!confirm('Yakin ingin menghapus akun admin ini? Tindakan tidak bisa dibatalkan.')) return;
   if (!db.users) return;
   const idx = db.users.findIndex(u => u.id === userId);
@@ -2567,10 +3199,18 @@ if (btnRefreshUsers) {
 const userModalCancelBtn = document.getElementById('userModalCancelBtn');
 if (userModalCancelBtn) {
   userModalCancelBtn.addEventListener('click', () => {
-    const modal = document.getElementById('userCrudModal');
-    if (modal) modal.classList.remove('open');
+    closeUserModal();
   });
 }
+
+function closeUserModal() {
+  const modal = document.getElementById('userCrudModal');
+  if (modal) modal.classList.remove('open');
+}
+window.closeUserModal = closeUserModal;
+
+// Inisialisasi Event Listener Matrix Role saat DOM siap
+setupRoleMatrixEventListeners();
 
 // User CRUD Form Submit
 const userCrudForm = document.getElementById('userCrudForm');
@@ -2590,9 +3230,12 @@ if (userCrudForm) {
     const role    = document.getElementById('userRole').value;
     const status  = document.getElementById('userStatus').value;
     const notes   = (document.getElementById('userNotes').value || '').trim();
+    const canWrite = document.getElementById('perm_can_write') ? document.getElementById('perm_can_write').checked : true;
+    const customPanels = Array.from(document.querySelectorAll('.perm-panel-checkbox:checked')).map(cb => cb.dataset.panel);
 
     if (!name) return showFormErr('Nama operator wajib diisi.');
     if (!email || !email.includes('@')) return showFormErr('Email login harus valid.');
+    if (customPanels.length === 0) return showFormErr('Pilih minimal 1 modul hak akses yang dapat dibuka oleh operator.');
 
     if (!db.users) db.users = [];
     const isEdit = !!id;
@@ -2614,28 +3257,1430 @@ if (userCrudForm) {
       db.users[idx].role   = role;
       db.users[idx].status = status;
       db.users[idx].notes  = notes;
+      db.users[idx].canWrite = canWrite;
+      db.users[idx].customPanels = customPanels;
+
+      // Jika user mengedit akunnya sendiri, perbarui sesi aktif
+      const cur = getCurrentUser();
+      if (cur && (cur.id === id || cur.email === email)) {
+        sessionStorage.setItem(AUTH_USER_KEY, JSON.stringify(db.users[idx]));
+        updateOperatorBadge(db.users[idx]);
+        applyRolePermissions();
+      }
     } else {
       if (!pwd) return showFormErr('Password wajib diisi untuk akun baru.');
       if (pwd.length < 6) return showFormErr('Password minimal 6 karakter.');
       if (pwd !== pwdConf) return showFormErr('Konfirmasi password tidak cocok.');
       db.users.push({
-        id:        generateUserId(),
-        name:      name,
-        email:     email,
-        password:  pwd,
-        role:      role,
-        status:    status,
-        notes:     notes,
-        avatar:    'assets/mothra-logo.png',
-        createdAt: new Date().toISOString().split('T')[0]
+        id:           generateUserId(),
+        name:         name,
+        email:        email,
+        password:     pwd,
+        role:         role,
+        status:       status,
+        notes:        notes,
+        canWrite:     canWrite,
+        customPanels: customPanels,
+        avatar:       'assets/mothra-logo.png',
+        createdAt:    new Date().toISOString().split('T')[0]
       });
     }
 
     saveMothraData(db);
     renderUsersTable();
-    const modal = document.getElementById('userCrudModal');
-    if (modal) modal.classList.remove('open');
-    showToast(isEdit ? '✅ Data operator berhasil diperbarui dan disinkronkan ke Supabase!' : '✅ Akun admin baru berhasil ditambahkan dan disinkronkan ke Supabase!');
+    closeUserModal();
+    showToast(isEdit ? '✅ Data operator berhasil diperbarui & disinkronkan ke Supabase!' : '✅ Akun admin baru berhasil ditambahkan & disinkronkan ke Supabase!');
   });
 }
+
+// ============================================================
+// MOTHRA MEDIA (VIDEOS & LIVE STREAMING) CRUD CONTROLLER
+// ============================================================
+let videoCategoryFilterVal = 'all';
+let videoSearchQuery = '';
+
+function extractYouTubeId(url) {
+  if (!url) return '';
+  const trimmed = url.trim();
+  // Match standard, embed, shorts, youtu.be, live formats
+  const regExp = /(?:youtube(?:-nocookie)?\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?|live|shorts)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i;
+  const match = trimmed.match(regExp);
+  if (match && match[1]) {
+    return match[1];
+  }
+  // Fallback: if raw 11-char ID is entered
+  if (/^[a-zA-Z0-9_-]{11}$/.test(trimmed)) {
+    return trimmed;
+  }
+  return '';
+}
+
+function renderVideosTable() {
+  const tbody = document.getElementById('videosTableBody');
+  if (!tbody) return;
+
+  const rawVideos = (db && Array.isArray(db.videos)) ? db.videos : [];
+
+  // Update Stats
+  const total = rawVideos.length;
+  const liveCount = rawVideos.filter(v => v.category === 'live').length;
+  const gameplayCount = rawVideos.filter(v => v.category === 'gameplay').length;
+  const publishedCount = rawVideos.filter(v => v.published !== false).length;
+
+  const elTotal = document.getElementById('statVideoTotal');
+  const elLive = document.getElementById('statVideoLive');
+  const elGameplay = document.getElementById('statVideoGameplay');
+  const elPublished = document.getElementById('statVideoPublished');
+  if (elTotal) elTotal.textContent = total;
+  if (elLive) elLive.textContent = liveCount;
+  if (elGameplay) elGameplay.textContent = gameplayCount;
+  if (elPublished) elPublished.textContent = publishedCount;
+
+  // Filter
+  let filtered = [...rawVideos];
+  if (videoCategoryFilterVal !== 'all') {
+    filtered = filtered.filter(v => v.category === videoCategoryFilterVal);
+  }
+  if (videoSearchQuery) {
+    const q = videoSearchQuery.toLowerCase();
+    filtered = filtered.filter(v => 
+      (v.title && v.title.toLowerCase().includes(q)) || 
+      (v.description && v.description.toLowerCase().includes(q)) ||
+      (v.video_id && v.video_id.toLowerCase().includes(q))
+    );
+  }
+
+  // Sort
+  filtered.sort((a, b) => {
+    const orderA = a.sort_order !== undefined && a.sort_order !== null ? Number(a.sort_order) : 999;
+    const orderB = b.sort_order !== undefined && b.sort_order !== null ? Number(b.sort_order) : 999;
+    if (orderA !== orderB) return orderA - orderB;
+    return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+  });
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--gray-light);padding:2rem;">Tidak ada data video yang cocok. Klik <strong>＋ TAMBAH VIDEO BARU</strong> untuk menambah.</td></tr>`;
+    renderTablePagination('videosPagination', 0, 'videos', renderVideosTable);
+    return;
+  }
+
+  const totalFiltered = filtered.length;
+  const vidState = adminPagination.videos;
+  const vidTotalPages = Math.max(1, Math.ceil(totalFiltered / vidState.perPage));
+  if (vidState.page > vidTotalPages) vidState.page = vidTotalPages;
+  if (vidState.page < 1) vidState.page = 1;
+  const vidStartIdx = (vidState.page - 1) * vidState.perPage;
+  const paginatedVideos = filtered.slice(vidStartIdx, vidStartIdx + vidState.perPage);
+
+  tbody.innerHTML = paginatedVideos.map((v, i) => {
+    const isLive = v.category === 'live';
+    const catBadge = isLive 
+      ? '<span style="background:rgba(239,68,68,0.15);color:#FCA5A5;border:1px solid #EF4444;padding:0.2rem 0.55rem;border-radius:3px;font-family:var(--font-mono);font-size:0.7rem;font-weight:700;">🔴 LIVE</span>' 
+      : '<span style="background:rgba(59,130,246,0.15);color:#93C5FD;border:1px solid #3B82F6;padding:0.2rem 0.55rem;border-radius:3px;font-family:var(--font-mono);font-size:0.7rem;font-weight:700;">🎮 GAMEPLAY</span>';
+    
+    const isPub = v.published !== false;
+    const pubBadge = isPub 
+      ? `<span style="background:rgba(16,185,129,0.15);color:#86EFAC;border:1px solid #22C55E;padding:0.2rem 0.5rem;border-radius:3px;font-family:var(--font-mono);font-size:0.7rem;font-weight:700;cursor:pointer;" onclick="toggleVideoPublish('${v.id}')" title="Klik untuk ubah ke Draft">✅ PUBLISHED</span>` 
+      : `<span style="background:rgba(239,68,68,0.15);color:#FCA5A5;border:1px solid #EF4444;padding:0.2rem 0.5rem;border-radius:3px;font-family:var(--font-mono);font-size:0.7rem;font-weight:700;cursor:pointer;" onclick="toggleVideoPublish('${v.id}')" title="Klik untuk Publish">🔒 DRAFT</span>`;
+
+    const featBadge = v.featured 
+      ? `<span style="background:rgba(212,175,55,0.15);color:var(--gold-bright);border:1px solid var(--gold);padding:0.2rem 0.5rem;border-radius:3px;font-family:var(--font-mono);font-size:0.7rem;font-weight:800;cursor:pointer;" onclick="toggleVideoFeatured('${v.id}')" title="Featured Utama">⭐ UTAMA</span>` 
+      : `<button type="button" class="btn-action-edit" onclick="toggleVideoFeatured('${v.id}')" style="padding:0.2rem 0.5rem;font-size:0.7rem;">Set Featured</button>`;
+
+    const thumb = v.thumbnail_url || (v.video_id ? `https://img.youtube.com/vi/${v.video_id}/hqdefault.jpg` : 'assets/pb-bg-squad.jpg');
+
+    return `
+      <tr>
+        <td style="color:var(--gray-light);font-size:0.8rem;">${i + 1}</td>
+        <td>
+          <a href="${v.video_url || '#'}" target="_blank" rel="noopener" title="Tonton di YouTube">
+            <img src="${thumb}" alt="Thumb" class="table-video-thumb" onerror="this.src='assets/pb-bg-squad.jpg'" />
+          </a>
+        </td>
+        <td>
+          <div style="font-weight:800;font-size:0.9rem;color:var(--white);margin-bottom:0.2rem;">${v.title}</div>
+          <div style="color:var(--gray-light);font-size:0.75rem;max-width:280px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${v.description || '—'}</div>
+        </td>
+        <td>${catBadge}</td>
+        <td style="font-family:var(--font-mono);font-size:0.78rem;color:var(--gold);">${v.video_id || '—'}</td>
+        <td>${pubBadge}</td>
+        <td>${featBadge}</td>
+        <td style="font-family:var(--font-mono);font-size:0.8rem;text-align:center;">${v.sort_order || 1}</td>
+        <td style="text-align:center;">
+          <div style="display:flex;gap:0.35rem;justify-content:center;">
+            <button class="btn-action-edit" onclick="openVideoModal('edit','${v.id}')" style="padding:0.3rem 0.6rem;font-size:0.75rem;">✏️ EDIT</button>
+            <button class="btn-action-del" onclick="deleteVideo('${v.id}')" style="padding:0.3rem 0.6rem;font-size:0.75rem;">🗑️ HAPUS</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+  renderTablePagination('videosPagination', totalFiltered, 'videos', renderVideosTable);
+}
+
+function closeVideoModal() {
+  const modal = document.getElementById('videoCrudModal');
+  if (modal) modal.classList.remove('open');
+}
+
+function openVideoModal(mode, videoId) {
+  const modal = document.getElementById('videoCrudModal');
+  const title = document.getElementById('videoModalTitle');
+  const formAlert = document.getElementById('videoFormAlert');
+  if (!modal) return;
+
+  const form = document.getElementById('videoCrudForm');
+  if (form) form.reset();
+  document.getElementById('crudVideoId').value = '';
+  if (formAlert) { formAlert.style.display = 'none'; formAlert.textContent = ''; }
+
+  const statusBadge = document.getElementById('videoIdStatusBadge');
+  if (statusBadge) { statusBadge.style.display = 'none'; }
+
+  if (mode === 'edit' && videoId) {
+    const videos = (db && Array.isArray(db.videos)) ? db.videos : [];
+    const v = videos.find(item => item.id === videoId);
+    if (!v) return;
+
+    if (title) title.textContent = 'EDIT VIDEO: ' + v.title.substring(0, 30);
+    document.getElementById('crudVideoId').value = v.id;
+    document.getElementById('videoTitle').value = v.title || '';
+    document.getElementById('videoSlug').value = v.slug || '';
+    document.getElementById('videoCategory').value = v.category || 'gameplay';
+    document.getElementById('videoUrlInput').value = v.video_url || (v.video_id ? `https://www.youtube.com/watch?v=${v.video_id}` : '');
+    document.getElementById('extractedVideoId').value = v.video_id || '';
+    document.getElementById('videoSortOrder').value = v.sort_order !== undefined ? v.sort_order : 1;
+    document.getElementById('videoThumbnailUrl').value = v.thumbnail_url || '';
+    document.getElementById('videoDescription').value = v.description || '';
+    document.getElementById('videoPublishedSelect').value = v.published !== false ? 'true' : 'false';
+    document.getElementById('videoFeaturedCheck').checked = !!v.featured;
+
+    updateVideoModalPreview();
+
+    const submitBtn = document.getElementById('videoModalSubmitBtn');
+    if (submitBtn) submitBtn.textContent = '💾 SIMPAN PERUBAHAN ➔';
+  } else {
+    if (title) title.textContent = 'TAMBAH VIDEO BARU';
+    document.getElementById('videoSortOrder').value = (db && Array.isArray(db.videos) ? db.videos.length + 1 : 1);
+    updateVideoModalPreview();
+    const submitBtn = document.getElementById('videoModalSubmitBtn');
+    if (submitBtn) submitBtn.textContent = '💾 TAMBAH SEKARANG ➔';
+  }
+
+  modal.classList.add('open');
+}
+
+function updateVideoModalPreview() {
+  const videoId = (document.getElementById('extractedVideoId') ? document.getElementById('extractedVideoId').value : '').trim();
+  const customThumb = (document.getElementById('videoThumbnailUrl') ? document.getElementById('videoThumbnailUrl').value : '').trim();
+  const title = (document.getElementById('videoTitle') ? document.getElementById('videoTitle').value : '').trim() || 'Judul Video Preview';
+
+  const previewImg = document.getElementById('videoThumbPreview');
+  const previewTitle = document.getElementById('previewVideoTitle');
+
+  if (previewTitle) previewTitle.textContent = title;
+  if (previewImg) {
+    if (customThumb) {
+      previewImg.src = customThumb;
+    } else if (videoId) {
+      previewImg.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+    } else {
+      previewImg.src = 'assets/pb-bg-squad.jpg';
+    }
+  }
+}
+
+function toggleVideoPublish(videoId) {
+  if (!db || !Array.isArray(db.videos)) return;
+  const v = db.videos.find(item => item.id === videoId);
+  if (!v) return;
+  v.published = v.published === false ? true : false;
+  v.updated_at = new Date().toISOString();
+  saveMothraData(db);
+  renderVideosTable();
+  showToast(`✅ Video "${v.title}" sekarang ${v.published ? 'DIPUBLIKASIKAN' : 'DRAFT'}.`);
+}
+
+function toggleVideoFeatured(videoId) {
+  if (!db || !Array.isArray(db.videos)) return;
+  db.videos.forEach(v => {
+    if (v.id === videoId) {
+      v.featured = !v.featured;
+    }
+  });
+  saveMothraData(db);
+  renderVideosTable();
+  showToast('⭐ Status Featured Video diperbarui.');
+}
+
+function deleteVideo(videoId) {
+  if (!confirm('Yakin ingin menghapus video ini dari arsip? Tindakan tidak bisa dibatalkan.')) return;
+  if (!db || !Array.isArray(db.videos)) return;
+  const idx = db.videos.findIndex(v => v.id === videoId);
+  if (idx === -1) return;
+  const title = db.videos[idx].title;
+  db.videos.splice(idx, 1);
+  saveMothraData(db);
+
+  // Hapus dari tabel relational clan_videos jika Supabase terhubung
+  try {
+    if (typeof _supabaseClient !== 'undefined' && _supabaseClient) {
+      _supabaseClient
+        .from('clan_videos')
+        .delete()
+        .eq('id', videoId)
+        .then(({ error }) => {
+          if (error) console.warn('Hapus dari clan_videos relational database notice:', error.message);
+        })
+        .catch(() => {});
+    }
+  } catch (err) {}
+
+  renderVideosTable();
+  showToast(`🗑️ Video "${title}" berhasil dihapus.`);
+}
+
+// Auto-extract YouTube video_id on URL input
+const videoUrlInput = document.getElementById('videoUrlInput');
+if (videoUrlInput) {
+  videoUrlInput.addEventListener('input', () => {
+    const url = videoUrlInput.value;
+    const extracted = extractYouTubeId(url);
+    const idField = document.getElementById('extractedVideoId');
+    const badge = document.getElementById('videoIdStatusBadge');
+    if (idField) {
+      if (extracted) {
+        idField.value = extracted;
+        if (badge) {
+          badge.style.display = 'inline-block';
+          badge.style.background = 'rgba(16,185,129,0.15)';
+          badge.style.color = '#86EFAC';
+          badge.style.border = '1px solid #22C55E';
+          badge.textContent = '✓ ID VALID: ' + extracted;
+        }
+      } else {
+        if (badge) {
+          badge.style.display = 'inline-block';
+          badge.style.background = 'rgba(239,68,68,0.15)';
+          badge.style.color = '#FCA5A5';
+          badge.style.border = '1px solid #EF4444';
+          badge.textContent = '✗ LINK TIDAK VALID';
+        }
+      }
+      updateVideoModalPreview();
+    }
+  });
+}
+
+const extractedVideoIdInput = document.getElementById('extractedVideoId');
+if (extractedVideoIdInput) {
+  extractedVideoIdInput.addEventListener('input', updateVideoModalPreview);
+}
+const videoTitleInput = document.getElementById('videoTitle');
+if (videoTitleInput) {
+  videoTitleInput.addEventListener('input', () => {
+    const slugInput = document.getElementById('videoSlug');
+    if (slugInput && !slugInput.dataset.manualEdited) {
+      slugInput.value = videoTitleInput.value
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)+/g, '');
+    }
+    updateVideoModalPreview();
+  });
+}
+const videoSlugInput = document.getElementById('videoSlug');
+if (videoSlugInput) {
+  videoSlugInput.addEventListener('input', () => {
+    videoSlugInput.dataset.manualEdited = 'true';
+  });
+}
+
+// Local image file upload for custom video thumbnail with WebP auto-compression
+const videoThumbFileInput = document.getElementById('videoThumbFile');
+if (videoThumbFileInput) {
+  videoThumbFileInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        alert('Mohon pilih file gambar yang valid.');
+        return;
+      }
+      try {
+        const compressedDataUrl = await compressAndReadFile(file, 640, 360, 0.75);
+        const thumbUrlField = document.getElementById('videoThumbnailUrl');
+        if (thumbUrlField) thumbUrlField.value = compressedDataUrl;
+        updateVideoModalPreview();
+        showToast(`⚡ Thumbnail video berhasil dioptimasi!`);
+      } catch (err) {
+        console.error('Error compressing video thumbnail:', err);
+      }
+    }
+  });
+}
+
+// Video search & filter
+const videoCatFilter = document.getElementById('videoCategoryFilter');
+if (videoCatFilter) {
+  videoCatFilter.addEventListener('change', (e) => {
+    videoCategoryFilterVal = e.target.value;
+    adminPagination.videos.page = 1;
+    renderVideosTable();
+  });
+}
+const videoSearchEl = document.getElementById('videoSearchInput');
+if (videoSearchEl) {
+  videoSearchEl.addEventListener('input', (e) => {
+    videoSearchQuery = e.target.value.trim();
+    adminPagination.videos.page = 1;
+    renderVideosTable();
+  });
+}
+const btnAddVid = document.getElementById('btnAddVideo');
+if (btnAddVid) {
+  btnAddVid.addEventListener('click', () => openVideoModal('add'));
+}
+const btnRefreshVid = document.getElementById('btnRefreshVideos');
+if (btnRefreshVid) {
+  btnRefreshVid.addEventListener('click', () => {
+    if (!db) db = getMothraData();
+    renderVideosTable();
+    showToast('🔄 Data video berhasil dimuat ulang.');
+  });
+}
+
+// Video CRUD Form Submit
+const videoCrudForm = document.getElementById('videoCrudForm');
+if (videoCrudForm) {
+  videoCrudForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const formAlert = document.getElementById('videoFormAlert');
+    const showErr = (msg) => {
+      if (formAlert) { formAlert.style.display = 'block'; formAlert.textContent = msg; }
+    };
+
+    const id = (document.getElementById('crudVideoId').value || '').trim();
+    const title = (document.getElementById('videoTitle').value || '').trim();
+    let slug = (document.getElementById('videoSlug').value || '').trim();
+    const category = document.getElementById('videoCategory').value;
+    const url = (document.getElementById('videoUrlInput').value || '').trim();
+    let videoId = (document.getElementById('extractedVideoId').value || '').trim();
+    const sortOrder = parseInt(document.getElementById('videoSortOrder').value || '1', 10);
+    const thumbUrl = (document.getElementById('videoThumbnailUrl').value || '').trim();
+    const desc = (document.getElementById('videoDescription').value || '').trim();
+    const published = document.getElementById('videoPublishedSelect').value === 'true';
+    const featured = document.getElementById('videoFeaturedCheck').checked;
+
+    if (!title) return showErr('Judul video wajib diisi.');
+    if (!url && !videoId) return showErr('YouTube URL atau Video ID wajib diisi.');
+
+    if (!videoId && url) {
+      videoId = extractYouTubeId(url);
+    }
+    if (!videoId) {
+      return showErr('Gagal mengekstrak YouTube Video ID. Harap periksa kembali format URL YouTube.');
+    }
+
+    if (!slug) {
+      slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+    }
+
+    if (!db.videos) db.videos = [];
+    const isEdit = !!id;
+
+    if (isEdit) {
+      const idx = db.videos.findIndex(v => v.id === id);
+      if (idx === -1) return showErr('Video tidak ditemukan.');
+      db.videos[idx].title = title;
+      db.videos[idx].slug = slug;
+      db.videos[idx].category = category;
+      db.videos[idx].video_url = url || `https://www.youtube.com/watch?v=${videoId}`;
+      db.videos[idx].video_id = videoId;
+      db.videos[idx].thumbnail_url = thumbUrl || `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+      db.videos[idx].sort_order = isNaN(sortOrder) ? 1 : sortOrder;
+      db.videos[idx].description = desc;
+      db.videos[idx].published = published;
+      db.videos[idx].featured = featured;
+      db.videos[idx].updated_at = new Date().toISOString();
+    } else {
+      const newVideo = {
+        id: 'vid_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+        title: title,
+        slug: slug,
+        category: category,
+        video_url: url || `https://www.youtube.com/watch?v=${videoId}`,
+        video_id: videoId,
+        thumbnail_url: thumbUrl || `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+        sort_order: isNaN(sortOrder) ? 1 : sortOrder,
+        description: desc,
+        published: published,
+        featured: featured,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      db.videos.push(newVideo);
+    }
+
+    saveMothraData(db);
+    renderVideosTable();
+    closeVideoModal();
+    showToast(isEdit ? '✅ Video berhasil diperbarui & disinkronkan ke Supabase!' : '✅ Video baru berhasil ditambahkan & disinkronkan ke Supabase!');
+  });
+}
+
+/* ============================================================
+   ANTI-SPAM & MULTI-CLICK PROTECTOR FOR ADMIN FORMS
+   (Mencegah penekanan tombol Simpan berulang kali & hemat Egress)
+   ============================================================ */
+function protectSubmitButton(formEl) {
+  if (!formEl) return;
+  const submitBtn = formEl.querySelector('button[type="submit"], input[type="submit"], .btn-add, .btn-primary');
+  if (!submitBtn || submitBtn.disabled) return;
+
+  const origHtml = submitBtn.innerHTML;
+  submitBtn.disabled = true;
+  submitBtn.style.opacity = '0.75';
+  submitBtn.style.cursor = 'not-allowed';
+  submitBtn.innerHTML = '⏳ <span>MENYIMPAN...</span>';
+
+  setTimeout(() => {
+    submitBtn.disabled = false;
+    submitBtn.style.opacity = '1';
+    submitBtn.style.cursor = 'pointer';
+    submitBtn.innerHTML = origHtml;
+  }, 1200);
+}
+
+// Global submit listener to lock buttons and throttle clicks across all admin panels
+document.addEventListener('submit', (e) => {
+  if (e.target && e.target.tagName === 'FORM') {
+    protectSubmitButton(e.target);
+  }
+}, true);
+
+
+/* ============================================================
+   AUDIT TRAIL ENGINE — EGRESS-SAFE ACTIVITY LOG SYSTEM
+   Strategi Hemat Egress:
+   1. Tulis log ke localStorage INSTAN (0 egress)
+   2. Kirim ke Supabase hanya secara MANUAL (klik tombol SYNC)
+      atau saat operator logout — bukan otomatis per-aksi
+   3. Baca dari Supabase hanya saat panel Audit dibuka
+   4. Max 500 log lokal, otomatis prune yang lama
+   ============================================================ */
+const AUDIT_STORAGE_KEY  = 'mothra_audit_log';
+const AUDIT_MAX_LOCAL    = 500;
+const AUDIT_SUPABASE_TABLE = 'mothra_audit_log';
+
+let _auditPage     = 1;
+const _auditPerPage = 25;
+
+// ── Core: Tambah satu entri log ke localStorage ──────────────
+function logAuditEvent(action, module, description) {
+  try {
+    const user = getCurrentUser() || {};
+    const freshUser = (db && db.users
+      ? db.users.find(u => u.id === user.id || (user.email && u.email.toLowerCase() === user.email.toLowerCase()))
+      : null) || user;
+
+    const entry = {
+      id:          'al_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 4),
+      ts:          new Date().toISOString(),
+      userId:      freshUser.id    || 'unknown',
+      userName:    freshUser.name  || freshUser.email || 'Unknown',
+      userEmail:   freshUser.email || '',
+      userRole:    freshUser.role  || 'UNKNOWN',
+      action:      action.toUpperCase(),   // LOGIN | LOGOUT | CREATE | UPDATE | DELETE | SAVE
+      module:      module  || 'General',
+      description: description || '',
+      synced:      false
+    };
+
+    let logs = [];
+    try { logs = JSON.parse(localStorage.getItem(AUDIT_STORAGE_KEY) || '[]'); } catch {}
+    logs.unshift(entry);
+    // Pruning: batasi max 500 entri lokal
+    if (logs.length > AUDIT_MAX_LOCAL) logs = logs.slice(0, AUDIT_MAX_LOCAL);
+    localStorage.setItem(AUDIT_STORAGE_KEY, JSON.stringify(logs));
+
+    // Perbarui tampilan jika panel Audit sedang aktif
+    const auditPanel = document.getElementById('panelAuditLog');
+    if (auditPanel && auditPanel.classList.contains('active')) {
+      renderAuditLog();
+    }
+  } catch (err) {
+    console.warn('[AUDIT] Gagal mencatat log lokal:', err);
+  }
+}
+window.logAuditEvent = logAuditEvent;
+
+// ── Render tabel Audit Log ────────────────────────────────────
+function renderAuditLog() {
+  const tbody       = document.getElementById('auditLogTableBody');
+  const pagination  = document.getElementById('auditLogPagination');
+  if (!tbody) return;
+
+  let logs = [];
+  try { logs = JSON.parse(localStorage.getItem(AUDIT_STORAGE_KEY) || '[]'); } catch {}
+
+  // Filter
+  const filterAction = (document.getElementById('auditFilterAction')?.value || '').toUpperCase();
+  const filterUser   = (document.getElementById('auditFilterUser')?.value   || '').toLowerCase();
+  const searchTerm   = (document.getElementById('auditSearchInput')?.value  || '').toLowerCase();
+
+  let filtered = logs;
+  if (filterAction) filtered = filtered.filter(l => l.action === filterAction);
+  if (filterUser)   filtered = filtered.filter(l => l.userEmail.toLowerCase() === filterUser);
+  if (searchTerm)   filtered = filtered.filter(l =>
+    (l.module || '').toLowerCase().includes(searchTerm) ||
+    (l.description || '').toLowerCase().includes(searchTerm)
+  );
+
+  // Stats
+  const today = new Date().toISOString().split('T')[0];
+  const elTotal   = document.getElementById('auditStatTotal');
+  const elToday   = document.getElementById('auditStatToday');
+  const elPending = document.getElementById('auditStatPending');
+  const elSynced  = document.getElementById('auditStatSynced');
+  if (elTotal)   elTotal.textContent   = logs.length;
+  if (elToday)   elToday.textContent   = logs.filter(l => l.ts.startsWith(today)).length;
+  if (elPending) elPending.textContent = logs.filter(l => !l.synced).length;
+  if (elSynced)  elSynced.textContent  = logs.filter(l =>  l.synced).length;
+
+  // Populate User filter dropdown
+  const filterUserEl = document.getElementById('auditFilterUser');
+  if (filterUserEl) {
+    const currentVal = filterUserEl.value;
+    const uniqueUsers = [...new Set(logs.map(l => l.userEmail).filter(Boolean))];
+    filterUserEl.innerHTML = '<option value="">Semua Operator</option>' +
+      uniqueUsers.map(e => `<option value="${e}"${e === currentVal ? ' selected' : ''}>${e}</option>`).join('');
+  }
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--gray-light);padding:2.5rem;">Tidak ada log yang cocok dengan filter.</td></tr>`;
+    if (pagination) pagination.innerHTML = '';
+    return;
+  }
+
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(filtered.length / _auditPerPage));
+  if (_auditPage > totalPages) _auditPage = totalPages;
+  const start   = (_auditPage - 1) * _auditPerPage;
+  const pageLogs = filtered.slice(start, start + _auditPerPage);
+
+  const ACTION_COLORS = {
+    LOGIN:  { bg: 'rgba(16,185,129,0.15)',  color: '#10B981', icon: '🔑' },
+    LOGOUT: { bg: 'rgba(148,163,184,0.12)', color: '#94A3B8', icon: '🚪' },
+    CREATE: { bg: 'rgba(96,165,250,0.15)',  color: '#60A5FA', icon: '➕' },
+    UPDATE: { bg: 'rgba(212,175,55,0.15)',  color: '#D4AF37', icon: '✏️' },
+    DELETE: { bg: 'rgba(239,68,68,0.15)',   color: '#EF4444', icon: '🗑️' },
+    SAVE:   { bg: 'rgba(167,139,250,0.15)', color: '#A78BFA', icon: '💾' }
+  };
+
+  tbody.innerHTML = pageLogs.map((log, i) => {
+    const ac = ACTION_COLORS[log.action] || { bg: 'rgba(255,255,255,0.05)', color: '#94A3B8', icon: '📋' };
+    const dt = new Date(log.ts);
+    const dateStr = dt.toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' });
+    const timeStr = dt.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+    const syncBadge = log.synced
+      ? '<span style="color:#10B981;font-size:0.68rem;font-family:var(--font-mono);">✅ Synced</span>'
+      : '<span style="color:#F59E0B;font-size:0.68rem;font-family:var(--font-mono);">⏳ Lokal</span>';
+    const roleColor = ROLE_COLORS[log.userRole] || '#94A3B8';
+
+    return `<tr style="border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.15s;"
+        onmouseover="this.style.background='rgba(212,175,55,0.05)'" onmouseout="this.style.background=''">
+      <td style="padding:0.55rem 0.75rem;color:var(--gray-light);font-size:0.75rem;">${start + i + 1}</td>
+      <td style="padding:0.55rem 0.75rem;white-space:nowrap;">
+        <div style="font-size:0.78rem;color:#E2E8F0;">${dateStr}</div>
+        <div style="font-size:0.7rem;color:var(--gray-light);font-family:var(--font-mono);">${timeStr}</div>
+      </td>
+      <td style="padding:0.55rem 0.75rem;">
+        <div style="font-size:0.8rem;font-weight:600;">${log.userName || '—'}</div>
+        <div style="display:flex;align-items:center;gap:0.3rem;margin-top:0.1rem;">
+          <span style="font-size:0.68rem;color:#64748B;font-family:var(--font-mono);">${log.userEmail || ''}</span>
+          <span style="background:${roleColor}22;color:${roleColor};border:1px solid ${roleColor}44;font-size:0.6rem;padding:0.05rem 0.4rem;border-radius:3px;font-family:var(--font-mono);font-weight:700;">${log.userRole}</span>
+        </div>
+      </td>
+      <td style="padding:0.55rem 0.75rem;">
+        <span style="background:${ac.bg};color:${ac.color};border:1px solid ${ac.color}44;padding:0.2rem 0.55rem;border-radius:4px;font-family:var(--font-mono);font-size:0.72rem;font-weight:700;white-space:nowrap;">
+          ${ac.icon} ${log.action}
+        </span>
+      </td>
+      <td style="padding:0.55rem 0.75rem;color:#93C5FD;font-family:var(--font-mono);font-size:0.75rem;">${log.module || '—'}</td>
+      <td style="padding:0.55rem 0.75rem;color:var(--text-muted);font-size:0.78rem;max-width:260px;">${log.description || '—'}</td>
+      <td style="padding:0.55rem 0.75rem;text-align:center;">${syncBadge}</td>
+    </tr>`;
+  }).join('');
+
+  // Render pagination
+  if (pagination) {
+    let pagHTML = '';
+    const btnStyle = 'padding:0.3rem 0.65rem;border-radius:4px;border:1px solid var(--border-dim);background:rgba(255,255,255,0.04);color:var(--text-muted);cursor:pointer;font-size:0.78rem;font-family:var(--font-mono);transition:all 0.2s;';
+    const activeBtnStyle = 'padding:0.3rem 0.65rem;border-radius:4px;border:1px solid var(--gold);background:rgba(212,175,55,0.15);color:var(--gold);cursor:pointer;font-size:0.78rem;font-family:var(--font-mono);font-weight:700;';
+    for (let p = 1; p <= totalPages; p++) {
+      pagHTML += `<button onclick="_auditPage=${p};renderAuditLog();" style="${p === _auditPage ? activeBtnStyle : btnStyle}">${p}</button>`;
+    }
+    pagination.innerHTML = pagHTML;
+  }
+}
+
+// ── Sync pending logs ke Supabase (INSERT only, hemat egress) ─
+async function syncAuditLogToSupabase() {
+  const statusEl = document.getElementById('auditSyncStatus');
+  const showStatus = (msg, color) => {
+    if (statusEl) {
+      statusEl.style.display = 'block';
+      statusEl.style.color = color || '#94A3B8';
+      statusEl.textContent = msg;
+    }
+  };
+
+  let logs = [];
+  try { logs = JSON.parse(localStorage.getItem(AUDIT_STORAGE_KEY) || '[]'); } catch {}
+  const pending = logs.filter(l => !l.synced);
+
+  if (pending.length === 0) {
+    showStatus('✅ Semua log sudah tersinkronisasi ke Supabase.', '#10B981');
+    return;
+  }
+
+  showStatus(`☁️ Mengirim ${pending.length} log ke Supabase...`, '#D4AF37');
+
+  try {
+    const config = getSupabaseConfig();
+    if (!config.isConfigured) {
+      showStatus('⚠️ Supabase belum dikonfigurasi. Log tetap tersimpan lokal.', '#F59E0B');
+      return;
+    }
+
+    // Gunakan Supabase JS SDK jika tersedia
+    const client = window.supabaseClient || null;
+    if (client) {
+      const rows = pending.map(l => ({
+        id:           l.id,
+        created_at:   l.ts,
+        user_id:      l.userId,
+        user_name:    l.userName,
+        user_email:   l.userEmail,
+        user_role:    l.userRole,
+        action:       l.action,
+        module:       l.module,
+        description:  l.description
+      }));
+      const { error } = await client.from(AUDIT_SUPABASE_TABLE).upsert(rows, { onConflict: 'id', ignoreDuplicates: true });
+      if (error) throw new Error(error.message);
+    } else {
+      // Fallback: REST API
+      const rows = pending.map(l => ({
+        id: l.id, created_at: l.ts, user_id: l.userId, user_name: l.userName,
+        user_email: l.userEmail, user_role: l.userRole,
+        action: l.action, module: l.module, description: l.description
+      }));
+      const res = await fetch(`${config.url}/rest/v1/${AUDIT_SUPABASE_TABLE}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': config.anonKey,
+          'Authorization': `Bearer ${config.anonKey}`,
+          'Prefer': 'resolution=ignore-duplicates'
+        },
+        body: JSON.stringify(rows)
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    }
+
+    // Tandai sebagai synced
+    const ids = new Set(pending.map(l => l.id));
+    logs = logs.map(l => ids.has(l.id) ? { ...l, synced: true } : l);
+    localStorage.setItem(AUDIT_STORAGE_KEY, JSON.stringify(logs));
+    showStatus(`✅ ${pending.length} log berhasil disinkronkan ke Supabase!`, '#10B981');
+    renderAuditLog();
+  } catch (err) {
+    showStatus(`❌ Gagal sync: ${err.message}. Log tetap tersimpan lokal.`, '#EF4444');
+    console.error('[AUDIT SYNC]', err);
+  }
+}
+
+// ── Event listeners panel Audit Trail ────────────────────────
+(function initAuditTrailUI() {
+  const btnSync    = document.getElementById('btnSyncAuditLog');
+  const btnRefresh = document.getElementById('btnRefreshAuditLog');
+  const btnClear   = document.getElementById('btnClearAuditLog');
+
+  if (btnSync)    btnSync.addEventListener('click',    syncAuditLogToSupabase);
+  if (btnRefresh) btnRefresh.addEventListener('click', renderAuditLog);
+  if (btnClear) {
+    btnClear.addEventListener('click', () => {
+      if (!confirm('Yakin ingin menghapus semua log lokal yang belum tersinkronisasi? Tindakan ini tidak dapat dibatalkan.')) return;
+      localStorage.removeItem(AUDIT_STORAGE_KEY);
+      renderAuditLog();
+      showToast('🗑️ Log lokal berhasil dihapus.');
+    });
+  }
+
+  // Filter change listeners
+  ['auditFilterAction','auditFilterUser','auditSearchInput'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', () => { _auditPage = 1; renderAuditLog(); });
+  });
+})();
+
+// ── Hook: Render saat panel Audit dibuka ─────────────────────
+const _origSwitchAdminPanel = typeof switchAdminPanel === 'function' ? switchAdminPanel : null;
+// Patch switchAdminPanel to render audit log on open
+(function patchSwitchForAudit() {
+  const originalFn = window.switchAdminPanel;
+  if (!originalFn) return;
+  // We'll use the mothra_data_updated event approach instead
+})();
+
+// Render saat panel Audit Trail dipilih via event
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-panel="panelAuditLog"]');
+  if (btn) setTimeout(renderAuditLog, 80);
+}, true);
+
+// ── Hook LOGIN event ─────────────────────────────────────────
+(function hookLoginAudit() {
+  const loginForm = document.getElementById('loginForm');
+  if (!loginForm) return;
+  loginForm.addEventListener('submit', () => {
+    // Defer after login succeeds (500ms)
+    setTimeout(() => {
+      const u = getCurrentUser();
+      if (u) logAuditEvent('LOGIN', 'Authentication', `Login berhasil: ${u.name || u.email} [${u.role}]`);
+    }, 500);
+  });
+})();
+
+// ── Hook LOGOUT event ────────────────────────────────────────
+(function hookLogoutAudit() {
+  const logoutBtns = [document.getElementById('logoutBtn'), document.getElementById('mobileLogoutBtn')];
+  logoutBtns.forEach(btn => {
+    if (!btn) return;
+    btn.addEventListener('click', () => {
+      const u = getCurrentUser();
+      if (u) {
+        logAuditEvent('LOGOUT', 'Authentication', `Logout: ${u.name || u.email} [${u.role}]`);
+        // Sync pending saat logout (hemat egress: kirim semua sekaligus)
+        syncAuditLogToSupabase().catch(() => {});
+      }
+    });
+  });
+})();
+
+// ── Schema SQL info (untuk referensi) ────────────────────────
+// Jalankan query berikut di Supabase SQL Editor jika belum ada tabel audit:
+// CREATE TABLE IF NOT EXISTS public.mothra_audit_log (
+//   id TEXT PRIMARY KEY,
+//   created_at TIMESTAMPTZ DEFAULT NOW(),
+//   user_id TEXT, user_name TEXT, user_email TEXT, user_role TEXT,
+//   action TEXT, module TEXT, description TEXT
+// );
+// ALTER TABLE public.mothra_audit_log ENABLE ROW LEVEL SECURITY;
+// CREATE POLICY "Allow anon insert" ON public.mothra_audit_log FOR INSERT TO anon WITH CHECK (true);
+// CREATE POLICY "Allow anon select" ON public.mothra_audit_log FOR SELECT TO anon USING (true);
+
+/* ============================================================
+   15 / LIVE MATCH DAY & REALTIME SCOREBOARD CONTROLLER
+   ============================================================ */
+function renderLiveMatchPanel() {
+  const lm = db.liveMatch || {
+    enabled: false,
+    status: 'OFF',
+    tournament: 'PBNC 2026 QUALIFIER',
+    map: 'Downtown',
+    roundInfo: 'Round 1',
+    mothraScore: 7,
+    opponentScore: 5,
+    opponentName: 'OPFOR',
+    streamUrl: 'https://youtube.com',
+    nextMatchTime: ''
+  };
+
+  const statusEl = document.getElementById('lmStatus');
+  if (statusEl) statusEl.value = lm.status || (lm.enabled ? 'LIVE' : 'OFF');
+
+  const tourneyEl = document.getElementById('lmTournament');
+  if (tourneyEl) tourneyEl.value = lm.tournament || '';
+
+  const mapEl = document.getElementById('lmMap');
+  if (mapEl) mapEl.value = `${lm.map || 'Downtown'} • ${lm.roundInfo || 'Round 1'}`;
+
+  const scoreMothraEl = document.getElementById('lmMothraScore');
+  if (scoreMothraEl) scoreMothraEl.value = lm.mothraScore !== undefined ? lm.mothraScore : 7;
+
+  const scoreOppEl = document.getElementById('lmOpponentScore');
+  if (scoreOppEl) scoreOppEl.value = lm.opponentScore !== undefined ? lm.opponentScore : 5;
+
+  const oppNameEl = document.getElementById('lmOpponentName');
+  if (oppNameEl) oppNameEl.value = lm.opponentName || 'OPFOR';
+
+  const streamEl = document.getElementById('lmStreamUrl');
+  if (streamEl) streamEl.value = lm.streamUrl || '';
+
+  const clanNameDisplay = document.getElementById('lmClanNameDisplay');
+  if (clanNameDisplay) clanNameDisplay.textContent = (db.branding && db.branding.clanName) || 'MOTHRA';
+}
+
+(function initLiveMatchControls() {
+  const btnPlusMothra = document.getElementById('btnPlusMothra');
+  const btnMinusMothra = document.getElementById('btnMinusMothra');
+  const btnPlusOpponent = document.getElementById('btnPlusOpponent');
+  const btnMinusOpponent = document.getElementById('btnMinusOpponent');
+  const liveMatchForm = document.getElementById('liveMatchForm');
+
+  if (btnPlusMothra) {
+    btnPlusMothra.addEventListener('click', () => {
+      const inp = document.getElementById('lmMothraScore');
+      if (inp) inp.value = Math.min(99, (parseInt(inp.value) || 0) + 1);
+    });
+  }
+
+  if (btnMinusMothra) {
+    btnMinusMothra.addEventListener('click', () => {
+      const inp = document.getElementById('lmMothraScore');
+      if (inp) inp.value = Math.max(0, (parseInt(inp.value) || 0) - 1);
+    });
+  }
+
+  if (btnPlusOpponent) {
+    btnPlusOpponent.addEventListener('click', () => {
+      const inp = document.getElementById('lmOpponentScore');
+      if (inp) inp.value = Math.min(99, (parseInt(inp.value) || 0) + 1);
+    });
+  }
+
+  if (btnMinusOpponent) {
+    btnMinusOpponent.addEventListener('click', () => {
+      const inp = document.getElementById('lmOpponentScore');
+      if (inp) inp.value = Math.max(0, (parseInt(inp.value) || 0) - 1);
+    });
+  }
+
+  if (liveMatchForm) {
+    liveMatchForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const statusVal = document.getElementById('lmStatus').value;
+      const rawMap = document.getElementById('lmMap').value.trim();
+      const mapParts = rawMap.split(/[•\-]/).map(s => s.trim());
+
+      db.liveMatch = {
+        enabled: statusVal !== 'OFF',
+        status: statusVal,
+        tournament: document.getElementById('lmTournament').value.trim() || 'PBNC 2026 MATCH DAY',
+        map: mapParts[0] || 'Downtown',
+        roundInfo: mapParts[1] || 'Round 1',
+        mothraScore: parseInt(document.getElementById('lmMothraScore').value) || 0,
+        opponentScore: parseInt(document.getElementById('lmOpponentScore').value) || 0,
+        opponentName: document.getElementById('lmOpponentName').value.trim() || 'OPFOR',
+        streamUrl: document.getElementById('lmStreamUrl').value.trim() || '',
+        nextMatchTime: ''
+      };
+
+      saveMothraData(db);
+      showToast('🔴 Live Match Scoreboard berhasil disimpan & disiarkan realtime!');
+    });
+  }
+})();
+
+/* ============================================================
+   16 / RECRUITMENT CRM & APPLICANTS INBOX
+   ============================================================ */
+function renderRecruitmentTable() {
+  const tbody = document.getElementById('recruitmentTableBody');
+  if (!tbody) return;
+
+  const applicants = Array.isArray(db.recruitment) ? db.recruitment : [];
+
+  // Update Counters
+  const totalEl = document.getElementById('statRecTotal');
+  const pendingEl = document.getElementById('statRecPending');
+  const interviewEl = document.getElementById('statRecInterview');
+  const acceptedEl = document.getElementById('statRecAccepted');
+  const rejectedEl = document.getElementById('statRecRejected');
+
+  if (totalEl) totalEl.textContent = applicants.length;
+  if (pendingEl) pendingEl.textContent = applicants.filter(a => a.status === 'PENDING').length;
+  if (interviewEl) interviewEl.textContent = applicants.filter(a => a.status === 'INTERVIEW').length;
+  if (acceptedEl) acceptedEl.textContent = applicants.filter(a => a.status === 'ACCEPTED').length;
+  if (rejectedEl) rejectedEl.textContent = applicants.filter(a => a.status === 'REJECTED').length;
+
+  if (applicants.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--gray-light);padding:2.5rem;">Belum ada lamaran rekrutmen masuk.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = applicants.map((app, idx) => {
+    const cleanPhone = (app.contact || '').replace(/[^0-9]/g, '');
+    const waText = encodeURIComponent(`Halo Troopers ${app.name} (${app.ign}), kami dari Management Official Clan MOTHRA Point Blank ingin menginformasikan hasil seleksi pendaftaran kamu...`);
+    const waUrl = cleanPhone ? `https://wa.me/${cleanPhone}?text=${waText}` : `https://wa.me/?text=${waText}`;
+
+    return `
+      <tr>
+        <td style="color:var(--gray-light);">${idx + 1}</td>
+        <td>
+          <strong>${app.name}</strong><br/>
+          <span style="color:var(--gold);font-family:var(--font-mono);font-size:0.8rem;">${app.ign || '-'}</span>
+        </td>
+        <td><span class="badge-tag badge-tag--green">${app.role || 'Roster'}</span></td>
+        <td>
+          <div style="font-size:0.82rem;font-family:var(--font-mono);">${app.contact || '-'}</div>
+          <small style="color:var(--gray-light);">${app.date || 'Baru'}</small>
+        </td>
+        <td>
+          <select onchange="updateApplicantStatus('${app.id}', this.value)" class="form-input form-select" style="padding:0.35rem 0.6rem;font-size:0.8rem;font-family:var(--font-mono);background:#111115;">
+            <option value="PENDING" ${app.status === 'PENDING' ? 'selected' : ''}>⏳ PENDING</option>
+            <option value="INTERVIEW" ${app.status === 'INTERVIEW' ? 'selected' : ''}>⚔️ SCRIM TRYOUT</option>
+            <option value="ACCEPTED" ${app.status === 'ACCEPTED' ? 'selected' : ''}>✅ ACCEPTED (ROSTER)</option>
+            <option value="REJECTED" ${app.status === 'REJECTED' ? 'selected' : ''}>❌ REJECTED</option>
+          </select>
+        </td>
+        <td style="max-width:240px;">
+          <input type="text" value="${app.notes || ''}" onchange="updateApplicantNotes('${app.id}', this.value)" class="form-input" style="padding:0.35rem 0.6rem;font-size:0.8rem;" placeholder="Catatan operator..." />
+        </td>
+        <td>
+          <div class="action-btns" style="justify-content:center;">
+            <a href="${waUrl}" target="_blank" rel="noopener" class="btn-action-edit" style="background:#22C55E;color:#000;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:0.3rem;">
+              💬 WA
+            </a>
+            <button class="btn-action-del" onclick="deleteApplicant('${app.id}')">Hapus</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+window.updateApplicantStatus = function(id, newStatus) {
+  if (typeof updateRecruitmentStatus === 'function') {
+    updateRecruitmentStatus(id, newStatus);
+  } else {
+    const app = (db.recruitment || []).find(a => a.id === id);
+    if (app) app.status = newStatus;
+    saveMothraData(db);
+  }
+  renderRecruitmentTable();
+  showToast(`Status pelamar berhasil diubah ke: ${newStatus}`);
+};
+
+window.updateApplicantNotes = function(id, notes) {
+  const app = (db.recruitment || []).find(a => a.id === id);
+  if (app) {
+    app.notes = notes;
+    saveMothraData(db);
+    showToast('Catatan pelamar tersimpan.');
+  }
+};
+
+window.deleteApplicant = function(id) {
+  if (confirm('Yakin ingin menghapus berkas lamaran ini?')) {
+    if (typeof deleteRecruitmentApplication === 'function') {
+      deleteRecruitmentApplication(id);
+    } else {
+      db.recruitment = (db.recruitment || []).filter(a => a.id !== id);
+      saveMothraData(db);
+    }
+    renderRecruitmentTable();
+    showToast('Berkas lamaran berhasil dihapus.');
+  }
+};
+
+const btnRefreshRec = document.getElementById('btnRefreshRecruitment');
+if (btnRefreshRec) {
+  btnRefreshRec.addEventListener('click', () => {
+    if (typeof fetchMothraDataOnline === 'function') fetchMothraDataOnline();
+    renderRecruitmentTable();
+    showToast('🔄 Data inbox rekrutmen diperbarui.');
+  });
+}
+
+/* ============================================================
+   17 / AUTOMATED ROSTER POSTER GENERATOR ENGINE (CANVAS 2D)
+   ============================================================ */
+function initPosterGenerator() {
+  const playerSelect = document.getElementById('posterPlayerSelect');
+  const formatSelect = document.getElementById('posterFormatSelect');
+  const themeSelect = document.getElementById('posterThemeSelect');
+  const titleInput = document.getElementById('posterHeaderTitle');
+  const subInput = document.getElementById('posterSubTitle');
+  const downloadBtn = document.getElementById('btnDownloadPoster');
+  const canvas = document.getElementById('posterCanvas');
+
+  if (!canvas || !playerSelect) return;
+
+  // Populate players
+  const players = Array.isArray(db.lineup) ? db.lineup : [];
+  playerSelect.innerHTML = players.map(p => `<option value="${p.id}">${p.name} (${p.role})</option>`).join('');
+
+  function drawPoster() {
+    const pId = playerSelect.value;
+    const player = players.find(p => p.id === pId) || players[0];
+    if (!player) return;
+
+    const isStory = formatSelect.value === 'story';
+    const accentColor = themeSelect.value || '#D4AF37';
+    const headerTitle = titleInput.value || 'MOTHRA OFFICIAL ROSTER';
+    const subTitle = subInput.value || 'POINT BLANK NATIONAL CUP 2026';
+
+    const w = isStory ? 1080 : 1080;
+    const h = isStory ? 1920 : 1080;
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+
+    // 1. Dark Cyber Background
+    const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
+    bgGrad.addColorStop(0, '#060608');
+    bgGrad.addColorStop(0.5, '#0E0E14');
+    bgGrad.addColorStop(1, '#050507');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, w, h);
+
+    // 2. Tactical Grid Lines
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+    ctx.lineWidth = 1;
+    for (let x = 0; x < w; x += 60) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, h);
+      ctx.stroke();
+    }
+    for (let y = 0; y < h; y += 60) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(w, y);
+      ctx.stroke();
+    }
+
+    // 3. Glowing Corner Borders
+    ctx.strokeStyle = accentColor;
+    ctx.lineWidth = 4;
+    ctx.strokeRect(30, 30, w - 60, h - 60);
+
+    // 4. Header Section
+    ctx.textAlign = 'center';
+    ctx.fillStyle = accentColor;
+    ctx.font = 'bold 36px "Barlow Condensed", sans-serif';
+    ctx.fillText(headerTitle.toUpperCase(), w / 2, isStory ? 120 : 90);
+
+    ctx.fillStyle = '#A1A1AA';
+    ctx.font = '22px "Share Tech Mono", monospace';
+    ctx.fillText(subTitle, w / 2, isStory ? 165 : 125);
+
+    // 5. Player Photo & Name
+    const imgObj = new Image();
+    imgObj.crossOrigin = 'anonymous';
+    imgObj.src = player.img || 'assets/player-captain.jpg';
+
+    imgObj.onload = function() {
+      // Draw image
+      const imgSize = isStory ? 540 : 420;
+      const imgX = (w - imgSize) / 2;
+      const imgY = isStory ? 230 : 170;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(w / 2, imgY + imgSize / 2, imgSize / 2, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.drawImage(imgObj, imgX, imgY, imgSize, imgSize);
+      ctx.restore();
+
+      // Outer Ring around player
+      ctx.beginPath();
+      ctx.arc(w / 2, imgY + imgSize / 2, imgSize / 2 + 6, 0, Math.PI * 2);
+      ctx.strokeStyle = accentColor;
+      ctx.lineWidth = 6;
+      ctx.stroke();
+
+      // Player Name
+      const textY = isStory ? 860 : 660;
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = '900 72px "Barlow Condensed", sans-serif';
+      ctx.fillText(player.name.toUpperCase(), w / 2, textY);
+
+      // Realname & Role Tag
+      ctx.fillStyle = accentColor;
+      ctx.font = 'bold 32px "Barlow Condensed", sans-serif';
+      ctx.fillText(`${player.role.toUpperCase()} • ${player.realname || 'TROOPER'}`, w / 2, textY + 45);
+
+      // Stats Bar (K/D, HS%, EXP, WEAPON)
+      const statY = isStory ? 970 : 740;
+      const statsBoxWidth = w - 160;
+      const statBoxX = 80;
+
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+      ctx.fillRect(statBoxX, statY, statsBoxWidth, isStory ? 160 : 120);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(statBoxX, statY, statsBoxWidth, isStory ? 160 : 120);
+
+      // 4 Columns
+      const colW = statsBoxWidth / 4;
+      const statsArr = [
+        { label: 'K/D RATIO', val: player.kd || '2.00' },
+        { label: 'HEADSHOT', val: player.hs || '60%' },
+        { label: 'EXPERIENCE', val: player.experience || '3+ Tahun' },
+        { label: 'MAIN WEAPON', val: (player.weapons && player.weapons.primary) || player.weapon || 'AUG A3' }
+      ];
+
+      statsArr.forEach((st, i) => {
+        const cx = statBoxX + colW * i + colW / 2;
+        ctx.fillStyle = '#94A3B8';
+        ctx.font = '18px "Share Tech Mono", monospace';
+        ctx.fillText(st.label, cx, statY + 40);
+
+        ctx.fillStyle = i < 2 ? accentColor : '#FFF';
+        ctx.font = 'bold 28px "Barlow Condensed", sans-serif';
+        ctx.fillText(st.val, cx, statY + 85);
+      });
+
+      // If Story (9:16), Draw Radar Pentagon below
+      if (isStory) {
+        const radarCenterY = 1380;
+        const radarRadius = 180;
+        const rStats = player.radarStats || { aim: 90, reflex: 88, clutch: 92, tactical: 85, comms: 87 };
+        const axes = [
+          { l: 'AIM', v: rStats.aim || 90 },
+          { l: 'REFLEX', v: rStats.reflex || 88 },
+          { l: 'CLUTCH', v: rStats.clutch || 92 },
+          { l: 'TACTICAL', v: rStats.tactical || 85 },
+          { l: 'COMMS', v: rStats.comms || 87 }
+        ];
+
+        // Grid
+        for (let lvl = 1; lvl <= 4; lvl++) {
+          const r = (radarRadius / 4) * lvl;
+          ctx.beginPath();
+          for (let a = 0; a < 5; a++) {
+            const angle = -Math.PI / 2 + (Math.PI * 2 / 5) * a;
+            const rx = w / 2 + Math.cos(angle) * r;
+            const ry = radarCenterY + Math.sin(angle) * r;
+            if (a === 0) ctx.moveTo(rx, ry);
+            else ctx.lineTo(rx, ry);
+          }
+          ctx.closePath();
+          ctx.strokeStyle = lvl === 4 ? accentColor : 'rgba(255,255,255,0.08)';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        }
+
+        // Polygon Fill
+        ctx.beginPath();
+        for (let a = 0; a < 5; a++) {
+          const angle = -Math.PI / 2 + (Math.PI * 2 / 5) * a;
+          const r = radarRadius * (Math.max(30, Math.min(100, axes[a].v)) / 100);
+          const rx = w / 2 + Math.cos(angle) * r;
+          const ry = radarCenterY + Math.sin(angle) * r;
+          if (a === 0) ctx.moveTo(rx, ry);
+          else ctx.lineTo(rx, ry);
+        }
+        ctx.closePath();
+        ctx.fillStyle = `${accentColor}44`;
+        ctx.fill();
+        ctx.strokeStyle = accentColor;
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        // Labels
+        ctx.fillStyle = '#E2E8F0';
+        ctx.font = 'bold 20px "Share Tech Mono", monospace';
+        axes.forEach((ax, a) => {
+          const angle = -Math.PI / 2 + (Math.PI * 2 / 5) * a;
+          const lx = w / 2 + Math.cos(angle) * (radarRadius + 35);
+          const ly = radarCenterY + Math.sin(angle) * (radarRadius + 35);
+          ctx.fillText(`${ax.l} (${ax.v})`, lx, ly);
+        });
+      }
+
+      // Footer Branding
+      ctx.fillStyle = accentColor;
+      ctx.font = 'bold 24px "Barlow Condensed", sans-serif';
+      ctx.fillText('MOTHRA ESPORTS • POINT BLANK INDONESIA', w / 2, h - 65);
+    };
+
+    imgObj.onerror = function() {
+      imgObj.src = 'assets/player-captain.jpg';
+    };
+  }
+
+  [playerSelect, formatSelect, themeSelect, titleInput, subInput].forEach(el => {
+    if (el) el.addEventListener('input', drawPoster);
+  });
+
+  if (downloadBtn) {
+    downloadBtn.addEventListener('click', () => {
+      const pId = playerSelect.value;
+      const player = players.find(p => p.id === pId) || { name: 'ROSTER' };
+      const link = document.createElement('a');
+      link.download = `MOTHRA_ROSTER_${player.name.replace(/[^a-zA-Z0-9_-]/g, '_')}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      showToast('📥 Poster berhasil diunduh dalam resolusi High-Res!');
+    });
+  }
+
+  drawPoster();
+}
+
+/* ============================================================
+   18 / CLAN ARMORY & STORE CATALOG CONTROLLER
+   ============================================================ */
+const storeTableBody = document.getElementById('storeTableBody');
+const storeModal = document.getElementById('storeCrudModal');
+const storeForm = document.getElementById('storeCrudForm');
+let editingStoreItemId = null;
+
+function renderStoreTable() {
+  if (!storeTableBody) return;
+
+  const store = db.store || { enabled: true, description: '', items: [] };
+  const items = Array.isArray(store.items) ? store.items : [];
+
+  // Update enable toggle & desc
+  const enableSelect = document.getElementById('storeEnabledSelect');
+  if (enableSelect) enableSelect.value = store.enabled !== false ? 'true' : 'false';
+  const descInput = document.getElementById('storeDescInput');
+  if (descInput) descInput.value = store.description || '';
+
+  if (items.length === 0) {
+    storeTableBody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--gray-light);padding:2.5rem;">Belum ada item produk di katalog Armory.</td></tr>`;
+    return;
+  }
+
+  storeTableBody.innerHTML = items.map((it, idx) => `
+    <tr>
+      <td style="color:var(--gray-light);">${idx + 1}</td>
+      <td><img src="${it.img || 'assets/pb-bg-squad.jpg'}" alt="${it.name}" class="table-thumb" onerror="this.src='assets/pb-bg-squad.jpg'" /></td>
+      <td>
+        <strong>${it.name}</strong><br/>
+        <small style="color:var(--gray-light);">${(it.description || '').substring(0, 45)}...</small>
+      </td>
+      <td><span class="badge-tag badge-tag--green">${it.category || 'GEAR'}</span></td>
+      <td>
+        <strong style="color:var(--gold);">${it.price}</strong>
+        ${it.originalPrice ? `<br/><small style="text-decoration:line-through;color:var(--gray-light);">${it.originalPrice}</small>` : ''}
+      </td>
+      <td>${it.badge ? `<span class="badge-tag badge-tag--gold">${it.badge}</span>` : '-'}</td>
+      <td>
+        <div class="action-btns" style="justify-content:center;">
+          <button class="btn-action-edit" onclick="editStoreItem('${it.id}')">Edit</button>
+          <button class="btn-action-del" onclick="deleteStoreItem('${it.id}')">Hapus</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+window.openAddStoreModal = function() {
+  editingStoreItemId = null;
+  document.getElementById('storeModalTitle').textContent = 'TAMBAH ITEM ARMORY';
+  storeForm.reset();
+  document.getElementById('storeImg').value = 'assets/pb-bg-squad.jpg';
+  document.getElementById('storeImgPreviewTag').src = 'assets/pb-bg-squad.jpg';
+  storeModal.classList.add('open');
+};
+
+window.editStoreItem = function(id) {
+  const store = db.store || { items: [] };
+  const item = (store.items || []).find(it => it.id === id);
+  if (!item) return;
+
+  editingStoreItemId = id;
+  document.getElementById('storeModalTitle').textContent = `EDIT ITEM: ${item.name}`;
+  document.getElementById('storeName').value = item.name;
+  document.getElementById('storeCategory').value = item.category || 'APPAREL';
+  document.getElementById('storePrice').value = item.price;
+  document.getElementById('storeOriginalPrice').value = item.originalPrice || '';
+  document.getElementById('storeBadge').value = item.badge || '';
+  document.getElementById('storeImg').value = item.img || 'assets/pb-bg-squad.jpg';
+  document.getElementById('storeImgPreviewTag').src = item.img || 'assets/pb-bg-squad.jpg';
+  document.getElementById('storeDescription').value = item.description || '';
+  document.getElementById('storeOrderUrl').value = item.orderUrl || '';
+
+  storeModal.classList.add('open');
+};
+
+window.deleteStoreItem = function(id) {
+  if (confirm('Yakin ingin menghapus produk ini dari Armory Store?')) {
+    if (!db.store) db.store = { enabled: true, items: [] };
+    db.store.items = (db.store.items || []).filter(it => it.id !== id);
+    saveMothraData(db);
+    renderStoreTable();
+    showToast('Produk berhasil dihapus.');
+  }
+};
+
+window.closeStoreModal = function() {
+  if (storeModal) storeModal.classList.remove('open');
+};
+
+if (storeForm) {
+  storeForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (!db.store) db.store = { enabled: true, description: '', items: [] };
+    if (!Array.isArray(db.store.items)) db.store.items = [];
+
+    const itemData = {
+      id: editingStoreItemId || 'st_' + Date.now(),
+      name: document.getElementById('storeName').value.trim(),
+      category: document.getElementById('storeCategory').value,
+      price: document.getElementById('storePrice').value.trim(),
+      originalPrice: document.getElementById('storeOriginalPrice').value.trim(),
+      badge: document.getElementById('storeBadge').value.trim(),
+      img: document.getElementById('storeImg').value.trim() || 'assets/pb-bg-squad.jpg',
+      description: document.getElementById('storeDescription').value.trim(),
+      orderUrl: document.getElementById('storeOrderUrl').value.trim() || 'https://discord.gg/fxfMBWSzW'
+    };
+
+    if (editingStoreItemId) {
+      const idx = db.store.items.findIndex(it => it.id === editingStoreItemId);
+      if (idx !== -1) db.store.items[idx] = itemData;
+    } else {
+      db.store.items.push(itemData);
+    }
+
+    saveMothraData(db);
+    renderStoreTable();
+    closeStoreModal();
+    showToast(editingStoreItemId ? 'Produk berhasil diperbarui!' : 'Produk baru berhasil ditambahkan ke Armory!');
+  });
+}
+
+const btnAddStoreItem = document.getElementById('btnAddStoreItem');
+if (btnAddStoreItem) btnAddStoreItem.addEventListener('click', window.openAddStoreModal);
+
+const btnSaveStoreSettings = document.getElementById('btnSaveStoreSettings');
+if (btnSaveStoreSettings) {
+  btnSaveStoreSettings.addEventListener('click', () => {
+    if (!db.store) db.store = { enabled: true, description: '', items: [] };
+    db.store.enabled = document.getElementById('storeEnabledSelect').value === 'true';
+    db.store.description = document.getElementById('storeDescInput').value.trim();
+    saveMothraData(db);
+    showToast('⚙️ Pengaturan Armory Store berhasil disimpan!');
+  });
+}
+
+setupImageUploader('storeImgFile', 'storeImg', 'storeImgPreviewTag', 600, 600);
+
+// Hook automatic renders when switching panels
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-panel]');
+  if (!btn) return;
+  const panel = btn.dataset.panel;
+  if (panel === 'panelLiveMatch') setTimeout(renderLiveMatchPanel, 50);
+  if (panel === 'panelRecruitment') setTimeout(renderRecruitmentTable, 50);
+  if (panel === 'panelPosterGenerator') setTimeout(initPosterGenerator, 50);
+  if (panel === 'panelStore') setTimeout(renderStoreTable, 50);
+});
+
+// Render all on initial load
+setTimeout(() => {
+  renderLiveMatchPanel();
+  renderRecruitmentTable();
+  renderStoreTable();
+}, 200);
+
+
 
