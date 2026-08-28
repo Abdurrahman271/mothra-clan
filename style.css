@@ -3772,6 +3772,8 @@ button {
     padding: 0.7rem 1rem;
     font-size: 0.9rem;
   }
+}
+
 /* ============================================================
    07 / MOTHRA MEDIA — VIDEO SECTION
    ============================================================ */
@@ -4526,6 +4528,42 @@ button {
 .btn-remind-cal:hover {
   background: var(--gold);
   color: #000;
+}
+
+@media (max-width: 992px) {
+  .live-match-container {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.85rem;
+    padding: 0.65rem 1rem;
+  }
+}
+
+@media (max-width: 680px) {
+  .live-match-container {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+    gap: 0.6rem;
+    padding: 0.6rem 0.85rem;
+  }
+  .live-badge-wrap {
+    justify-content: center;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .live-scoreboard {
+    justify-content: center;
+    width: 100%;
+  }
+  .live-actions-wrap {
+    justify-content: center;
+    width: 100%;
+  }
+  .btn-live-stream, .btn-remind-cal {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 /* ============================================================
