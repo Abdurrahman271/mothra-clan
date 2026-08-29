@@ -65,6 +65,19 @@ function ensureLineupReadMoreElement() {
   }
 }
 
+function updateHeaderOffset() {
+  const header = document.getElementById('siteHeader');
+  if (!header) return;
+  const h = header.offsetHeight || 76;
+  document.documentElement.style.setProperty('--site-header-height', `${h}px`);
+  document.documentElement.style.scrollPaddingTop = `${h + 16}px`;
+}
+window.updateHeaderOffset = updateHeaderOffset;
+window.addEventListener('resize', updateHeaderOffset);
+if (typeof document !== 'undefined') {
+  document.addEventListener('DOMContentLoaded', updateHeaderOffset);
+}
+
 function syncCmsData() {
   if (typeof getMothraData !== 'function') return;
   const db = getMothraData();
@@ -92,6 +105,7 @@ function syncCmsData() {
           if (!btn._hasAdListener) {
             btn.addEventListener('click', () => {
               topBar.style.display = 'none';
+              updateHeaderOffset();
             });
             btn._hasAdListener = true;
           }
@@ -657,6 +671,8 @@ function syncCmsData() {
       }
     }
   }
+
+  setTimeout(updateHeaderOffset, 50);
 }
 
 /* ============================================================
