@@ -209,6 +209,10 @@ button {
   0% { transform: scale(0.96); filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.5)); }
   100% { transform: scale(1.05); filter: drop-shadow(0 0 22px rgba(245, 197, 24, 0.9)); }
 }
+@keyframes pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--gold); }
+  50% { opacity: 0.4; box-shadow: 0 0 3px var(--gold); }
+}
 .loader-logo {
   font-family: var(--font-display);
   font-size: 2.75rem;
@@ -3723,7 +3727,7 @@ button {
 .ads-promo-visual-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to right, #100e08 0%, rgba(0, 0, 0, 0.2) 100%);
+  background: linear-gradient(to right, #100e08 0%, rgba(0, 0, 0, 0.05) 60%, transparent 100%);
   pointer-events: none;
 }
 
