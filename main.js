@@ -2444,10 +2444,14 @@ if (document.readyState === 'loading') {
       // 1. Simpan ke database terpusat via helper data.js
       const applicantObj = {
         name: pName,
+        fullname: pName,
         ign: gId,
+        nick: gId,
         role: pRole,
         contact: pContact,
+        whatsapp: pContact,
         notes: pMessage || 'Pendaftaran online melalui website resmi Clan MOTHRA',
+        motivation: pMessage || 'Pendaftaran online melalui website resmi Clan MOTHRA',
         kd: '2.00',
         hs: '60%'
       };
@@ -2508,7 +2512,7 @@ if (document.readyState === 'loading') {
         return;
       }
 
-      recResultCard.innerHTML = `<div style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.85rem;">MENCARI DATA PENDAFTARAN...</div>`;
+      recResultCard.innerHTML = `<div style="color:var(--gold);font-family:var(--font-mono);font-size:0.85rem;display:flex;align-items:center;gap:0.5rem;"><span style="animation:pulse 1s infinite;">📡</span> MENGHUBUNGKAN KE SUPABASE CLOUD &amp; MENGECEK STATUS...</div>`;
       recResultCard.style.display = 'block';
       TacticalAudio.playClick();
 
@@ -2522,41 +2526,65 @@ if (document.readyState === 'loading') {
         let statusLabel = 'DALAM PENINJAUAN (PENDING)';
         let statusNotes = result.notes || 'Berkas lamaran sedang ditinjau oleh Clan Leader & Operator.';
 
-        if (result.status === 'ACCEPTED') {
+        const st = String(result.status || '').toUpperCase();
+        if (st === 'ACCEPTED') {
           statusBadgeClass = 'rec-status-accepted';
-          statusLabel = 'DITERIMA (ACCEPTED)';
+          statusLabel = 'DITERIMA (ACCEPTED ROSTER)';
           statusNotes = result.notes || 'Selamat! Kamu dinyatakan lolos seleksi Clan MOTHRA. Silakan hubungi admin di Discord.';
-        } else if (result.status === 'INTERVIEW') {
+        } else if (st === 'INTERVIEW' || st === 'TESTING') {
           statusBadgeClass = 'rec-status-interview';
           statusLabel = 'TAHAP SCRIM / TRYOUT';
           statusNotes = result.notes || 'Kamu dijadwalkan mengikuti sesi Sparring / Tryout Scrim malam ini.';
-        } else if (result.status === 'REJECTED') {
+        } else if (st === 'REJECTED') {
           statusBadgeClass = 'rec-status-rejected';
           statusLabel = 'BELUM LOLOS (REJECTED)';
           statusNotes = result.notes || 'Mohon maaf kualifikasi belum sesuai kuota roster saat ini. Tetap semangat!';
         }
 
+        let dateStr = 'Baru Saja';
+        if (result.date || result.createdAt) {
+          try {
+            const d = new Date(result.date || result.createdAt);
+            if (!isNaN(d.getTime())) {
+              dateStr = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' WIB';
+            }
+          } catch (e) {}
+        }
+
         recResultCard.innerHTML = `
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.75rem;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:0.75rem;margin-bottom:0.85rem;">
             <div>
-              <div style="font-family:var(--font-display);font-weight:900;font-size:1.15rem;color:#FFF;">${result.ign || result.name}</div>
-              <div style="font-size:0.8rem;color:var(--text-muted);">Nama: ${result.name} • Role: <span style="color:var(--gold);">${result.role}</span></div>
+              <div style="font-family:var(--font-display);font-weight:900;font-size:1.25rem;color:#FFF;letter-spacing:0.03em;">
+                ${result.ign || result.nick || result.name}
+              </div>
+              <div style="font-size:0.82rem;color:var(--text-muted);margin-top:0.25rem;">
+                Nama: <strong style="color:#FFF;">${result.name || result.fullname || '-'}</strong> &bull; Role: <span style="color:var(--gold);font-weight:700;">${(result.role || 'rusher').toUpperCase()}</span> &bull; Rank: <span style="color:#FFF;">${result.rankPb || 'Trooper'}</span>
+              </div>
             </div>
             <span class="rec-badge-status ${statusBadgeClass}">${statusLabel}</span>
           </div>
-          <div style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.06);padding:0.75rem;border-radius:4px;font-size:0.85rem;color:#E4E4E7;line-height:1.5;">
-            <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--gold);margin-bottom:0.25rem;">CATATAN OPERATOR HQ:</div>
-            ${statusNotes}
+          <div style="background:rgba(0,0,0,0.5);border:1px solid rgba(212,175,55,0.25);padding:0.85rem;border-radius:6px;font-size:0.88rem;color:#E4E4E7;line-height:1.6;box-shadow:inset 0 0 15px rgba(0,0,0,0.4);">
+            <div style="font-family:var(--font-mono);font-size:0.75rem;color:var(--gold);margin-bottom:0.35rem;display:flex;align-items:center;gap:0.4rem;font-weight:700;">
+              <span>📋</span> CATATAN OPERATOR HQ:
+            </div>
+            <div style="color:#F3F4F6;">${statusNotes}</div>
           </div>
-          <div style="margin-top:0.75rem;font-size:0.75rem;color:var(--text-muted);font-family:var(--font-mono);">
-            Terdaftar: ${result.date || 'Baru Saja'} • Kontak: ${result.contact || '-'}
+          <div style="margin-top:0.85rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;font-size:0.75rem;color:var(--text-muted);font-family:var(--font-mono);border-top:1px solid rgba(255,255,255,0.06);padding-top:0.6rem;">
+            <span>📅 Terdaftar: ${dateStr}</span>
+            <span>📱 Kontak: ${result.contact || result.whatsapp || '-'}</span>
+            <span style="color:var(--gold);">⚡ KD: ${result.kd || '2.00'} &bull; HS: ${result.hs || '60%'}</span>
           </div>
         `;
         TacticalAudio.playSuccess();
       } else {
         recResultCard.innerHTML = `
-          <div style="color:#EF4444;font-family:var(--font-mono);font-size:0.85rem;margin-bottom:0.5rem;">[TIDAK DITEMUKAN] Data dengan kata kunci "${query}" tidak tercatat.</div>
-          <div style="font-size:0.8rem;color:var(--text-muted);">Pastikan Nickname Point Blank atau Nomor Kontak yang kamu masukkan persis sama seperti saat mengisi form pendaftaran di atas.</div>
+          <div style="color:#EF4444;font-family:var(--font-mono);font-size:0.88rem;margin-bottom:0.5rem;font-weight:700;">
+            ⚠️ [TIDAK DITEMUKAN] Data dengan kata kunci "${query}" tidak tercatat di Cloud Supabase.
+          </div>
+          <div style="font-size:0.82rem;color:var(--text-muted);line-height:1.6;">
+            Pastikan In-Game Nick Point Blank atau Nomor WhatsApp yang kamu masukkan persis sama seperti saat mengisi form pendaftaran di atas.<br>
+            <span style="color:var(--gold);font-family:var(--font-mono);font-size:0.75rem;">☁️ Sistem mengecek secara realtime langsung ke database terpusat Supabase.</span>
+          </div>
         `;
         TacticalAudio.playBlip(300, 'sawtooth', 0.1, 0.08);
       }
@@ -2566,6 +2594,14 @@ if (document.readyState === 'loading') {
     recSearchQuery.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
+        performSearch();
+      }
+    });
+
+    // Auto-refresh status if Supabase push realtime update arrives while checking
+    window.addEventListener('mothra_data_updated', () => {
+      const q = recSearchQuery.value.trim();
+      if (q && recResultCard.style.display === 'block') {
         performSearch();
       }
     });

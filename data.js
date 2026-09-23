@@ -377,9 +377,13 @@ const DEFAULT_MOTHRA_DATA = {
     {
       "id": "rec_1",
       "createdAt": "2026-08-26T14:20:00.000Z",
+      "date": "2026-08-26T14:20:00.000Z",
       "fullname": "Dimas Pratama",
+      "name": "Dimas Pratama",
       "nick": "MTR~DimasX",
+      "ign": "MTR~DimasX",
       "whatsapp": "081234567890",
+      "contact": "081234567890",
       "discord": "dimas_pb#1234",
       "role": "rusher",
       "kd": "68.5",
@@ -387,15 +391,19 @@ const DEFAULT_MOTHRA_DATA = {
       "rankPb": "Brigadier (Bintang 1)",
       "clipUrl": "https://youtube.com",
       "motivation": "Ingin berkembang dan membawa nama MOTHRA di kancah PBNC 2026!",
-      "status": "TESTING",
+      "status": "INTERVIEW",
       "notes": "Jadwal sparring hari Jumat jam 20:00 WIB"
     },
     {
       "id": "rec_2",
       "createdAt": "2026-08-27T09:15:00.000Z",
+      "date": "2026-08-27T09:15:00.000Z",
       "fullname": "Farhan Alamsyah",
+      "name": "Farhan Alamsyah",
       "nick": "SniperBoyz99",
+      "ign": "SniperBoyz99",
       "whatsapp": "085712345678",
+      "contact": "085712345678",
       "discord": "farhan_pb#5678",
       "role": "sniper",
       "kd": "72.1",
@@ -409,9 +417,13 @@ const DEFAULT_MOTHRA_DATA = {
     {
       "id": "rec_3",
       "createdAt": "2026-08-25T11:00:00.000Z",
+      "date": "2026-08-25T11:00:00.000Z",
       "fullname": "Reza Rahardian",
+      "name": "Reza Rahardian",
       "nick": "MTR~Valkyrie",
+      "ign": "MTR~Valkyrie",
       "whatsapp": "087812345678",
+      "contact": "087812345678",
       "discord": "reza_valk#9999",
       "role": "pointman",
       "kd": "69.8",
@@ -921,6 +933,20 @@ function sanitizeMothraData(data) {
   }
   if (!data.recruitment || !Array.isArray(data.recruitment)) {
     data.recruitment = JSON.parse(JSON.stringify(DEFAULT_MOTHRA_DATA.recruitment));
+  } else {
+    data.recruitment.forEach(app => {
+      app.name = app.name || app.fullname || '';
+      app.fullname = app.fullname || app.name || '';
+      app.ign = app.ign || app.nick || '';
+      app.nick = app.nick || app.ign || '';
+      app.contact = app.contact || app.whatsapp || '';
+      app.whatsapp = app.whatsapp || app.contact || '';
+      app.date = app.date || app.createdAt || new Date().toISOString();
+      app.createdAt = app.createdAt || app.date || new Date().toISOString();
+      if (app.status === 'TESTING') app.status = 'INTERVIEW';
+      if (!app.status) app.status = 'PENDING';
+      if (!app.role) app.role = 'rusher';
+    });
   }
   if (!data.store) {
     data.store = JSON.parse(JSON.stringify(DEFAULT_MOTHRA_DATA.store));
@@ -1038,7 +1064,7 @@ function saveMothraData(data) {
     }
 
     // Trigger local UI update immediately (0 latency)
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
       window.dispatchEvent(new CustomEvent('mothra_data_updated', { detail: data }));
 
       // Debounce Cloud Sync (350ms) untuk mencegah spam save dan broadcast berlebihan ke pengunjung
@@ -1184,33 +1210,74 @@ function applyClanTheme(themeKey) {
 }
 
 // ============================================================
-// 📥 RECRUITMENT CRM & APPLICANT MANAGEMENT HELPERS
+// 📥 RECRUITMENT CRM & APPLICANT MANAGEMENT HELPERS (REALTIME SUPABASE)
 // ============================================================
 async function submitRecruitmentApplication(appData) {
+  // 1. Sinkronkan dulu data terkini dari Supabase Cloud agar tidak menimpa data baru
+  try {
+    if (typeof fetchMothraDataOnline === 'function') {
+      await fetchMothraDataOnline();
+    }
+  } catch (err) {
+    console.warn('Pre-submit online sync notice:', err);
+  }
+
   const db = getMothraData();
-  if (!db.recruitment) db.recruitment = [];
+  if (!db.recruitment || !Array.isArray(db.recruitment)) db.recruitment = [];
+
+  const nowIso = new Date().toISOString();
+  const rawName = appData.fullname || appData.name || '';
+  const rawNick = appData.nick || appData.ign || '';
+  const rawWa = appData.whatsapp || appData.contact || '';
 
   const newApp = {
     id: 'rec_' + Date.now(),
-    createdAt: new Date().toISOString(),
-    fullname: sanitizeSecurityInput(appData.fullname || ''),
-    nick: sanitizeSecurityInput(appData.nick || ''),
-    whatsapp: sanitizeSecurityInput(appData.whatsapp || ''),
+    createdAt: nowIso,
+    date: nowIso,
+    fullname: sanitizeSecurityInput(rawName),
+    name: sanitizeSecurityInput(rawName),
+    nick: sanitizeSecurityInput(rawNick),
+    ign: sanitizeSecurityInput(rawNick),
+    whatsapp: sanitizeSecurityInput(rawWa),
+    contact: sanitizeSecurityInput(rawWa),
     discord: sanitizeSecurityInput(appData.discord || ''),
     role: sanitizeSecurityInput(appData.role || 'rusher'),
-    kd: sanitizeSecurityInput(String(appData.kd || '0')),
-    hs: sanitizeSecurityInput(String(appData.hs || '0')),
+    kd: sanitizeSecurityInput(String(appData.kd || '2.00')),
+    hs: sanitizeSecurityInput(String(appData.hs || '60%')),
     rankPb: sanitizeSecurityInput(appData.rankPb || 'Trooper'),
     clipUrl: sanitizeSecurityInput(appData.clipUrl || ''),
-    motivation: sanitizeSecurityInput(appData.motivation || ''),
+    motivation: sanitizeSecurityInput(appData.motivation || appData.notes || ''),
     status: 'PENDING',
-    notes: 'Menunggu review operator'
+    notes: 'Pendaftaran online melalui Website Resmi Clan MOTHRA'
   };
 
   db.recruitment.unshift(newApp);
+  db.dataVersion = Date.now();
+  db.updatedAt = nowIso;
   saveMothraData(db);
 
-  // Optional: Kirim notifikasi Discord Webhook jika dikonfigurasi
+  // 2. Tembak langsung ke Supabase Cloud (Bypass debounce untuk write instan)
+  const config = getSupabaseConfig();
+  if (config.isConfigured) {
+    if (!_supabaseClient) initSupabase();
+    if (_supabaseClient) {
+      try {
+        await _supabaseClient
+          .from(config.tableName)
+          .upsert({
+            id: config.docId,
+            data: db,
+            data_version: db.dataVersion,
+            updated_at: db.updatedAt
+          });
+        console.log('⚡ [SUPABASE REALTIME] Lamaran baru tersimpan instan di Cloud Supabase:', newApp.nick);
+      } catch (e) {
+        console.warn('Direct cloud upsert fallback triggered:', e);
+      }
+    }
+  }
+
+  // 3. Optional: Kirim notifikasi Discord Webhook jika dikonfigurasi
   if (db.branding && db.branding.discordWebhook && typeof fetch !== 'undefined') {
     try {
       fetch(db.branding.discordWebhook, {
@@ -1219,7 +1286,7 @@ async function submitRecruitmentApplication(appData) {
         body: JSON.stringify({
           embeds: [{
             title: `🎯 PENDAFTARAN ANGGOTA BARU — ${newApp.nick}`,
-            description: `**Nama:** ${newApp.fullname}\n**Role:** ${newApp.role.toUpperCase()}\n**KD / HS:** ${newApp.kd}% / ${newApp.hs}%\n**Rank:** ${newApp.rankPb}\n**WhatsApp:** ${newApp.whatsapp}\n**Discord:** ${newApp.discord}\n\n*Motivasi:* ${newApp.motivation}`,
+            description: `**Nama:** ${newApp.fullname}\n**Nick PB:** ${newApp.nick}\n**Role:** ${newApp.role.toUpperCase()}\n**KD / HS:** ${newApp.kd} / ${newApp.hs}\n**Rank:** ${newApp.rankPb}\n**WhatsApp:** ${newApp.whatsapp}\n**Discord:** ${newApp.discord}\n\n*Motivasi:* ${newApp.motivation}`,
             color: 13938487,
             timestamp: new Date().toISOString()
           }]
@@ -1231,17 +1298,64 @@ async function submitRecruitmentApplication(appData) {
   return newApp;
 }
 
-function checkRecruitmentStatus(query) {
+async function checkRecruitmentStatus(query) {
   if (!query) return null;
   const q = String(query).trim().toLowerCase();
-  const db = getMothraData();
-  if (!db.recruitment || !Array.isArray(db.recruitment)) return null;
+  if (!q) return null;
 
-  return db.recruitment.find(app => {
-    const nickMatch = app.nick && app.nick.toLowerCase() === q;
-    const waMatch = app.whatsapp && app.whatsapp.replace(/\D/g, '').includes(q.replace(/\D/g, ''));
-    return nickMatch || waMatch;
-  }) || null;
+  // 1. Tarik data live langsung dari Cloud Supabase (0 stale cache)
+  try {
+    if (typeof fetchMothraDataOnline === 'function') {
+      await fetchMothraDataOnline();
+    }
+  } catch (err) {
+    console.warn('Realtime fetch for status check notice:', err);
+  }
+
+  const db = getMothraData();
+  if (!db || !db.recruitment || !Array.isArray(db.recruitment)) return null;
+
+  const qDigits = q.replace(/\D/g, '');
+
+  const found = db.recruitment.find(app => {
+    const ign = String(app.ign || app.nick || '').trim().toLowerCase();
+    const name = String(app.name || app.fullname || '').trim().toLowerCase();
+    const phone = String(app.contact || app.whatsapp || '').replace(/\D/g, '');
+
+    // A. Match In-Game Nickname (exact atau partial match)
+    const ignMatch = Boolean(ign && (ign === q || ign.includes(q) || q.includes(ign)));
+
+    // B. Match Nama Lengkap (exact atau partial match)
+    const nameMatch = Boolean(name && (name === q || name.includes(q) || q.includes(name)));
+
+    // C. Match Nomor WhatsApp / Kontak HANYA jika kata kunci memiliki minimal 4 angka
+    // PENTING: Mencegah bug false-positive ketika query adalah teks tanpa angka!
+    const waMatch = Boolean(qDigits.length >= 4 && phone && phone.includes(qDigits));
+
+    return ignMatch || nameMatch || waMatch;
+  });
+
+  if (!found) return null;
+
+  // Normalisasi seluruh properti agar aman diakses di UI publik
+  return {
+    id: found.id,
+    name: found.name || found.fullname || '-',
+    fullname: found.fullname || found.name || '-',
+    ign: found.ign || found.nick || '-',
+    nick: found.nick || found.ign || '-',
+    contact: found.contact || found.whatsapp || '-',
+    whatsapp: found.whatsapp || found.contact || '-',
+    discord: found.discord || '-',
+    role: found.role || 'rusher',
+    kd: found.kd || '2.00',
+    hs: found.hs || '60%',
+    rankPb: found.rankPb || 'Trooper',
+    status: (found.status === 'TESTING' ? 'INTERVIEW' : found.status) || 'PENDING',
+    notes: found.notes || 'Berkas lamaran sedang ditinjau oleh Clan Leader & Operator.',
+    date: found.date || found.createdAt || new Date().toISOString(),
+    createdAt: found.createdAt || found.date || new Date().toISOString()
+  };
 }
 
 function updateRecruitmentStatus(id, newStatus, notes = '') {
@@ -1249,10 +1363,25 @@ function updateRecruitmentStatus(id, newStatus, notes = '') {
   if (!db.recruitment || !Array.isArray(db.recruitment)) return false;
   const app = db.recruitment.find(a => a.id === id);
   if (app) {
-    app.status = newStatus;
+    app.status = newStatus === 'TESTING' ? 'INTERVIEW' : newStatus;
     if (notes) app.notes = sanitizeSecurityInput(notes);
     app.updatedAt = new Date().toISOString();
-    return saveMothraData(db);
+    saveMothraData(db);
+
+    // Langsung tembak Supabase Cloud agar instan
+    const config = getSupabaseConfig();
+    if (config.isConfigured && _supabaseClient) {
+      _supabaseClient
+        .from(config.tableName)
+        .upsert({
+          id: config.docId,
+          data: db,
+          data_version: db.dataVersion || Date.now(),
+          updated_at: db.updatedAt || new Date().toISOString()
+        })
+        .catch(() => {});
+    }
+    return true;
   }
   return false;
 }
@@ -1261,7 +1390,23 @@ function deleteRecruitmentApplication(id) {
   const db = getMothraData();
   if (!db.recruitment || !Array.isArray(db.recruitment)) return false;
   db.recruitment = db.recruitment.filter(a => a.id !== id);
-  return saveMothraData(db);
+  db.updatedAt = new Date().toISOString();
+  saveMothraData(db);
+
+  // Langsung tembak Supabase Cloud agar instan
+  const config = getSupabaseConfig();
+  if (config.isConfigured && _supabaseClient) {
+    _supabaseClient
+      .from(config.tableName)
+      .upsert({
+        id: config.docId,
+        data: db,
+        data_version: db.dataVersion || Date.now(),
+        updated_at: db.updatedAt || new Date().toISOString()
+      })
+      .catch(() => {});
+  }
+  return true;
 }
 
 // Global Exports & Window Binding

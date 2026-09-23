@@ -4521,28 +4521,41 @@ function renderRecruitmentTable() {
   }
 
   tbody.innerHTML = applicants.map((app, idx) => {
-    const cleanPhone = (app.contact || '').replace(/[^0-9]/g, '');
-    const waText = encodeURIComponent(`Halo Troopers ${app.name} (${app.ign}), kami dari Management Official Clan MOTHRA Point Blank ingin menginformasikan hasil seleksi pendaftaran kamu...`);
+    const appName = app.name || app.fullname || '-';
+    const appIgn = app.ign || app.nick || '-';
+    const appContact = app.contact || app.whatsapp || '-';
+    let appDateStr = app.date || app.createdAt || 'Baru';
+    if (appDateStr !== 'Baru') {
+      try {
+        const d = new Date(appDateStr);
+        if (!isNaN(d.getTime())) {
+          appDateStr = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+      } catch (e) {}
+    }
+    const cleanPhone = appContact.replace(/[^0-9]/g, '');
+    const currentStatus = (app.status === 'TESTING' ? 'INTERVIEW' : app.status) || 'PENDING';
+    const waText = encodeURIComponent(`Halo Troopers ${appName} (${appIgn}), kami dari Management Official Clan MOTHRA Point Blank ingin menginformasikan hasil seleksi pendaftaran kamu...`);
     const waUrl = cleanPhone ? `https://wa.me/${cleanPhone}?text=${waText}` : `https://wa.me/?text=${waText}`;
 
     return `
       <tr>
         <td style="color:var(--gray-light);">${idx + 1}</td>
         <td>
-          <strong>${app.name}</strong><br/>
-          <span style="color:var(--gold);font-family:var(--font-mono);font-size:0.8rem;">${app.ign || '-'}</span>
+          <strong style="color:#FFF;">${appName}</strong><br/>
+          <span style="color:var(--gold);font-family:var(--font-mono);font-size:0.8rem;">${appIgn}</span>
         </td>
         <td><span class="badge-tag badge-tag--green">${app.role || 'Roster'}</span></td>
         <td>
-          <div style="font-size:0.82rem;font-family:var(--font-mono);">${app.contact || '-'}</div>
-          <small style="color:var(--gray-light);">${app.date || 'Baru'}</small>
+          <div style="font-size:0.82rem;font-family:var(--font-mono);">${appContact}</div>
+          <small style="color:var(--gray-light);font-size:0.75rem;">${appDateStr}</small>
         </td>
         <td>
           <select onchange="updateApplicantStatus('${app.id}', this.value)" class="form-input form-select" style="padding:0.35rem 0.6rem;font-size:0.8rem;font-family:var(--font-mono);background:#111115;">
-            <option value="PENDING" ${app.status === 'PENDING' ? 'selected' : ''}>⏳ PENDING</option>
-            <option value="INTERVIEW" ${app.status === 'INTERVIEW' ? 'selected' : ''}>⚔️ SCRIM TRYOUT</option>
-            <option value="ACCEPTED" ${app.status === 'ACCEPTED' ? 'selected' : ''}>✅ ACCEPTED (ROSTER)</option>
-            <option value="REJECTED" ${app.status === 'REJECTED' ? 'selected' : ''}>❌ REJECTED</option>
+            <option value="PENDING" ${currentStatus === 'PENDING' ? 'selected' : ''}>⏳ PENDING</option>
+            <option value="INTERVIEW" ${currentStatus === 'INTERVIEW' ? 'selected' : ''}>⚔️ SCRIM TRYOUT</option>
+            <option value="ACCEPTED" ${currentStatus === 'ACCEPTED' ? 'selected' : ''}>✅ ACCEPTED (ROSTER)</option>
+            <option value="REJECTED" ${currentStatus === 'REJECTED' ? 'selected' : ''}>❌ REJECTED</option>
           </select>
         </td>
         <td style="max-width:240px;">
@@ -4597,10 +4610,24 @@ window.deleteApplicant = function(id) {
 
 const btnRefreshRec = document.getElementById('btnRefreshRecruitment');
 if (btnRefreshRec) {
-  btnRefreshRec.addEventListener('click', () => {
-    if (typeof fetchMothraDataOnline === 'function') fetchMothraDataOnline();
-    renderRecruitmentTable();
-    showToast('🔄 Data inbox rekrutmen diperbarui.');
+  btnRefreshRec.addEventListener('click', async () => {
+    btnRefreshRec.disabled = true;
+    const oldText = btnRefreshRec.innerHTML;
+    btnRefreshRec.innerHTML = '🔄 Sinkronisasi...';
+    try {
+      if (typeof fetchMothraDataOnline === 'function') {
+        const fresh = await fetchMothraDataOnline();
+        if (fresh) db = fresh;
+      }
+      renderRecruitmentTable();
+      showToast('☁️ Data inbox rekrutmen disinkronisasi realtime dari Supabase Cloud.');
+    } catch (err) {
+      renderRecruitmentTable();
+      showToast('⚠️ Gagal sinkronisasi online, menggunakan cache lokal.');
+    } finally {
+      btnRefreshRec.disabled = false;
+      btnRefreshRec.innerHTML = oldText;
+    }
   });
 }
 
