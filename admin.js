@@ -4236,13 +4236,13 @@ function openMatchPresetModal(presetId = '') {
     if (statusInp) statusInp.value = 'UPCOMING';
   }
 
-  modal.classList.add('active');
+  modal.classList.add('open');
 }
 window.openMatchPresetModal = openMatchPresetModal;
 
 function closeMatchPresetModal() {
   const modal = document.getElementById('modalMatchPreset');
-  if (modal) modal.classList.remove('active');
+  if (modal) modal.classList.remove('open');
 }
 window.closeMatchPresetModal = closeMatchPresetModal;
 
