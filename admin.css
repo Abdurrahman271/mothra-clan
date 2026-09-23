@@ -1813,3 +1813,28 @@ select.form-input option {
     font-size: 0.72rem;
   }
 }
+
+/* ============================================================
+   LIVE MATCH SCOREBOARD OPERATOR — Panel Styles
+   ============================================================ */
+.live-dot-blink {
+  animation: liveBlinkPulse 1.2s ease-in-out infinite;
+  box-shadow: 0 0 8px #EF4444;
+}
+@keyframes liveBlinkPulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 8px #EF4444, 0 0 18px rgba(239,68,68,0.4); }
+  50%       { opacity: 0.35; box-shadow: 0 0 4px #EF4444; }
+}
+
+/* Hide number-input spin arrows on score fields */
+#lmMothraScore::-webkit-outer-spin-button,
+#lmMothraScore::-webkit-inner-spin-button,
+#lmOpponentScore::-webkit-outer-spin-button,
+#lmOpponentScore::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+#lmMothraScore,
+#lmOpponentScore {
+  -moz-appearance: textfield;
+}

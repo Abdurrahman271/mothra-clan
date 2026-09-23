@@ -399,6 +399,8 @@ function renderAllPanels() {
   renderSupabasePanel();
   renderUsersTable();
   renderAdsPanel();
+  renderLiveMatchPanel();
+  renderRecruitmentTable();
 }
 
 // Dengarkan event update data realtime dari Supabase
@@ -461,6 +463,10 @@ function switchAdminPanel(panelId) {
       renderLineupTable();
     } else if (panelId === 'panelCategories' && typeof renderCategoriesTable === 'function') {
       renderCategoriesTable();
+    } else if (panelId === 'panelLiveMatch' && typeof renderLiveMatchPanel === 'function') {
+      renderLiveMatchPanel();
+    } else if (panelId === 'panelRecruitment' && typeof renderRecruitmentTable === 'function') {
+      renderRecruitmentTable();
     }
   }
 
@@ -4084,6 +4090,195 @@ document.addEventListener('click', (e) => {
 /* ============================================================
    15 / LIVE MATCH DAY & REALTIME SCOREBOARD CONTROLLER
    ============================================================ */
+function ensureDefaultMatchPresets() {
+  if (!Array.isArray(db.liveMatchPresets) || db.liveMatchPresets.length === 0) {
+    db.liveMatchPresets = [
+      {
+        id: 'preset_1',
+        tournament: 'PBNC 2026 QUALIFIER PHASE 2',
+        opponent: 'EVOS DIVINE PB',
+        map: 'Downtown',
+        round: 'Round 3 • Search & Destroy',
+        status: 'UPCOMING',
+        mothraScore: 7,
+        opponentScore: 5,
+        streamUrl: 'https://youtube.com'
+      },
+      {
+        id: 'preset_2',
+        tournament: 'POINT BLANK INVITATIONAL CUP 2026',
+        opponent: 'RRQ ENDEAVOUR',
+        map: 'Luxville',
+        round: 'Semifinal • Match 1',
+        status: 'LIVE',
+        mothraScore: 5,
+        opponentScore: 3,
+        streamUrl: 'https://youtube.com'
+      },
+      {
+        id: 'preset_3',
+        tournament: 'COMMUNITY CLAN WARS PB 2026',
+        opponent: 'BOOM ESPORTS PB',
+        map: 'Blowcity',
+        round: 'Grand Final Match',
+        status: 'VICTORY',
+        mothraScore: 10,
+        opponentScore: 6,
+        streamUrl: ''
+      }
+    ];
+  }
+}
+
+function renderMatchPresetsTable() {
+  const tbody = document.getElementById('matchPresetsTableBody');
+  if (!tbody) return;
+
+  ensureDefaultMatchPresets();
+  const presets = Array.isArray(db.liveMatchPresets) ? db.liveMatchPresets : [];
+
+  if (presets.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--gray-light);padding:2rem;">Belum ada preset pertandingan. Klik "+ TAMBAH PRESET MATCH" untuk membuat jadwal!</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = presets.map((p, idx) => {
+    let statusBadge = '<span class="badge" style="background:rgba(212,175,55,0.15);color:var(--gold);border:1px solid var(--border);">⏳ UPCOMING</span>';
+    if (p.status === 'LIVE') {
+      statusBadge = '<span class="badge" style="background:rgba(239,68,68,0.2);color:#EF4444;border:1px solid rgba(239,68,68,0.4);animation:pulse 1.2s infinite alternate;">🔴 LIVE</span>';
+    } else if (p.status === 'VICTORY') {
+      statusBadge = '<span class="badge" style="background:rgba(16,185,129,0.2);color:#10B981;border:1px solid rgba(16,185,129,0.4);">🏆 WIN</span>';
+    } else if (p.status === 'DEFEAT') {
+      statusBadge = '<span class="badge" style="background:rgba(239,68,68,0.1);color:#FCA5A5;border:1px solid rgba(239,68,68,0.3);">💀 LOSE</span>';
+    }
+
+    const tTitle = typeof escapeHtml === 'function' ? escapeHtml(p.tournament || 'POINT BLANK MATCH') : (p.tournament || 'POINT BLANK MATCH');
+    const opp = typeof escapeHtml === 'function' ? escapeHtml(p.opponent || 'OPFOR') : (p.opponent || 'OPFOR');
+    const mMap = typeof escapeHtml === 'function' ? escapeHtml(p.map || 'Downtown') : (p.map || 'Downtown');
+    const mRound = typeof escapeHtml === 'function' ? escapeHtml(p.round || 'Round 1') : (p.round || 'Round 1');
+
+    return `
+      <tr>
+        <td style="font-family:var(--font-mono);font-size:0.85rem;color:var(--gray-light);">${idx + 1}</td>
+        <td>
+          <strong style="color:#fff;font-family:var(--font-display);font-size:0.95rem;">${tTitle}</strong>
+          ${p.streamUrl ? `<div style="font-size:0.75rem;color:var(--gold);margin-top:2px;">📺 Stream Linked</div>` : ''}
+        </td>
+        <td><strong style="color:var(--gold);font-family:var(--font-display);">${opp}</strong></td>
+        <td>
+          <div style="font-size:0.88rem;color:#E2E8F0;">${mMap}</div>
+          <div style="font-size:0.75rem;color:var(--gray-light);">${mRound}</div>
+        </td>
+        <td>
+          <span style="font-family:var(--font-mono);font-size:1.05rem;font-weight:900;color:${(p.mothraScore || 0) > (p.opponentScore || 0) ? '#10B981' : '#fff'};">
+            ${p.mothraScore || 0} - ${p.opponentScore || 0}
+          </span>
+        </td>
+        <td>${statusBadge}</td>
+        <td style="text-align:right;">
+          <div style="display:flex;gap:0.4rem;justify-content:flex-end;">
+            <button type="button" class="btn-action-edit" onclick="activateMatchPresetToLive('${p.id}')" title="Siarkan Preset ini ke Website" style="background:rgba(239,68,68,0.18);border-color:#EF4444;color:#EF4444;font-size:0.75rem;padding:0.3rem 0.6rem;font-weight:800;cursor:pointer;">
+              🔴 AKTIFKAN LIVE
+            </button>
+            <button type="button" class="btn-action-edit" onclick="openMatchPresetModal('${p.id}')" title="Edit Preset" style="font-size:0.75rem;padding:0.3rem 0.6rem;cursor:pointer;">
+              ✏️
+            </button>
+            <button type="button" class="btn-action-delete" onclick="deleteMatchPreset('${p.id}')" title="Hapus Preset" style="font-size:0.75rem;padding:0.3rem 0.6rem;cursor:pointer;">
+              🗑️
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+window.renderMatchPresetsTable = renderMatchPresetsTable;
+
+function openMatchPresetModal(presetId = '') {
+  const modal = document.getElementById('modalMatchPreset');
+  const form = document.getElementById('matchPresetForm');
+  const title = document.getElementById('modalMatchPresetTitle');
+  if (!modal || !form) return;
+
+  form.reset();
+  const idEl = document.getElementById('matchPresetId');
+  if (idEl) idEl.value = presetId;
+
+  if (presetId) {
+    if (title) title.textContent = '✏️ EDIT PRESET PERTANDINGAN';
+    const p = (db.liveMatchPresets || []).find(item => item.id === presetId);
+    if (p) {
+      const tourneyInp = document.getElementById('presetTournament');
+      const oppInp = document.getElementById('presetOpponent');
+      const mapInp = document.getElementById('presetMap');
+      const roundInp = document.getElementById('presetRound');
+      const statusInp = document.getElementById('presetStatus');
+      const mothraScoreInp = document.getElementById('presetMothraScore');
+      const oppScoreInp = document.getElementById('presetOpponentScore');
+      const streamUrlInp = document.getElementById('presetStreamUrl');
+
+      if (tourneyInp) tourneyInp.value = p.tournament || '';
+      if (oppInp) oppInp.value = p.opponent || '';
+      if (mapInp) mapInp.value = p.map || '';
+      if (roundInp) roundInp.value = p.round || '';
+      if (statusInp) statusInp.value = p.status || 'UPCOMING';
+      if (mothraScoreInp) mothraScoreInp.value = p.mothraScore !== undefined ? p.mothraScore : 0;
+      if (oppScoreInp) oppScoreInp.value = p.opponentScore !== undefined ? p.opponentScore : 0;
+      if (streamUrlInp) streamUrlInp.value = p.streamUrl || '';
+    }
+  } else {
+    if (title) title.textContent = '➕ TAMBAH PRESET PERTANDINGAN';
+    const mothraScoreInp = document.getElementById('presetMothraScore');
+    const oppScoreInp = document.getElementById('presetOpponentScore');
+    const statusInp = document.getElementById('presetStatus');
+    if (mothraScoreInp) mothraScoreInp.value = 0;
+    if (oppScoreInp) oppScoreInp.value = 0;
+    if (statusInp) statusInp.value = 'UPCOMING';
+  }
+
+  modal.classList.add('active');
+}
+window.openMatchPresetModal = openMatchPresetModal;
+
+function closeMatchPresetModal() {
+  const modal = document.getElementById('modalMatchPreset');
+  if (modal) modal.classList.remove('active');
+}
+window.closeMatchPresetModal = closeMatchPresetModal;
+
+function deleteMatchPreset(presetId) {
+  if (!confirm('Apakah Anda yakin ingin menghapus preset pertandingan ini?')) return;
+  db.liveMatchPresets = (db.liveMatchPresets || []).filter(p => p.id !== presetId);
+  saveMothraData(db);
+  renderMatchPresetsTable();
+  showToast('Preset pertandingan berhasil dihapus.');
+}
+window.deleteMatchPreset = deleteMatchPreset;
+
+function activateMatchPresetToLive(presetId) {
+  const p = (db.liveMatchPresets || []).find(item => item.id === presetId);
+  if (!p) return;
+
+  // Set to active live match
+  db.liveMatch = {
+    enabled: true,
+    status: p.status === 'OFF' ? 'LIVE' : (p.status || 'LIVE'),
+    tournament: p.tournament || 'PBNC 2026 MATCH DAY',
+    map: p.map || 'Downtown',
+    roundInfo: p.round || 'Round 1',
+    mothraScore: parseInt(p.mothraScore) || 0,
+    opponentScore: parseInt(p.opponentScore) || 0,
+    opponentName: p.opponent || 'OPFOR',
+    streamUrl: p.streamUrl || '',
+    nextMatchTime: ''
+  };
+
+  saveMothraData(db);
+  renderLiveMatchPanel();
+  showToast(`🔴 Preset "${p.opponent}" AKTIF & langsung disiarkan ke banner website!`);
+}
+window.activateMatchPresetToLive = activateMatchPresetToLive;
+
 function renderLiveMatchPanel() {
   const lm = db.liveMatch || {
     enabled: false,
@@ -4121,7 +4316,10 @@ function renderLiveMatchPanel() {
 
   const clanNameDisplay = document.getElementById('lmClanNameDisplay');
   if (clanNameDisplay) clanNameDisplay.textContent = (db.branding && db.branding.clanName) || 'MOTHRA';
+
+  renderMatchPresetsTable();
 }
+window.renderLiveMatchPanel = renderLiveMatchPanel;
 
 (function initLiveMatchControls() {
   const btnPlusMothra = document.getElementById('btnPlusMothra');
@@ -4129,6 +4327,12 @@ function renderLiveMatchPanel() {
   const btnPlusOpponent = document.getElementById('btnPlusOpponent');
   const btnMinusOpponent = document.getElementById('btnMinusOpponent');
   const liveMatchForm = document.getElementById('liveMatchForm');
+
+  const btnQuickToggleLive = document.getElementById('btnQuickToggleLive');
+  const btnQuickResetScore = document.getElementById('btnQuickResetScore');
+  const btnQuickSwapTeams = document.getElementById('btnQuickSwapTeams');
+  const btnAddMatchPreset = document.getElementById('btnAddMatchPreset');
+  const matchPresetForm = document.getElementById('matchPresetForm');
 
   if (btnPlusMothra) {
     btnPlusMothra.addEventListener('click', () => {
@@ -4155,6 +4359,111 @@ function renderLiveMatchPanel() {
     btnMinusOpponent.addEventListener('click', () => {
       const inp = document.getElementById('lmOpponentScore');
       if (inp) inp.value = Math.max(0, (parseInt(inp.value) || 0) - 1);
+    });
+  }
+
+  // Quick Action Buttons
+  if (btnQuickToggleLive) {
+    btnQuickToggleLive.addEventListener('click', () => {
+      const statusEl = document.getElementById('lmStatus');
+      if (!statusEl) return;
+      if (statusEl.value === 'LIVE') {
+        statusEl.value = 'OFF';
+        showToast('Live Match dinonaktifkan (OFF). Klik SIMPAN untuk menyiarkan.');
+      } else {
+        statusEl.value = 'LIVE';
+        showToast('Status diubah ke LIVE! Klik SIMPAN untuk menyiarkan.');
+      }
+    });
+  }
+
+  if (btnQuickResetScore) {
+    btnQuickResetScore.addEventListener('click', () => {
+      const mothraInp = document.getElementById('lmMothraScore');
+      const oppInp = document.getElementById('lmOpponentScore');
+      if (mothraInp) mothraInp.value = 0;
+      if (oppInp) oppInp.value = 0;
+      showToast('Skor di-reset ke 0 - 0. Klik SIMPAN untuk memancarkan.');
+    });
+  }
+
+  if (btnQuickSwapTeams) {
+    btnQuickSwapTeams.addEventListener('click', () => {
+      const mothraInp = document.getElementById('lmMothraScore');
+      const oppInp = document.getElementById('lmOpponentScore');
+      if (mothraInp && oppInp) {
+        const tmp = mothraInp.value;
+        mothraInp.value = oppInp.value;
+        oppInp.value = tmp;
+        showToast('Posisi skor ditukar!');
+      }
+    });
+  }
+
+  if (btnAddMatchPreset) {
+    btnAddMatchPreset.addEventListener('click', () => {
+      openMatchPresetModal();
+    });
+  }
+
+  if (matchPresetForm) {
+    matchPresetForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const presetId = document.getElementById('matchPresetId').value;
+      const tournament = document.getElementById('presetTournament').value.trim();
+      const opponent = document.getElementById('presetOpponent').value.trim();
+      const map = document.getElementById('presetMap').value.trim();
+      const round = document.getElementById('presetRound').value.trim();
+      const status = document.getElementById('presetStatus').value;
+      const mothraScore = parseInt(document.getElementById('presetMothraScore').value) || 0;
+      const opponentScore = parseInt(document.getElementById('presetOpponentScore').value) || 0;
+      const streamUrl = document.getElementById('presetStreamUrl').value.trim();
+
+      if (!tournament || !opponent) {
+        showToast('Nama turnamen dan tim lawan wajib diisi!');
+        return;
+      }
+
+      if (!Array.isArray(db.liveMatchPresets)) {
+        db.liveMatchPresets = [];
+      }
+
+      if (presetId) {
+        // Edit existing
+        const idx = db.liveMatchPresets.findIndex(p => p.id === presetId);
+        if (idx !== -1) {
+          db.liveMatchPresets[idx] = {
+            id: presetId,
+            tournament,
+            opponent,
+            map,
+            round,
+            status,
+            mothraScore,
+            opponentScore,
+            streamUrl
+          };
+          showToast('Preset pertandingan berhasil diperbarui!');
+        }
+      } else {
+        // Add new
+        db.liveMatchPresets.unshift({
+          id: 'preset_' + Date.now(),
+          tournament,
+          opponent,
+          map,
+          round,
+          status,
+          mothraScore,
+          opponentScore,
+          streamUrl
+        });
+        showToast('Preset pertandingan baru berhasil ditambahkan!');
+      }
+
+      saveMothraData(db);
+      closeMatchPresetModal();
+      renderMatchPresetsTable();
     });
   }
 

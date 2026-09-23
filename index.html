@@ -177,6 +177,7 @@
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
             <span>INGATKAN SAYA</span>
           </button>
+          <button type="button" class="live-match-close" id="liveMatchCloseBtn" aria-label="Tutup Live Match" title="Tutup pemberitahuan Live Match">&times;</button>
         </div>
       </div>
     </div>
@@ -1670,27 +1671,39 @@
     </div>
   </div>
 
-  <!-- ===================== MOTHRA AIM REFLEX TRAINER MODAL ===================== -->
-  <div class="aim-modal-overlay" id="aimTrainerModal" role="dialog" aria-modal="true" aria-hidden="true" aria-label="MOTHRA Aim Reflex Trainer">
+  <!-- ===================== MOTHRA AIM REFLEX TRAINER 2.0 MODAL ===================== -->
+  <div class="aim-modal-overlay" id="aimTrainerModal" role="dialog" aria-modal="true" aria-hidden="true" aria-label="MOTHRA Aim Reflex Trainer 2.0">
     <div class="aim-game-card">
       <div class="aim-game-header">
         <div class="aim-game-title">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.5">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.5">
             <circle cx="12" cy="12" r="10"/><line x1="22" y1="12" x2="18" y2="12"/><line x1="6" y1="12" x2="2" y2="12"/><line x1="12" y1="6" x2="12" y2="2"/><line x1="12" y1="22" x2="12" y2="18"/>
           </svg>
           <span>MOTHRA AIM REFLEX TRAINER</span>
+          <span class="aim-version-badge">v2.0 PRO</span>
         </div>
-        <button type="button" class="player-modal-close" id="closeAimTrainerBtn" aria-label="Tutup Game">&#10005;</button>
+        <div class="aim-header-actions">
+          <div class="aim-pb-chip" id="aimHeaderPbChip" title="Rekor Terbaik Anda">
+            <span class="aim-pb-label">🏆 BEST:</span>
+            <span class="aim-pb-val" id="aimHeaderPbScore">0</span>
+          </div>
+          <button type="button" class="player-modal-close" id="closeAimTrainerBtn" aria-label="Tutup Game">&#10005;</button>
+        </div>
       </div>
 
+      <!-- HUD STATS -->
       <div class="aim-game-hud">
         <div class="hud-stat-box">
           <div class="hud-stat-label">SISA WAKTU</div>
           <div class="hud-stat-val" id="aimTimerDisplay">30s</div>
         </div>
         <div class="hud-stat-box">
-          <div class="hud-stat-label">SKOR TEMBAKAN</div>
+          <div class="hud-stat-label">SKOR</div>
           <div class="hud-stat-val" id="aimScoreDisplay">0</div>
+        </div>
+        <div class="hud-stat-box hud-stat-box--combo">
+          <div class="hud-stat-label">COMBO STREAK</div>
+          <div class="hud-stat-val hud-stat-val--combo" id="aimComboDisplay">x1</div>
         </div>
         <div class="hud-stat-box">
           <div class="hud-stat-label">AKURASI</div>
@@ -1702,26 +1715,107 @@
         </div>
       </div>
 
+      <!-- ARENA -->
       <div class="aim-arena" id="aimArena">
         <div class="aim-arena-grid"></div>
+        <div class="aim-crosshair" id="aimCrosshair"></div>
 
         <!-- Start Screen -->
         <div class="aim-start-screen" id="aimStartScreen">
-          <h3 style="font-family:var(--font-display);font-size:1.8rem;color:#fff;margin-bottom:0.5rem;">UJI KECEPATAN REAKSI AIM POINT BLANK</h3>
-          <p style="color:var(--text-muted);font-size:0.9rem;max-width:480px;line-height:1.5;margin-bottom:1.5rem;">
-            Tembak sasaran merah secepat mungkin dalam 30 detik! Uji insting dan kecepatan refleks milidetik kamu sebelum ikut seleksi Clan MOTHRA.
+          <h3 class="aim-screen-title">TACTICAL AIM SIMULATOR POINT BLANK</h3>
+          <p class="aim-screen-sub">
+            Uji insting, presisi bidikan, dan kecepatan refleks milidetik kamu sebelum ikut seleksi Clan MOTHRA.
           </p>
-          <button type="button" class="btn-play-aim" id="startAimGameBtn">🎯 MULAI LATIHAN (30s)</button>
+
+          <!-- Mode Selector -->
+          <div class="aim-config-group">
+            <label class="aim-config-label">PILIH MODE LATIHAN:</label>
+            <div class="aim-pill-grid" id="aimModeSelector">
+              <button type="button" class="aim-pill active" data-mode="standard">
+                <span class="aim-pill-icon">🎯</span>
+                <span class="aim-pill-name">Standard Reflex</span>
+                <span class="aim-pill-time">30s</span>
+              </button>
+              <button type="button" class="aim-pill" data-mode="headshot">
+                <span class="aim-pill-icon">💀</span>
+                <span class="aim-pill-name">Headshot Only</span>
+                <span class="aim-pill-time">25s</span>
+              </button>
+              <button type="button" class="aim-pill" data-mode="rush">
+                <span class="aim-pill-icon">⚡</span>
+                <span class="aim-pill-name">Speed Rush</span>
+                <span class="aim-pill-time">15s</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Weapon Selector -->
+          <div class="aim-config-group">
+            <label class="aim-config-label">LOADOUT SENJATA PB:</label>
+            <div class="aim-weapon-grid" id="aimWeaponSelector">
+              <button type="button" class="aim-weapon-pill active" data-weapon="aug">
+                <span class="aim-w-name">AUG A3</span>
+                <span class="aim-w-spec">Balanced • Precision</span>
+              </button>
+              <button type="button" class="aim-weapon-pill" data-weapon="kriss">
+                <span class="aim-w-name">KRISS S.V</span>
+                <span class="aim-w-spec">Rapid Fire • Streak</span>
+              </button>
+              <button type="button" class="aim-weapon-pill" data-weapon="cheytac">
+                <span class="aim-w-name">CHEYTAC M200</span>
+                <span class="aim-w-spec">Sniper • High Damage</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Rules / Target Legend -->
+          <div class="aim-legend-bar">
+            <div class="aim-legend-item"><span class="legend-dot legend-dot--red"></span> Target Merah: <strong>+100</strong></div>
+            <div class="aim-legend-item"><span class="legend-dot legend-dot--skull">💀</span> Headshot Gold: <strong>+250</strong></div>
+            <div class="aim-legend-item"><span class="legend-dot legend-dot--star">⭐</span> MOTHRA Star: <strong>+300 &amp; +2s</strong></div>
+            <div class="aim-legend-item"><span class="legend-dot legend-dot--shield">🛡️</span> Sandera/Hostage: <strong class="text-danger">-150 Penalti</strong></div>
+          </div>
+
+          <button type="button" class="btn-play-aim" id="startAimGameBtn">
+            <span class="btn-play-icon">🎯</span>
+            <span id="startAimBtnText">MULAI LATIHAN (30s)</span>
+          </button>
         </div>
 
         <!-- Result Screen -->
         <div class="aim-result-screen" id="aimResultScreen" style="display:none;">
-          <div style="font-family:var(--font-mono);font-size:0.85rem;color:var(--gold);letter-spacing:0.1em;">EVALUASI TEMPUR SELESAI</div>
+          <div class="aim-eval-sub">EVALUASI TEMPUR SELESAI</div>
           <div class="aim-rank-tag" id="aimRankTitle">TACTICAL LEGEND</div>
-          <p style="color:#fff;font-size:1rem;margin-bottom:1.25rem;" id="aimResultSummary">Skor: 1,850 • Akurasi: 94% • Reaksi: 245 ms</p>
-          <div style="display:flex;gap:0.75rem;flex-wrap:wrap;justify-content:center;">
+          <div class="aim-new-best-badge" id="aimNewBestBadge" style="display:none;">🎉 REKOR BARU TERTINGGI!</div>
+          
+          <div class="aim-result-stats-grid">
+            <div class="aim-res-card">
+              <span class="aim-res-lbl">SKOR AKHIR</span>
+              <span class="aim-res-val" id="resScoreVal">0</span>
+            </div>
+            <div class="aim-res-card">
+              <span class="aim-res-lbl">TOTAL HITS</span>
+              <span class="aim-res-val" id="resHitsVal">0</span>
+            </div>
+            <div class="aim-res-card">
+              <span class="aim-res-lbl">MAX COMBO</span>
+              <span class="aim-res-val text-gold" id="resComboVal">x1</span>
+            </div>
+            <div class="aim-res-card">
+              <span class="aim-res-lbl">AKURASI</span>
+              <span class="aim-res-val" id="resAccVal">0%</span>
+            </div>
+            <div class="aim-res-card">
+              <span class="aim-res-lbl">RATA-RATA REAKSI</span>
+              <span class="aim-res-val" id="resSpeedVal">0 ms</span>
+            </div>
+          </div>
+
+          <p class="aim-result-msg" id="aimResultMsg">Refleks bidikan Anda sangat tajam!</p>
+
+          <div style="display:flex;gap:0.75rem;flex-wrap:wrap;justify-content:center;margin-top:1.25rem;">
             <button type="button" class="btn-play-aim" id="retryAimGameBtn">🔄 MAIN LAGI</button>
-            <a href="#join" class="btn btn--primary" id="aimClaimRecruitBtn" style="font-family:var(--font-display);font-size:1.1rem;font-weight:900;padding:0.75rem 1.5rem;text-decoration:none;">GABUNG ROSTER MOTHRA</a>
+            <a href="#join" class="btn btn--primary" id="aimClaimRecruitBtn" style="font-family:var(--font-display);font-size:1.05rem;font-weight:900;padding:0.75rem 1.5rem;text-decoration:none;">GABUNG ROSTER MOTHRA</a>
           </div>
         </div>
       </div>

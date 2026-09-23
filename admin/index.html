@@ -134,7 +134,7 @@
     <!-- Mobile Horizontal Quick-Nav Scroll Bar -->
     <nav class="mobile-quick-nav" id="mobileQuickNav" aria-label="Quick Category Switcher">
       <button class="mobile-quick-item active" data-panel="panelOverview">📊 Overview</button>
-      <button class="mobile-quick-item" data-panel="panelLiveMatch">🔴 Live Score</button>
+      <button class="mobile-quick-item" data-panel="panelLiveMatch">🔴 Live Match</button>
       <button class="mobile-quick-item" data-panel="panelRecruitment">📥 Rekrutmen</button>
       <button class="mobile-quick-item" data-panel="panelPosterGenerator">🖼️ Poster</button>
       <button class="mobile-quick-item" data-panel="panelStore">🛒 Store</button>
@@ -170,7 +170,7 @@
       <nav class="sidebar-nav">
         <div class="sidebar-nav-section">COMMAND CENTER</div>
         <button class="nav-item active" data-panel="panelBranding">🛡️ Identitas &amp; Logo Clan</button>
-        <button class="nav-item" data-panel="panelLiveMatch">🔴 Live Scoreboard Operator</button>
+        <button class="nav-item" data-panel="panelLiveMatch">🔴 Live Match &amp; Scoreboard (Edit Live)</button>
         <button class="nav-item" data-panel="panelRecruitment">📥 Inbox Rekrutmen CRM</button>
         <button class="nav-item" data-panel="panelPosterGenerator">🖼️ Roster Poster Generator</button>
         <button class="nav-item" data-panel="panelStore">🛒 Katalog Tactical Armory</button>
@@ -1401,9 +1401,14 @@
         <div class="card-box">
           <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;margin-bottom:1rem;">
             <div>
-              <h3 class="card-box-title">🔴 LIVE MATCH DAY &amp; SCOREBOARD OPERATOR</h3>
-              <p style="color:var(--text-muted);font-size:0.9rem;margin-top:0.25rem;">
-                Kontrol skor pertandingan turnamen Point Blank secara realtime. Perubahan skor dan status <strong style="color:var(--gold);">langsung terpancar ke banner seluruh pengunjung website</strong>.
+              <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
+                <h3 class="card-box-title" style="margin-bottom:0;">🔴 LIVE MATCH DAY &amp; SCOREBOARD OPERATOR</h3>
+                <span class="badge" style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.4);color:#10B981;font-family:var(--font-mono);font-size:0.75rem;padding:0.2rem 0.5rem;border-radius:4px;">
+                  🟢 SUPABASE REALTIME SYNC
+                </span>
+              </div>
+              <p style="color:var(--text-muted);font-size:0.9rem;margin-top:0.35rem;">
+                Kontrol skor pertandingan turnamen Point Blank secara realtime. Data <strong style="color:var(--gold);">langsung tersimpan ke Supabase Cloud</strong> dan terpancar otomatis ke banner website publik.
               </p>
             </div>
             <div style="display:flex;gap:0.5rem;align-items:center;">
@@ -1412,7 +1417,21 @@
             </div>
           </div>
 
-          <form id="liveMatchForm" style="margin-top:1.5rem;">
+          <!-- Quick Action Buttons -->
+          <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin:1.25rem 0;padding:0.85rem 1rem;background:rgba(255,255,255,0.02);border:1px solid var(--border-dim);border-radius:6px;align-items:center;">
+            <span style="font-family:var(--font-mono);font-size:0.75rem;color:var(--gold);font-weight:700;">⚡ AKSI CEPAT:</span>
+            <button type="button" class="btn-action-edit" id="btnQuickToggleLive" style="padding:0.35rem 0.85rem;font-size:0.82rem;font-family:var(--font-mono);">
+              🔘 TOGGLE LIVE STATUS
+            </button>
+            <button type="button" class="btn-action-edit" id="btnQuickResetScore" style="padding:0.35rem 0.85rem;font-size:0.82rem;font-family:var(--font-mono);">
+              🔄 RESET SKOR (0 - 0)
+            </button>
+            <button type="button" class="btn-action-edit" id="btnQuickSwapTeams" style="padding:0.35rem 0.85rem;font-size:0.82rem;font-family:var(--font-mono);">
+              🔀 TUKAR POSISI SKOR
+            </button>
+          </div>
+
+          <form id="liveMatchForm" style="margin-top:1.25rem;">
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.25rem;">
               <div class="form-group">
                 <label class="form-label">STATUS MATCH DAY *</label>
@@ -1474,6 +1493,40 @@
               🔴 UPDATE &amp; BROADCAST LIVE SCOREBOARD &rarr;
             </button>
           </form>
+        </div>
+
+        <!-- CRUD MATCH PRESETS & JADWAL MATCH DAY -->
+        <div class="card-box" style="margin-top:2rem;">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem;">
+            <div>
+              <h3 class="card-box-title">📋 CRUD PRESET PERTANDINGAN (TERHUBUNG KE SUPABASE)</h3>
+              <p style="color:var(--text-muted);font-size:0.9rem;margin-top:0.25rem;">
+                Kelola daftar pertandingan mendatang atau arsip. Klik <strong style="color:#EF4444;">🔴 AKTIFKAN KE LIVE</strong> untuk langsung menyiarkannya ke banner publik!
+              </p>
+            </div>
+            <button type="button" class="btn-add" id="btnAddMatchPreset">
+              + TAMBAH PRESET MATCH
+            </button>
+          </div>
+
+          <div class="table-wrap">
+            <table class="data-table" id="matchPresetsTable">
+              <thead>
+                <tr>
+                  <th style="width:50px;">NO</th>
+                  <th>TURNAMEN</th>
+                  <th>TIM LAWAN</th>
+                  <th>MAP &amp; ROUND</th>
+                  <th>SKOR</th>
+                  <th>STATUS</th>
+                  <th style="width:240px;text-align:right;">AKSI</th>
+                </tr>
+              </thead>
+              <tbody id="matchPresetsTableBody">
+                <!-- Injected via JS -->
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
 
@@ -1797,6 +1850,9 @@
             </label>
             <label style="display:flex;align-items:center;gap:0.45rem;font-size:0.75rem;color:#E2E8F0;background:#14141B;border:1px solid var(--border-dim);padding:0.35rem 0.5rem;border-radius:4px;cursor:pointer;">
               <input type="checkbox" class="perm-panel-checkbox" data-panel="panelBranding" checked style="accent-color:var(--gold);" /> 🛡️ Branding &amp; Logo
+            </label>
+            <label style="display:flex;align-items:center;gap:0.45rem;font-size:0.75rem;color:#FCA5A5;background:#1A1114;border:1px solid rgba(239,68,68,0.3);padding:0.35rem 0.5rem;border-radius:4px;cursor:pointer;">
+              <input type="checkbox" class="perm-panel-checkbox" data-panel="panelLiveMatch" checked style="accent-color:#EF4444;" /> 🔴 Live Scoreboard
             </label>
             <label style="display:flex;align-items:center;gap:0.45rem;font-size:0.75rem;color:#E2E8F0;background:#14141B;border:1px solid var(--border-dim);padding:0.35rem 0.5rem;border-radius:4px;cursor:pointer;">
               <input type="checkbox" class="perm-panel-checkbox" data-panel="panelPartnership" checked style="accent-color:var(--gold);" /> 🤝 The Alliance
@@ -2487,6 +2543,71 @@
         <div class="crud-modal-footer">
           <button type="button" class="btn-cancel" onclick="closeStoreModal()">BATAL</button>
           <button type="submit" class="btn-add">SIMPAN PRODUK</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD / EDIT MATCH PRESET -->
+  <div class="crud-modal-overlay" id="modalMatchPreset">
+    <div class="crud-modal-card" style="max-width:650px;">
+      <div class="crud-modal-header">
+        <h3 class="crud-modal-title" id="modalMatchPresetTitle">➕ TAMBAH PRESET PERTANDINGAN</h3>
+        <button type="button" class="crud-modal-close" onclick="closeMatchPresetModal()">&times;</button>
+      </div>
+      <form id="matchPresetForm" style="padding:1.5rem;">
+        <input type="hidden" id="matchPresetId" value="" />
+        
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+          <div class="form-group">
+            <label class="form-label">NAMA TURNAMEN *</label>
+            <input type="text" id="presetTournament" class="form-input" placeholder="PBNC 2026 GRAND FINAL" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">NAMA TIM LAWAN *</label>
+            <input type="text" id="presetOpponent" class="form-input" placeholder="ALTER EGO PB" required />
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;">
+          <div class="form-group">
+            <label class="form-label">MAP PICK *</label>
+            <input type="text" id="presetMap" class="form-input" placeholder="Downtown" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">ROUND INFO *</label>
+            <input type="text" id="presetRound" class="form-input" placeholder="Round 1 • CT Attack" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">STATUS MATCH *</label>
+            <select id="presetStatus" class="form-input" required>
+              <option value="UPCOMING">⏳ UPCOMING</option>
+              <option value="LIVE">🔴 LIVE</option>
+              <option value="VICTORY">🏆 VICTORY (WIN)</option>
+              <option value="DEFEAT">💀 DEFEAT</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+          <div class="form-group">
+            <label class="form-label">SKOR SQUAD MOTHRA</label>
+            <input type="number" id="presetMothraScore" class="form-input" value="0" min="0" max="99" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">SKOR LAWAN</label>
+            <input type="number" id="presetOpponentScore" class="form-input" value="0" min="0" max="99" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">URL LIVE STREAM (YOUTUBE / DISCORD)</label>
+          <input type="url" id="presetStreamUrl" class="form-input" placeholder="https://youtube.com/watch?v=..." />
+        </div>
+
+        <div class="crud-modal-footer" style="margin-top:1.5rem;">
+          <button type="button" class="btn-cancel" onclick="closeMatchPresetModal()">BATAL</button>
+          <button type="submit" class="btn-add">💾 SIMPAN PRESET KE SUPABASE</button>
         </div>
       </form>
     </div>

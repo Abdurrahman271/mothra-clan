@@ -4569,6 +4569,31 @@ button {
   color: #000;
 }
 
+.live-match-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 4px;
+  color: var(--text-muted);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: all var(--transition);
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.live-match-close:hover {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: #EF4444;
+  color: #fff;
+  transform: scale(1.08);
+}
+
 /* Tablet Layout (768px - 1024px) */
 @media (max-width: 1024px) {
   .live-match-container {
@@ -4598,6 +4623,18 @@ button {
 @media (max-width: 768px) {
   .live-match-bar {
     border-bottom: 2px solid rgba(212, 175, 55, 0.4);
+    position: relative;
+  }
+  .live-match-close {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    font-size: 1.15rem;
+    z-index: 10;
+    background: rgba(0, 0, 0, 0.65);
+    border-color: rgba(255, 255, 255, 0.25);
   }
   .live-match-container {
     flex-direction: column;
@@ -4810,7 +4847,7 @@ button {
   border: 1px solid var(--border);
   border-radius: 8px;
   width: 100%;
-  max-width: 820px;
+  max-width: 860px;
   overflow: hidden;
   box-shadow: 0 0 50px rgba(0, 0, 0, 0.9), 0 0 30px var(--gold-glow);
   position: relative;
@@ -4819,18 +4856,19 @@ button {
 }
 
 .aim-game-header {
-  padding: 1rem 1.5rem;
-  background: rgba(20, 20, 26, 0.8);
+  padding: 0.85rem 1.5rem;
+  background: rgba(20, 20, 26, 0.9);
   border-bottom: 1px solid var(--border-dim);
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 1rem;
 }
 
 .aim-game-title {
   font-family: var(--font-display);
   font-weight: 900;
-  font-size: 1.4rem;
+  font-size: 1.35rem;
   color: var(--white);
   letter-spacing: 0.06em;
   display: flex;
@@ -4838,11 +4876,52 @@ button {
   gap: 0.5rem;
 }
 
+.aim-version-badge {
+  background: rgba(212, 175, 55, 0.15);
+  border: 1px solid var(--border);
+  color: var(--gold);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 0.15rem 0.45rem;
+  border-radius: 3px;
+  letter-spacing: 0.05em;
+}
+
+.aim-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.aim-pb-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  padding: 0.25rem 0.65rem;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+}
+
+.aim-pb-label {
+  font-size: 0.72rem;
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.aim-pb-val {
+  font-size: 0.88rem;
+  color: #fff;
+  font-weight: 900;
+}
+
 .aim-game-hud {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0.75rem;
-  padding: 0.75rem 1.5rem;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.5rem;
+  padding: 0.65rem 1.25rem;
   background: rgba(10, 10, 14, 0.95);
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
@@ -4851,13 +4930,18 @@ button {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 4px;
-  padding: 0.5rem;
+  padding: 0.4rem 0.5rem;
   text-align: center;
+}
+
+.hud-stat-box--combo {
+  border-color: rgba(212, 175, 55, 0.3);
+  background: rgba(212, 175, 55, 0.06);
 }
 
 .hud-stat-label {
   font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   color: var(--text-muted);
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -4865,14 +4949,20 @@ button {
 
 .hud-stat-val {
   font-family: var(--font-mono);
-  font-size: 1.3rem;
+  font-size: 1.25rem;
   font-weight: 900;
   color: var(--gold);
 }
 
+.hud-stat-val--combo {
+  color: #FBBF24;
+  text-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+  transition: transform 0.15s ease;
+}
+
 .aim-arena {
-  height: 420px;
-  background: radial-gradient(circle at center, #15151C 0%, #0A0A0D 100%);
+  height: 440px;
+  background: radial-gradient(circle at center, #15151C 0%, #08080B 100%);
   position: relative;
   overflow: hidden;
   cursor: crosshair;
@@ -4885,14 +4975,42 @@ button {
   background-image: 
     linear-gradient(rgba(212, 175, 55, 0.04) 1px, transparent 1px),
     linear-gradient(90deg, rgba(212, 175, 55, 0.04) 1px, transparent 1px);
-  background-size: 30px 30px;
+  background-size: 32px 32px;
   pointer-events: none;
 }
 
+/* Custom Crosshair Pointer */
+.aim-crosshair {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  display: none;
+  z-index: 20;
+}
+
+.aim-crosshair::before,
+.aim-crosshair::after {
+  content: '';
+  position: absolute;
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 0 5px rgba(212, 175, 55, 0.8);
+}
+
+.aim-crosshair::before {
+  top: 11px; left: 0; width: 24px; height: 2px;
+}
+
+.aim-crosshair::after {
+  top: 0; left: 11px; width: 2px; height: 24px;
+}
+
+/* Base Target */
 .aim-target-disc {
   position: absolute;
-  width: 54px;
-  height: 54px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   background: radial-gradient(circle at 35% 35%, #EF4444, #7F1D1D);
   border: 2px solid #FCA5A5;
@@ -4902,64 +5020,332 @@ button {
   justify-content: center;
   cursor: pointer;
   transform: translate(-50%, -50%) scale(0);
-  animation: spawnTarget 0.2s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+  animation: spawnTarget 0.18s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+  transition: transform 0.1s ease, opacity 0.1s ease;
+  z-index: 5;
 }
 
 .aim-target-disc::before {
   content: '';
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   background: #FEE2E2;
   box-shadow: 0 0 8px #fff;
+}
+
+/* Target: Golden Headshot Target */
+.aim-target-disc--headshot {
+  width: 40px;
+  height: 40px;
+  background: radial-gradient(circle at 35% 35%, #F59E0B, #78350F);
+  border-color: #FDE68A;
+  box-shadow: 0 0 24px rgba(245, 158, 11, 0.9);
+}
+
+.aim-target-disc--headshot::before {
+  content: '💀';
+  width: auto;
+  height: auto;
+  background: transparent;
+  box-shadow: none;
+  font-size: 1.15rem;
+}
+
+/* Target: MOTHRA Star Bonus Target */
+.aim-target-disc--star {
+  width: 46px;
+  height: 46px;
+  background: radial-gradient(circle at 35% 35%, #10B981, #064E3B);
+  border-color: #6EE7B7;
+  box-shadow: 0 0 25px rgba(16, 185, 129, 0.9);
+}
+
+.aim-target-disc--star::before {
+  content: '⭐';
+  width: auto;
+  height: auto;
+  background: transparent;
+  box-shadow: none;
+  font-size: 1.2rem;
+}
+
+/* Target: Civilian / Hostage Penalty Target */
+.aim-target-disc--hostage {
+  width: 54px;
+  height: 54px;
+  background: radial-gradient(circle at 35% 35%, #3B82F6, #1E3A8A);
+  border-color: #93C5FD;
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.7);
+}
+
+.aim-target-disc--hostage::before {
+  content: '🛡️';
+  width: auto;
+  height: auto;
+  background: transparent;
+  box-shadow: none;
+  font-size: 1.2rem;
 }
 
 @keyframes spawnTarget {
   to { transform: translate(-50%, -50%) scale(1); }
 }
 
+/* Screens */
 .aim-start-screen,
 .aim-result-screen {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(10, 10, 14, 0.95);
+  background: rgba(10, 10, 14, 0.96);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
+  padding: 1.5rem;
   text-align: center;
   z-index: 10;
+  overflow-y: auto;
 }
 
-.aim-rank-tag {
+.aim-screen-title {
   font-family: var(--font-display);
-  font-weight: 900;
-  font-size: 2.2rem;
-  color: var(--gold);
-  letter-spacing: 0.06em;
-  margin: 0.5rem 0 1rem;
-  text-shadow: 0 0 20px var(--gold-glow);
+  font-size: 1.6rem;
+  color: #fff;
+  margin-bottom: 0.35rem;
+  letter-spacing: 0.05em;
 }
+
+.aim-screen-sub {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  max-width: 520px;
+  line-height: 1.45;
+  margin-bottom: 1.1rem;
+}
+
+/* Config Groups */
+.aim-config-group {
+  width: 100%;
+  max-width: 600px;
+  margin-bottom: 0.85rem;
+  text-align: left;
+}
+
+.aim-config-label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--gold);
+  letter-spacing: 0.08em;
+  margin-bottom: 0.4rem;
+  font-weight: 700;
+}
+
+.aim-pill-grid,
+.aim-weapon-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.aim-pill,
+.aim-weapon-pill {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  padding: 0.5rem 0.65rem;
+  color: #fff;
+  cursor: pointer;
+  transition: all var(--transition);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.aim-pill:hover,
+.aim-weapon-pill:hover {
+  background: rgba(212, 175, 55, 0.1);
+  border-color: rgba(212, 175, 55, 0.4);
+}
+
+.aim-pill.active,
+.aim-weapon-pill.active {
+  background: rgba(212, 175, 55, 0.18);
+  border-color: var(--gold);
+  box-shadow: 0 0 12px var(--gold-glow);
+}
+
+.aim-pill-name,
+.aim-w-name {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.aim-pill.active .aim-pill-name,
+.aim-weapon-pill.active .aim-w-name {
+  color: var(--gold);
+}
+
+.aim-pill-time,
+.aim-w-spec {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+}
+
+/* Legend Bar */
+.aim-legend-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+  padding: 0.45rem 0.85rem;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  margin: 0.5rem 0 1.25rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.aim-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.legend-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.legend-dot--red { background: #EF4444; box-shadow: 0 0 6px #EF4444; }
+.text-danger { color: #EF4444; }
 
 .btn-play-aim {
   background: var(--gold);
   color: #000;
   font-family: var(--font-display);
   font-weight: 900;
-  font-size: 1.2rem;
+  font-size: 1.15rem;
   letter-spacing: 0.06em;
-  padding: 0.8rem 2.2rem;
+  padding: 0.75rem 2.2rem;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   transition: all var(--transition);
   box-shadow: 0 0 25px var(--gold-glow);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .btn-play-aim:hover {
   background: var(--gold-bright);
   transform: scale(1.04);
+}
+
+/* Result Screen Specifics */
+.aim-eval-sub {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--gold);
+  letter-spacing: 0.12em;
+}
+
+.aim-rank-tag {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 2rem;
+  color: var(--gold);
+  letter-spacing: 0.06em;
+  margin: 0.35rem 0 0.5rem;
+  text-shadow: 0 0 20px var(--gold-glow);
+}
+
+.aim-new-best-badge {
+  background: #10B981;
+  color: #fff;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 0.85rem;
+  padding: 0.25rem 0.85rem;
+  border-radius: 20px;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.85rem;
+  animation: pulse 1s infinite alternate;
+}
+
+.aim-result-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 680px;
+  margin: 0.5rem 0 0.85rem;
+}
+
+.aim-res-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  padding: 0.5rem 0.35rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.aim-res-lbl {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+}
+
+.aim-res-val {
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: #fff;
+  margin-top: 0.2rem;
+}
+
+.aim-result-msg {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  max-width: 500px;
+  line-height: 1.4;
+}
+
+/* Mobile Adjustments for Aim Trainer */
+@media (max-width: 640px) {
+  .aim-game-hud {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.35rem;
+    padding: 0.5rem;
+  }
+  .hud-stat-val {
+    font-size: 1.05rem;
+  }
+  .aim-arena {
+    height: 340px;
+  }
+  .aim-pill-grid,
+  .aim-weapon-grid {
+    grid-template-columns: 1fr;
+  }
+  .aim-result-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 /* ============================================================

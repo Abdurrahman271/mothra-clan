@@ -90,7 +90,12 @@ function syncCmsData() {
     // --- Top Announcement Bar ---
     const topBar = document.getElementById('adsTopBar');
     if (topBar && ads.topBanner) {
-      if (ads.topBanner.enabled) {
+      let isSponsorDismissed = false;
+      try {
+        isSponsorDismissed = localStorage.getItem('mothra_sponsor_banner_dismissed') === 'true';
+      } catch (e) {}
+
+      if (ads.topBanner.enabled && !isSponsorDismissed) {
         const txtEl = document.getElementById('adsTopBarText');
         const lnkEl = document.getElementById('adsTopBarLink');
         if (txtEl) txtEl.textContent = ads.topBanner.text || '';
@@ -105,6 +110,9 @@ function syncCmsData() {
           if (!btn._hasAdListener) {
             btn.addEventListener('click', () => {
               topBar.style.display = 'none';
+              try {
+                localStorage.setItem('mothra_sponsor_banner_dismissed', 'true');
+              } catch (e) {}
               updateHeaderOffset();
             });
             btn._hasAdListener = true;
@@ -567,7 +575,27 @@ function syncCmsData() {
   const liveBar = document.getElementById('liveMatchBar');
   if (liveBar && db.liveMatch) {
     const lm = db.liveMatch;
-    if (lm.enabled && lm.status !== 'OFF') {
+    const matchFingerprint = `${lm.tournament || ''}_${lm.opponentName || ''}_${lm.status || ''}_${lm.mothraScore || 0}_${lm.opponentScore || 0}`;
+    let isLiveDismissed = false;
+    try {
+      const dismissedVal = localStorage.getItem('mothra_live_match_dismissed');
+      isLiveDismissed = dismissedVal === matchFingerprint;
+    } catch (e) {}
+
+    // Pasang listener tombol Exit Live Match
+    const liveCloseBtn = document.getElementById('liveMatchCloseBtn');
+    if (liveCloseBtn && !liveCloseBtn._hasCloseListener) {
+      liveCloseBtn.addEventListener('click', () => {
+        liveBar.style.display = 'none';
+        try {
+          localStorage.setItem('mothra_live_match_dismissed', matchFingerprint);
+        } catch (e) {}
+        updateHeaderOffset();
+      });
+      liveCloseBtn._hasCloseListener = true;
+    }
+
+    if (lm.enabled && lm.status !== 'OFF' && !isLiveDismissed) {
       const statusText = document.getElementById('liveStatusText');
       const badgeStatus = document.getElementById('liveBadgeStatus');
       const tourneyName = document.getElementById('liveTourneyName');
@@ -1095,6 +1123,128 @@ const TacticalAudio = (function() {
           osc.start(now + i * 0.08);
           osc.stop(now + i * 0.08 + 0.22);
         });
+      } catch (e) {}
+    },
+    playGunshot(weapon = 'aug') {
+      if (isMuted) return;
+      try {
+        const ctx = getCtx();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        const dur = weapon === 'cheytac' ? 0.28 : (weapon === 'kriss' ? 0.08 : 0.14);
+
+        // Noise buffer for blast/crack
+        const bufferSize = ctx.sampleRate * dur;
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.35));
+        }
+        const noise = ctx.createBufferSource();
+        noise.buffer = buffer;
+
+        const noiseFilter = ctx.createBiquadFilter();
+        noiseFilter.type = weapon === 'cheytac' ? 'lowpass' : 'bandpass';
+        noiseFilter.frequency.setValueAtTime(weapon === 'cheytac' ? 450 : 1200, now);
+
+        const noiseGain = ctx.createGain();
+        noiseGain.gain.setValueAtTime(weapon === 'cheytac' ? 0.18 : 0.12, now);
+        noiseGain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+
+        noise.connect(noiseFilter);
+        noiseFilter.connect(noiseGain);
+        noiseGain.connect(ctx.destination);
+        noise.start(now);
+
+        // Low punch / body
+        const punch = ctx.createOscillator();
+        const punchGain = ctx.createGain();
+        punch.type = 'triangle';
+        const startFreq = weapon === 'cheytac' ? 180 : (weapon === 'kriss' ? 240 : 200);
+        punch.frequency.setValueAtTime(startFreq, now);
+        punch.frequency.exponentialRampToValueAtTime(30, now + dur * 0.8);
+        punchGain.gain.setValueAtTime(0.12, now);
+        punchGain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+        punch.connect(punchGain);
+        punchGain.connect(ctx.destination);
+        punch.start(now);
+        punch.stop(now + dur);
+      } catch (e) {}
+    },
+    playHitmarker() {
+      if (isMuted) return;
+      try {
+        const ctx = getCtx();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(2200, now);
+        osc.frequency.exponentialRampToValueAtTime(800, now + 0.05);
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.05);
+      } catch (e) {}
+    },
+    playBonus() {
+      if (isMuted) return;
+      try {
+        const ctx = getCtx();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        [880, 1174.66, 1760].forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now + i * 0.04);
+          gain.gain.setValueAtTime(0.07, now + i * 0.04);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.04 + 0.2);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + i * 0.04);
+          osc.stop(now + i * 0.04 + 0.22);
+        });
+      } catch (e) {}
+    },
+    playPenalty() {
+      if (isMuted) return;
+      try {
+        const ctx = getCtx();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(140, now);
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.18);
+      } catch (e) {}
+    },
+    playCombo(count) {
+      if (isMuted) return;
+      try {
+        const ctx = getCtx();
+        if (!ctx) return;
+        const now = ctx.currentTime;
+        const baseFreq = 440 + Math.min(count * 60, 800);
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(baseFreq, now);
+        gain.gain.setValueAtTime(0.06, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.12);
       } catch (e) {}
     }
   };
@@ -2423,37 +2573,131 @@ if (document.readyState === 'loading') {
 })();
 
 /* ============================================================
-   14. MOTHRA AIM REFLEX TRAINER MINI-GAME ENGINE
+   14. MOTHRA AIM REFLEX TRAINER 2.0 MINI-GAME ENGINE
    ============================================================ */
 (function initAimReflexTrainer() {
   const modal = document.getElementById('aimTrainerModal');
   const closeBtn = document.getElementById('closeAimTrainerBtn');
   const arena = document.getElementById('aimArena');
+  const crosshair = document.getElementById('aimCrosshair');
   const startScreen = document.getElementById('aimStartScreen');
   const resultScreen = document.getElementById('aimResultScreen');
   const startBtn = document.getElementById('startAimGameBtn');
+  const startBtnText = document.getElementById('startAimBtnText');
   const retryBtn = document.getElementById('retryAimGameBtn');
   const claimRecruitBtn = document.getElementById('aimClaimRecruitBtn');
 
+  // HUD Displays
   const timerDisplay = document.getElementById('aimTimerDisplay');
   const scoreDisplay = document.getElementById('aimScoreDisplay');
+  const comboDisplay = document.getElementById('aimComboDisplay');
   const accDisplay = document.getElementById('aimAccDisplay');
   const speedDisplay = document.getElementById('aimSpeedDisplay');
+  const pbHeaderChip = document.getElementById('aimHeaderPbScore');
+
+  // Result Displays
   const rankTitle = document.getElementById('aimRankTitle');
-  const resultSummary = document.getElementById('aimResultSummary');
+  const resScoreVal = document.getElementById('resScoreVal');
+  const resHitsVal = document.getElementById('resHitsVal');
+  const resComboVal = document.getElementById('resComboVal');
+  const resAccVal = document.getElementById('resAccVal');
+  const resSpeedVal = document.getElementById('resSpeedVal');
+  const resMsg = document.getElementById('aimResultMsg');
+  const newBestBadge = document.getElementById('aimNewBestBadge');
 
   if (!modal || !arena) return;
 
+  // Game Settings & State
+  let currentMode = 'standard'; // 'standard' (30s), 'headshot' (25s), 'rush' (15s)
+  let currentWeapon = 'aug'; // 'aug', 'kriss', 'cheytac'
   let isPlaying = false;
   let timeLeft = 30;
   let timerInterval = null;
   let targetTimeout = null;
+  let moveAnimationId = null;
+
   let score = 0;
   let hits = 0;
   let totalClicks = 0;
+  let combo = 0;
+  let maxCombo = 0;
   let reactionTimes = [];
   let currentTargetSpawnTime = 0;
   let currentTargetEl = null;
+
+  // Load High Score
+  function getPersonalBest() {
+    try {
+      const saved = localStorage.getItem('mothra_aim_best_v2');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return { score: 0, acc: 0, speed: 0 };
+  }
+
+  function savePersonalBest(s, a, sp) {
+    try {
+      localStorage.setItem('mothra_aim_best_v2', JSON.stringify({ score: s, acc: a, speed: sp }));
+    } catch (e) {}
+  }
+
+  function refreshHighScoresDisplay() {
+    const pb = getPersonalBest();
+    if (pbHeaderChip) pbHeaderChip.textContent = (pb.score || 0).toLocaleString();
+  }
+  refreshHighScoresDisplay();
+
+  // Mode Selection Handlers
+  const modePills = document.querySelectorAll('#aimModeSelector .aim-pill');
+  modePills.forEach(pill => {
+    pill.addEventListener('click', () => {
+      modePills.forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      currentMode = pill.dataset.mode || 'standard';
+      updateModeConfig();
+      if (typeof TacticalAudio !== 'undefined') TacticalAudio.playTab();
+    });
+  });
+
+  // Weapon Selection Handlers
+  const weaponPills = document.querySelectorAll('#aimWeaponSelector .aim-weapon-pill');
+  weaponPills.forEach(pill => {
+    pill.addEventListener('click', () => {
+      weaponPills.forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      currentWeapon = pill.dataset.weapon || 'aug';
+      if (typeof TacticalAudio !== 'undefined') TacticalAudio.playGunClick();
+    });
+  });
+
+  function updateModeConfig() {
+    if (currentMode === 'standard') {
+      timeLeft = 30;
+      if (startBtnText) startBtnText.textContent = 'MULAI LATIHAN (30s)';
+    } else if (currentMode === 'headshot') {
+      timeLeft = 25;
+      if (startBtnText) startBtnText.textContent = 'MULAI HEADSHOT ONLY (25s)';
+    } else if (currentMode === 'rush') {
+      timeLeft = 15;
+      if (startBtnText) startBtnText.textContent = 'MULAI SPEED RUSH (15s)';
+    }
+    if (timerDisplay) timerDisplay.textContent = `${timeLeft}s`;
+  }
+
+  // Crosshair Follow Mouse
+  arena.addEventListener('mouseenter', () => {
+    if (crosshair) crosshair.style.display = 'block';
+  });
+  arena.addEventListener('mouseleave', () => {
+    if (crosshair) crosshair.style.display = 'none';
+  });
+  arena.addEventListener('mousemove', (e) => {
+    if (!crosshair) return;
+    const rect = arena.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    crosshair.style.left = `${x}px`;
+    crosshair.style.top = `${y}px`;
+  });
 
   function openGame() {
     modal.classList.add('open');
@@ -2461,6 +2705,7 @@ if (document.readyState === 'loading') {
     modal.style.display = 'flex';
     modal.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
+    refreshHighScoresDisplay();
     resetGameToStart();
     if (typeof TacticalAudio !== 'undefined') TacticalAudio.playGunClick();
   }
@@ -2477,7 +2722,6 @@ if (document.readyState === 'loading') {
   window.openAimTrainer = openGame;
   window.closeAimTrainer = closeGame;
 
-  // Bind all trigger buttons
   document.querySelectorAll('#openAimTrainerBtn, .btn-aim-launch, [data-open-aim], a[href="#aimtrainer"]').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
@@ -2503,10 +2747,14 @@ if (document.readyState === 'loading') {
 
   function resetGameToStart() {
     stopGame();
+    updateModeConfig();
     if (startScreen) startScreen.style.display = 'flex';
     if (resultScreen) resultScreen.style.display = 'none';
-    if (timerDisplay) timerDisplay.textContent = '30s';
     if (scoreDisplay) scoreDisplay.textContent = '0';
+    if (comboDisplay) {
+      comboDisplay.textContent = 'x1';
+      comboDisplay.style.color = '#FBBF24';
+    }
     if (accDisplay) accDisplay.textContent = '100%';
     if (speedDisplay) speedDisplay.textContent = '0 ms';
   }
@@ -2517,20 +2765,21 @@ if (document.readyState === 'loading') {
     if (resultScreen) resultScreen.style.display = 'none';
 
     isPlaying = true;
-    timeLeft = 30;
     score = 0;
     hits = 0;
     totalClicks = 0;
+    combo = 0;
+    maxCombo = 0;
     reactionTimes = [];
 
     updateHud();
-    if (typeof TacticalAudio !== 'undefined') TacticalAudio.playHeadshot();
+    if (typeof TacticalAudio !== 'undefined') TacticalAudio.playGunshot(currentWeapon);
 
     timerInterval = setInterval(() => {
       timeLeft--;
       if (timerDisplay) timerDisplay.textContent = `${timeLeft}s`;
-      if (timeLeft <= 5 && typeof TacticalAudio !== 'undefined') {
-        TacticalAudio.playBlip(1200, 'sine', 0.05, 0.04);
+      if (timeLeft <= 5 && timeLeft > 0 && typeof TacticalAudio !== 'undefined') {
+        TacticalAudio.playBlip(1200, 'sine', 0.04, 0.04);
       }
       if (timeLeft <= 0) {
         endGame();
@@ -2544,10 +2793,19 @@ if (document.readyState === 'loading') {
     isPlaying = false;
     if (timerInterval) clearInterval(timerInterval);
     if (targetTimeout) clearTimeout(targetTimeout);
+    if (moveAnimationId) cancelAnimationFrame(moveAnimationId);
     if (currentTargetEl && currentTargetEl.parentNode) {
       currentTargetEl.parentNode.removeChild(currentTargetEl);
       currentTargetEl = null;
     }
+  }
+
+  function getComboMultiplier() {
+    if (combo >= 15) return 2.5;
+    if (combo >= 10) return 2.0;
+    if (combo >= 6) return 1.5;
+    if (combo >= 3) return 1.2;
+    return 1.0;
   }
 
   function spawnNextTarget() {
@@ -2557,25 +2815,59 @@ if (document.readyState === 'loading') {
       currentTargetEl.parentNode.removeChild(currentTargetEl);
       currentTargetEl = null;
     }
+    if (moveAnimationId) cancelAnimationFrame(moveAnimationId);
 
     const arenaW = arena.clientWidth || arena.getBoundingClientRect().width || 640;
     const arenaH = arena.clientHeight || arena.getBoundingClientRect().height || 380;
-    const targetSize = 54;
-    const padding = 28;
+    const padding = 34;
 
+    // Pick target type
+    const roll = Math.random();
+    let type = 'standard';
+    let targetClass = 'aim-target-disc';
+
+    if (currentMode === 'headshot') {
+      type = roll < 0.75 ? 'headshot' : (roll < 0.9 ? 'star' : 'hostage');
+    } else {
+      if (roll < 0.15) type = 'star';
+      else if (roll < 0.35) type = 'headshot';
+      else if (roll < 0.50) type = 'hostage';
+      else type = 'standard';
+    }
+
+    if (type === 'headshot') targetClass += ' aim-target-disc--headshot';
+    else if (type === 'star') targetClass += ' aim-target-disc--star';
+    else if (type === 'hostage') targetClass += ' aim-target-disc--hostage';
+
+    const targetSize = type === 'headshot' ? 40 : (type === 'star' ? 46 : 52);
     const maxX = Math.max(padding, arenaW - targetSize - padding);
     const maxY = Math.max(padding, arenaH - targetSize - padding);
 
-    const randX = padding + Math.random() * (maxX - padding);
-    const randY = padding + Math.random() * (maxY - padding);
+    let randX = padding + Math.random() * (maxX - padding);
+    let randY = padding + Math.random() * (maxY - padding);
 
     const disc = document.createElement('div');
-    disc.className = 'aim-target-disc';
+    disc.className = targetClass;
     disc.style.left = `${randX}px`;
     disc.style.top = `${randY}px`;
-    disc.innerHTML = `
-      <div class="aim-target-bullseye" style="width:18px;height:18px;background:#FFF;border-radius:50%;box-shadow:0 0 8px #fff;pointer-events:none;"></div>
-    `;
+    disc.dataset.type = type;
+
+    // Moving target mechanics (Rush mode or 30% chance in Standard)
+    const isMoving = (currentMode === 'rush' || (currentMode === 'standard' && Math.random() < 0.35)) && type !== 'hostage';
+    let vx = isMoving ? (Math.random() > 0.5 ? 2.2 : -2.2) : 0;
+
+    if (isMoving) {
+      function animateTarget() {
+        if (!isPlaying || currentTargetEl !== disc) return;
+        randX += vx;
+        if (randX <= padding || randX >= maxX) {
+          vx = -vx;
+        }
+        disc.style.left = `${randX}px`;
+        moveAnimationId = requestAnimationFrame(animateTarget);
+      }
+      moveAnimationId = requestAnimationFrame(animateTarget);
+    }
 
     currentTargetSpawnTime = performance.now();
     currentTargetEl = disc;
@@ -2583,7 +2875,7 @@ if (document.readyState === 'loading') {
     const handleHit = (e) => {
       e.preventDefault();
       e.stopPropagation();
-      onHitTarget(disc, randX, randY);
+      onHitTarget(disc, type, randX, randY);
     };
 
     disc.addEventListener('pointerdown', handleHit);
@@ -2591,40 +2883,100 @@ if (document.readyState === 'loading') {
 
     arena.appendChild(disc);
 
-    // Target disappears if not hit within 950ms
+    // Timeout based on mode
+    let timeoutMs = 950;
+    if (currentMode === 'headshot') timeoutMs = 750;
+    else if (currentMode === 'rush') timeoutMs = 600;
+
     targetTimeout = setTimeout(() => {
       if (isPlaying && currentTargetEl === disc) {
+        if (type !== 'hostage') {
+          // Missed a valid target: break combo streak
+          if (combo > 0) {
+            combo = 0;
+            updateHud();
+          }
+        }
         spawnNextTarget();
       }
-    }, 950);
+    }, timeoutMs);
   }
 
-  function onHitTarget(disc, x, y) {
+  function onHitTarget(disc, type, x, y) {
     if (!isPlaying) return;
 
-    const reactionTime = Math.round(performance.now() - currentTargetSpawnTime);
-    reactionTimes.push(reactionTime);
-    hits++;
     totalClicks++;
+    const reactionTime = Math.round(performance.now() - currentTargetSpawnTime);
 
-    // Speed bonus calculation
-    let earnedScore = 100;
+    // Gunshot audio for selected weapon
+    if (typeof TacticalAudio !== 'undefined') TacticalAudio.playGunshot(currentWeapon);
+
+    if (type === 'hostage') {
+      // PENALTY HIT!
+      score = Math.max(0, score - 150);
+      combo = 0;
+      if (typeof TacticalAudio !== 'undefined') TacticalAudio.playPenalty();
+      showFloatingScore(x, y, '-150 PENALTI SANDERA!', '#EF4444');
+      disc.style.transform = 'translate(-50%, -50%) scale(1.4)';
+      disc.style.opacity = '0';
+      setTimeout(() => {
+        if (disc.parentNode) disc.parentNode.removeChild(disc);
+      }, 100);
+      updateHud();
+      if (targetTimeout) clearTimeout(targetTimeout);
+      spawnNextTarget();
+      return;
+    }
+
+    // SUCCESS HIT
+    hits++;
+    combo++;
+    if (combo > maxCombo) maxCombo = combo;
+    reactionTimes.push(reactionTime);
+
+    const mult = getComboMultiplier();
+    let baseScore = 100;
     let label = 'HIT';
-    if (reactionTime < 300) { earnedScore = 150; label = 'CRITICAL HEADSHOT!'; }
-    else if (reactionTime < 450) { earnedScore = 120; label = 'PERFECT!'; }
-    else if (reactionTime < 650) { earnedScore = 100; label = 'FAST!'; }
-    else { earnedScore = 75; label = 'GOOD'; }
 
+    if (type === 'headshot') {
+      baseScore = 250;
+      label = '💀 HEADSHOT!';
+      if (typeof TacticalAudio !== 'undefined') TacticalAudio.playHeadshot();
+    } else if (type === 'star') {
+      baseScore = 300;
+      label = '⭐ MOTHRA BONUS (+2s)!';
+      timeLeft += 2;
+      if (timerDisplay) timerDisplay.textContent = `${timeLeft}s`;
+      if (typeof TacticalAudio !== 'undefined') TacticalAudio.playBonus();
+    } else {
+      if (reactionTime < 300) { baseScore = 160; label = 'CRITICAL!'; }
+      else if (reactionTime < 450) { baseScore = 130; label = 'PERFECT!'; }
+      else if (reactionTime < 650) { baseScore = 100; label = 'FAST!'; }
+      else { baseScore = 80; label = 'GOOD'; }
+      if (typeof TacticalAudio !== 'undefined') TacticalAudio.playHitmarker();
+    }
+
+    // Weapon modifiers
+    let weaponBonus = 1.0;
+    if (currentWeapon === 'cheytac') weaponBonus = 1.25; // High damage sniper
+    else if (currentWeapon === 'kriss') {
+      if (combo % 2 === 0) combo++; // Extra streak boost
+    }
+
+    const earnedScore = Math.round(baseScore * mult * weaponBonus);
     score += earnedScore;
 
-    if (typeof TacticalAudio !== 'undefined') TacticalAudio.playHeadshot();
+    if (combo >= 3 && typeof TacticalAudio !== 'undefined') {
+      TacticalAudio.playCombo(combo);
+    }
 
-    // Spawn floating score indicator
-    showFloatingScore(x, y, `+${earnedScore} ${label}`);
+    let floatText = `+${earnedScore} ${label}`;
+    if (mult > 1.0) floatText += ` [${mult}x]`;
+    showFloatingScore(x, y, floatText, type === 'headshot' ? '#F59E0B' : (type === 'star' ? '#10B981' : 'var(--gold)'));
 
-    // Create hit ripple effect
+    // Hit particle / ripple
     if (disc && disc.parentNode) {
-      disc.style.transform = 'translate(-50%, -50%) scale(1.35)';
+      disc.style.transform = 'translate(-50%, -50%) scale(1.4)';
       disc.style.opacity = '0';
       setTimeout(() => {
         if (disc.parentNode) disc.parentNode.removeChild(disc);
@@ -2636,25 +2988,25 @@ if (document.readyState === 'loading') {
     spawnNextTarget();
   }
 
-  function showFloatingScore(x, y, text) {
+  function showFloatingScore(x, y, text, color = 'var(--gold)') {
     const pop = document.createElement('div');
     pop.style.position = 'absolute';
     pop.style.left = `${x}px`;
     pop.style.top = `${y - 15}px`;
     pop.style.transform = 'translate(-50%, -50%)';
-    pop.style.color = 'var(--gold)';
+    pop.style.color = color;
     pop.style.fontFamily = 'var(--font-mono)';
-    pop.style.fontSize = '0.85rem';
+    pop.style.fontSize = '0.88rem';
     pop.style.fontWeight = '900';
     pop.style.pointerEvents = 'none';
-    pop.style.zIndex = '5';
-    pop.style.textShadow = '0 0 8px rgba(212,175,55,0.8), 0 0 15px rgba(0,0,0,0.9)';
+    pop.style.zIndex = '15';
+    pop.style.textShadow = `0 0 8px ${color}, 0 0 16px rgba(0,0,0,0.95)`;
     pop.style.transition = 'all 0.4s ease-out';
     pop.textContent = text;
     arena.appendChild(pop);
 
     requestAnimationFrame(() => {
-      pop.style.top = `${y - 45}px`;
+      pop.style.top = `${y - 48}px`;
       pop.style.opacity = '0';
     });
 
@@ -2663,19 +3015,27 @@ if (document.readyState === 'loading') {
     }, 450);
   }
 
-  // Missed click inside arena
+  // Arena Missed Shot
   arena.addEventListener('pointerdown', (e) => {
     if (!isPlaying) return;
     if (e.target.closest('.aim-target-disc') || e.target.closest('.aim-start-screen') || e.target.closest('.aim-result-screen')) {
       return;
     }
     totalClicks++;
-    if (typeof TacticalAudio !== 'undefined') TacticalAudio.playGunClick();
+    combo = 0; // Miss resets combo!
+    if (typeof TacticalAudio !== 'undefined') TacticalAudio.playGunshot(currentWeapon);
     updateHud();
   });
 
   function updateHud() {
     if (scoreDisplay) scoreDisplay.textContent = score.toLocaleString();
+    const mult = getComboMultiplier();
+    if (comboDisplay) {
+      comboDisplay.textContent = combo > 1 ? `x${combo} (${mult}x)` : 'x1';
+      if (combo >= 10) comboDisplay.style.color = '#EF4444';
+      else if (combo >= 5) comboDisplay.style.color = '#F59E0B';
+      else comboDisplay.style.color = '#FBBF24';
+    }
     const acc = totalClicks > 0 ? Math.round((hits / totalClicks) * 100) : 100;
     if (accDisplay) accDisplay.textContent = `${acc}%`;
 
@@ -2695,16 +3055,42 @@ if (document.readyState === 'loading') {
       : 0;
 
     let rank = 'TACTICAL RECRUIT';
-    if (score >= 2400 && acc >= 85) rank = '🏆 PBIC PRO LEVEL';
-    else if (score >= 1800 && acc >= 75) rank = '👑 TACTICAL LEGEND';
-    else if (score >= 1300) rank = '⭐ BRIGADIER SHARPSHOOTER';
-    else if (score >= 800) rank = '🎯 SPECIAL OPS RUSHER';
-    else rank = '🛡️ COMBAT RECRUIT';
+    let feedback = 'Latihan refleks yang bagus! Tingkatkan lagi konsistensi tembakan kamu.';
+    if (score >= 3500 && acc >= 85) {
+      rank = '🏆 PBIC WORLD CHAMPION';
+      feedback = 'Kemampuan aim dan kecepatan refleksmu setara atlet PB tingkat dunia! Layak menjadi First Line Roster Clan MOTHRA.';
+    } else if (score >= 2600 && acc >= 80) {
+      rank = '👑 TACTICAL LEGEND';
+      feedback = 'Refleks instan dan akurasi tinggi! Sangat cocok mengisi posisi Rusher / Point Attacker di skuad utama.';
+    } else if (score >= 1800) {
+      rank = '⭐ BRIGADIER SHARPSHOOTER';
+      feedback = 'Refleks di atas rata-rata pemain PBNC. Akurasi mantap dan siap diterjunkan dalam scrim kompetitif.';
+    } else if (score >= 1000) {
+      rank = '🎯 SPECIAL OPS RUSHER';
+      feedback = 'Insting bertarung tajam. Coba fokus pertahankan streak combo untuk raih skor di atas 2,000.';
+    } else {
+      rank = '🛡️ COMBAT RECRUIT';
+      feedback = 'Teruslah berlatih! Latih koordinasi mata dan jemari untuk respon di bawah 300 ms.';
+    }
+
+    // High Score Check
+    const pb = getPersonalBest();
+    const isNewBest = score > (pb.score || 0);
+    if (isNewBest) {
+      savePersonalBest(score, acc, avgSpeed);
+      refreshHighScoresDisplay();
+      if (newBestBadge) newBestBadge.style.display = 'block';
+    } else {
+      if (newBestBadge) newBestBadge.style.display = 'none';
+    }
 
     if (rankTitle) rankTitle.textContent = rank;
-    if (resultSummary) {
-      resultSummary.innerHTML = `Skor Akhir: <strong style="color:var(--gold);">${score.toLocaleString()}</strong> • Hit: <strong>${hits}</strong> • Akurasi: <strong>${acc}%</strong> • Reaksi Rata-Rata: <strong>${avgSpeed} ms</strong>`;
-    }
+    if (resScoreVal) resScoreVal.textContent = score.toLocaleString();
+    if (resHitsVal) resHitsVal.textContent = hits;
+    if (resComboVal) resComboVal.textContent = `x${maxCombo}`;
+    if (resAccVal) resAccVal.textContent = `${acc}%`;
+    if (resSpeedVal) resSpeedVal.textContent = `${avgSpeed} ms`;
+    if (resMsg) resMsg.textContent = feedback;
 
     if (resultScreen) resultScreen.style.display = 'flex';
   }
