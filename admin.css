@@ -521,39 +521,6 @@ select.form-input option {
   box-shadow: 0 0 8px #22C55E;
   display: inline-block;
 }
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  background: var(--dark-2);
-  border: 1px solid var(--border-dim);
-  color: var(--white);
-  padding: 0.6rem;
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  border-radius: var(--radius);
-  text-decoration: none;
-  transition: border-color 0.2s, color 0.2s;
-}
-.btn-view-site:hover {
-  border-color: var(--gold);
-  color: var(--gold);
-}
-.btn-logout {
-  background: rgba(239, 68, 68, 0.15);
-  border: 1px solid var(--red-bright);
-  color: #FCA5A5;
-  padding: 0.6rem;
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  font-weight: bold;
-  border-radius: var(--radius);
-  cursor: pointer;
-  transition: background 0.2s;
-}
-.btn-logout:hover {
-  background: var(--red);
-  color: var(--white);
-}
 
 /* Main Content Area */
 .admin-main {
